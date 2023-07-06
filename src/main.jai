@@ -1,23 +1,31 @@
-// Everett
+// Tactics
 // Main
 // Alex Hartford
 // June 2023
+
+VERSION :: 1;
+
+sprites_path    :: "assets/sprites";
+fonts_path      :: "assets/fonts";
+
+grids_path      :: "data";
+units_path      :: "data";
+
+pool: Flat_Pool;
 
 window : *SDL_Window;
 gl_context : *SDL_GLContext;
 imgui_context : *ImGui.ImGuiContext;
 
-window_width  : s32 = 1080;
-window_height : s32 = 600;
-aspect_ratio  : float = 1.8;
+window_width  : s32 = 1280;
+window_height : s32 = 720;
+aspect_ratio  : float = 1.78;
 
 running : bool;
 
-// @TODO: We should probably keep primitives like this one that we'll draw a lot in a structure together.
 quad : Quad;
-cube : Cube;
-
 fonts : Table(string, Font);
+spritesheet : Spritesheet;
 
 // Program-Level State
 //
@@ -31,7 +39,7 @@ program_state : struct {
 
     paused : bool;
 
-    current_level_name := "level1.entities";
+    current_level_name := "level1";
 
     imgui_capturing_mouse    := false;
     imgui_capturing_keyboard := false;
@@ -47,7 +55,7 @@ editor : struct {
 }
 
 debug : struct {
-    lines : [..] string;
+    lines : [4] string;
 }
 
 // Render-Level State
@@ -55,11 +63,8 @@ debug : struct {
 
 render_context : struct {
     using shaders : struct {
-        basic_shader     : Shader;
-        texture_shader   : Shader;
-
-        screen_shader    : Shader;
-        text_shader      : Shader;
+        shader      : Shader;
+        text_shader : Shader;
     }
 }
 
@@ -67,7 +72,7 @@ render_context : struct {
 //
 
 game_state : struct {
-    teams : [..] Team;
+    teams := Team.[.BLUE, .RED];
     current_turn_team_index : int;
 }
 
@@ -86,8 +91,6 @@ next_turn :: () -> Team {
     return whose_turn();
 }
 
-texture : Texture;
-
 // Main
 //
 
@@ -98,46 +101,44 @@ main :: () {
     init_result := init();
     assert(init_result);
 
-    // Shaders
-    render_context.basic_shader     = make_shader("basic.vs", "basic.fs");
-    render_context.texture_shader   = make_shader("texture.vs", "basic.fs");
+    // Init Rendering Structures
+    {
+        // Shaders
+        render_context.shader       = make_shader("screen.vs", "texture.fs");
+        render_context.text_shader  = make_shader("text.vs", "text.fs");
 
-    render_context.screen_shader    = make_shader("screen.vs", "texture.fs");
-    render_context.text_shader      = make_shader("text.vs", "text.fs");
+        // Primitives
+        init_quad_rendering_objects(*quad);
 
-    // Primitives
-    init_quad_rendering_objects(*quad);
-    init_cube_rendering_objects(*cube);
+        // Fonts
+        table_add(*fonts, "Header", make_font("JosefinSans-Regular.ttf", 24));
+        //table_add(*fonts, "Body",   make_font("OpenSans-BoldItalic.ttf", 22));
+        
+        // Sprites
+        success := make_spritesheet(*spritesheet, "sheet.png");
+        assert(success);
+    }
 
-    // Fonts
-    table_add(*fonts, "Header", make_font("JosefinSans-Regular.ttf", 24));
-    //table_add(*fonts, "Body",   make_font("OpenSans-BoldItalic.ttf", 22));
-
-    /*
-    // Animations
-    anim : Sampled_Animation;
-    loaded = load_animation_from_file(*anim, "assets/animations/idle.anim");
-    if !loaded
-        log_error ("Could not load % animation.", basename);
-
-    init_rendering_objects(animation_shader);
-
-    animation_time := 0.0;
-    animation_speed_in_fps := 20.0;
-
-    pose : Skeleton_Pose;
-    pose = make_pose_for_skeleton(*mesh.skeleton);
-    */
-
-    // Gameplay structures setup
     map : Map;
-    load_grid(*map, "level1.map");
+    units : [..] *Unit;
 
-    array_add(*game_state.teams, .BLUE);
-    array_add(*game_state.teams, .RED);
+    // Init Gameplay Objects
+    {
+        load_grid(*map, "level1.map");
+
+        success := load_units(*units, "level1.units");
+        assert(success);
+
+        for units {
+            occupy(*map, it.square, it);
+        }
+
+        success = save_units(units, "level1.units");
+        assert(success);
+    }
 
     // The Game Loop
-    print("Welcome to the Everett Engine.\n");
+    print("Welcome to the Tactics Game.\n");
 
     dt, last_frame := 0.0;
     running = true;
@@ -148,9 +149,8 @@ main :: () {
         last_frame = current_time;
 
         // Debug Console
-        array_reset(*debug.lines);
-        array_add(*debug.lines, tprint("Cursor Position: %", cursor.square));
-        array_add(*debug.lines, tprint("Cursor State: %", cursor.state));
+        debug.lines[0] = tprint("Cursor Position: %", cursor.square);
+        debug.lines[1] = tprint("Cursor State: %", cursor.state);
 
         // Handle Events
         handle_events();
@@ -162,25 +162,13 @@ main :: () {
             }
         }
 
-        /*
-        reset_to_bind_pose(*pose);
-        sample_animation(anim, animation_time, *pose, .LINEAR);
-
-        // Increment animation time
-        animation_time += dt * animation_speed_in_fps;
-        animation_time = fmod_cycling(animation_time, xx anim.sample_count);
-
-        // We transpose the result because OpenGL stores matrices in column-major
-        generate_skinning_matrices(*pose, transpose_result = true);
-        */
-
         // Editor
         if program_state.mode == .EDITOR {
             update_and_draw_editor();
         }
 
         // Render
-        render(map);
+        render(map, units);
         if program_state.mode == .EDITOR {
             ImGui_ImplSdl_RenderDrawLists(ImGui.GetDrawData());
         }
@@ -189,26 +177,39 @@ main :: () {
         SDL_Delay(1);
     }
 
+    array_reset(*units);
+    reset(*pool, overwrite_memory=true);
+
+    for fonts
+    deinit(*it.characters);
+    deinit(*fonts);
+
     ImGui_ImplSdl_Shutdown();
     ImGui.DestroyContext(imgui_context);
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
+    #if DEBUG_MEMORY then report_memory_leaks();
 }
 
-using Basic :: #import "Basic";
+BUILD : enum { DEVELOPING; DEPLOYING; } : .DEVELOPING;
+//DEBUG_MEMORY :: BUILD == .DEPLOYING;
+DEBUG_MEMORY :: BUILD == .DEVELOPING;
+
+using Basic :: #import "Basic"()(MEMORY_DEBUGGER=DEBUG_MEMORY);
+
 #import "String";
-#import "System"; // get_path_of_running_executable()
 #import "Math";
 #import "Hash_Table";
-#import "Deep_Copy";
-Reflection :: #import "Reflection"; // Inspect()
-
-#import "File";
 #import "Text_File_Handler";
-#import "stb_image";
-#import "freetype255";
+#import "Flat_Pool";
+
+#import "File";     // read_ and write_ entire_file()
+#import "System";   // get_path_of_running_executable()
 
 #import "SDL";
 #import "GL";
 ImGui :: #import "ImGui";
+#import "stb_image";
+#import "freetype255";

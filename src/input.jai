@@ -1,4 +1,4 @@
-// Everett
+// Tactics
 // Input
 // Alex Hartford
 // June 2023
@@ -63,9 +63,11 @@ handle_events :: () {
                     if program_state.mode == {
                         case .GAME;
                         program_state.mode = .EDITOR;
+                        activate_mouse();
 
                         case .EDITOR;
                         program_state.mode = .GAME;
+                        deactivate_mouse();
                     }
                 }
 

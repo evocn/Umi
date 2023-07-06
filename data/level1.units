@@ -1,0 +1,20 @@
+[1] # Version
+
+
+Everett	# name
+1	# team
+24	# sprite_index
+0	# unit_flags
+3	# movement
+2	# range
+3	# max_health
+5 5	# square
+
+Dog	# name
+2	# team
+374	# sprite_index
+0	# unit_flags
+2	# movement
+1	# range
+2	# max_health
+2 3	# square

@@ -1,4 +1,4 @@
-// Everett
+// Tactics
 // Grid
 // Alex Hartford
 // June 2023
@@ -10,6 +10,7 @@
 // * Some time later, we call update_ui every frame.
 // * It only eats the inputs and changes state if it's their turn.
 // * Therefore, we don't put everything in one monolithic command hierarchy, but rather two.
+// It's genius!
 
 cursor : struct {
     using square : Square = .{grid_width / 2, grid_height / 2};
@@ -17,7 +18,6 @@ cursor : struct {
     state : enum {
         NEUTRAL;
         MOVING;    // Soft limit
-        DIRECTING;
         TARGETING; // Hard limit?
 
         NONE;
@@ -32,6 +32,8 @@ cursor : struct {
     // This would simplify things on our end, and be smaller too, which would be nice.
     accessible : [..] Square;
     interactible : [..] Square;
+
+    path : Path;
 }
 
 update_cursor :: (map : *Map) {
@@ -58,7 +60,13 @@ update_cursor :: (map : *Map) {
 
         case .MOVING;
         {
-            maybe_move_cursor();
+            if maybe_move_cursor() {
+                success : bool;
+                new_path:, success = get_shortest_path(map, selected, cursor.square);
+                if success {
+                    path = new_path;
+                }
+            }
 
             if input.button_1 {
                 place_unit(map);
@@ -73,23 +81,6 @@ update_cursor :: (map : *Map) {
             if input.button_3 {
                 begin_targeting(map);
                 input.button_3 = false;
-            }
-
-            return;
-        }
-
-        case .DIRECTING;
-        {
-            maybe_direct_unit();
-
-            if input.button_1 {
-                finish_directing_unit();
-                input.button_1 = false;
-            }
-
-            if input.button_2 {
-                put_unit_back(map);
-                input.button_2 = false;
             }
 
             return;
@@ -141,7 +132,6 @@ begin_moving :: (map : *Map) {
 
     selected_initial_square = square;
     accessible = get_accessible_squares_from_position(map, selected);
-    filter_out_impassible(*accessible, map);
 
     state = .MOVING;
 }
@@ -186,12 +176,6 @@ place_unit :: (map : *Map) {
     selected.square = square;
     array_reset(*accessible);
 
-    state = .DIRECTING;
-}
-
-finish_directing_unit :: () {
-    using cursor;
-
     selected = null;
     selected_initial_square = Square.{-1, -1};
     state = .NEUTRAL;
@@ -210,7 +194,7 @@ begin_targeting :: (map : *Map) {
     }
 
     selected_initial_square = square;
-    interactible = get_interactible_squares_from_position(square, max = selected.range);
+    interactible = get_interactible_squares_from_position(map, selected);
 
     // We might need to filter out stuff based on the type of attacks later...
     //filter_out_impassible(*interactible, map);
@@ -232,23 +216,29 @@ attack_target :: (map : *Map) {
 //
 //
 
-maybe_move_cursor :: () {
+maybe_move_cursor :: () -> moved: bool {
+    moved: bool;
     if input.up {
         move_cursor(.NORTH);
         input.up = false;
+        moved = true;
     }
     if input.left {
         move_cursor(.WEST);
         input.left = false;
+        moved = true;
     }
     if input.down {
         move_cursor(.SOUTH);
         input.down = false;
+        moved = true;
     }
     if input.right {
         move_cursor(.EAST);
         input.right = false;
+        moved = true;
     }
+    return moved;
 }
 
 move_cursor :: (direction : Direction) {
@@ -264,28 +254,4 @@ move_cursor :: (direction : Direction) {
 
     if on_grid(new_square)
         square = new_square;
-}
-
-//
-//
-
-maybe_direct_unit :: () {
-    using cursor;
-
-    if input.up {
-        selected.direction = .NORTH;
-        input.up = false;
-    }
-    if input.left {
-        selected.direction = .WEST;
-        input.left = false;
-    }
-    if input.down {
-        selected.direction = .SOUTH;
-        input.down = false;
-    }
-    if input.right {
-        selected.direction = .EAST;
-        input.right = false;
-    }
 }

@@ -1,4 +1,4 @@
-// Everett
+// Tactics
 // Init
 // Alex Hartford
 // June 2023
@@ -7,7 +7,7 @@ init :: () -> bool {
     SDL_Init(SDL_INIT_VIDEO);
 
     // Create an application window with the following settings:
-    window = SDL_CreateWindow("Everett",
+    window = SDL_CreateWindow("Tactics",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height,
         SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN);
 
@@ -40,9 +40,7 @@ init :: () -> bool {
     // 2. Sort all the transparent objects by distance to the viewer.
     // 3. Draw all the transparent object in sorted order.
 
-    glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST); 
-    glLineWidth(10);
+    glLineWidth(1);
     glPointSize(5);
 
 

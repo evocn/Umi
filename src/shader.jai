@@ -1,4 +1,4 @@
-// Everett
+// Tactics
 // Shader
 // Alex Hartford
 // June 2023
@@ -13,12 +13,14 @@ disable_shaders :: () { glUseProgram(0); }
 make_shader :: (vertex_filename: string, fragment_filename: string) -> Shader
 {
     vs_text, vertex_success := read_entire_file(tprint("%/%", shaders_path, vertex_filename), log_errors = false);
+    defer free(vs_text.data);
     if !vertex_success {
         log_error("Could not read vertex shader: %", vertex_filename);
         return 0;
     }
 
     fs_text, fragment_success := read_entire_file(tprint("%/%", shaders_path, fragment_filename), log_errors = false);
+    defer free(fs_text.data);
     if !fragment_success {
         log_error("Could not read fragment shader: %", fragment_filename);
         return 0;
@@ -38,6 +40,9 @@ set_int :: (shader : Shader, name: string, value: int) {
 }
 set_float :: (shader : Shader, name: string, value: float) {
     glUniform1f(glGetUniformLocation(shader, name.data), value);
+}
+set_vec2 :: (shader : Shader, name: string, value: Vector2) {
+    glUniform2fv(glGetUniformLocation(shader, name.data), 1, cast(*float)*value);
 }
 set_vec3 :: (shader : Shader, name: string, value: Vector3) {
     glUniform3fv(glGetUniformLocation(shader, name.data), 1, cast(*float)*value);

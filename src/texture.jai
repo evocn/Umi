@@ -1,4 +1,4 @@
-// Everett
+// Tactics
 // Texture
 // Alex Hartford
 // June 2023
@@ -19,24 +19,22 @@ Texture :: struct {
 //
 //
 
-textures_path :: "assets/textures";
-
-load_texture :: (filename : string) -> Texture {
+load_texture :: (filename : string) -> Texture, success: bool {
 	using result : Texture;
 
-	cstr_path := temp_c_string(tprint("%/%", textures_path, filename));
+	cstr_path := temp_c_string(tprint("%/%", sprites_path, filename));
 	data := stbi_load(cstr_path, xx *width, xx *height, xx *dim, 4); defer stbi_image_free(data);
 
 	if(!data) {
 		log_error("Failed to load texture %.\n", filename);
-        assert(false);
+        return .{}, false;
 	}
 	fmt : GLenum;
 	if dim == 1 then fmt = GL_RED;
 	else if dim == 3 || dim == 4 then fmt = GL_RGBA;
 	else {
         log_error("Unknown image format: \"%\".\n", dim);
-        return .{};
+        return .{}, false;
 	}
 
 	glGenTextures(1, *id);
@@ -44,15 +42,15 @@ load_texture :: (filename : string) -> Texture {
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, xx ifx fmt == GL_RGBA then GL_CLAMP_TO_EDGE else GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, xx ifx fmt == GL_RGBA then GL_CLAMP_TO_EDGE else GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);											  
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);											  
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
  
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, xx width, xx height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	return result;
+	return result, true;
 }
 
 #scope_file

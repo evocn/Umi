@@ -1,11 +1,9 @@
-// Everett
+// Tactics
 // Font
 // Alex Hartford
 // June 2023
 
 // @TODO: There is a crash when I load multiple things... Look into this.
-
-fonts_path :: "assets/fonts";
 
 Font :: struct {
     characters : Table(u8, Character_Glyph);
@@ -190,4 +188,3 @@ init_font_rendering_objects :: (using font : *Font) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
-

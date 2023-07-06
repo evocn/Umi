@@ -1,4 +1,4 @@
-// Everett
+// Tactics
 // Build
 // Alex Hartford
 // May 2023
@@ -41,6 +41,7 @@ build :: () {
 
     add_build_file(tprint("%/unit.jai", #filepath), w);
     add_build_file(tprint("%/grid.jai", #filepath), w);
+    add_build_file(tprint("%/path.jai", #filepath), w);
     add_build_file(tprint("%/cursor.jai", #filepath), w);
     add_build_file(tprint("%/combat.jai", #filepath), w);
 
@@ -48,11 +49,11 @@ build :: () {
     add_build_file(tprint("%/parse_utils.jai", #filepath), w);
 
     add_build_file(tprint("%/render.jai", #filepath), w);
-    add_build_file(tprint("%/color.jai", #filepath), w);
     add_build_file(tprint("%/font.jai", #filepath), w);
 
     add_build_file(tprint("%/shader.jai", #filepath), w);
     add_build_file(tprint("%/texture.jai", #filepath), w);
+    add_build_file(tprint("%/spritesheet.jai", #filepath), w);
 
 	// Set up ctags options
 	ctags: CTags;
