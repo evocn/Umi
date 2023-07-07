@@ -3,17 +3,8 @@
 // Alex Hartford
 // June 2023
 
-// The new command architecture:
-// * Inputs flow through the whole program, everything can see its state.
-// * We call update_cursor every frame.
-// * We only eat the inputs and change state if it's our turn.
-// * Some time later, we call update_ui every frame.
-// * It only eats the inputs and changes state if it's their turn.
-// * Therefore, we don't put everything in one monolithic command hierarchy, but rather two.
-// It's genius!
-
 cursor : struct {
-    using square : Square = .{grid_width / 2, grid_height / 2};
+    using square : Square = .{map_width / 2, map_height / 2};
 
     state : enum {
         NEUTRAL;
@@ -60,11 +51,19 @@ update_cursor :: (map : *Map) {
 
         case .MOVING;
         {
+            // @LEAK: There's something going on here, we need to free the path, and I think we do, but I think this extra copy is funky.
             if maybe_move_cursor() {
-                success : bool;
-                new_path:, success = get_shortest_path(map, selected, cursor.square);
-                if success {
-                    path = new_path;
+                if array_find(cursor.accessible, cursor.square) {
+                    new_path, success := get_shortest_path(map, selected, cursor.square);
+                    if success {
+                        path = new_path;
+                    }
+                    else {
+                        array_reset(*new_path);
+                    }
+                }
+                else {
+                    array_reset(*path);
                 }
             }
 
@@ -122,7 +121,7 @@ begin_moving :: (map : *Map) {
     using cursor;
 
     if !selected {
-        selected = get_occupant(map, square);
+        selected = map.occupancy[square.col][square.row];
         if !selected return;
     }
     else {
@@ -143,6 +142,7 @@ deselect_unit :: () {
         selected_initial_square = .{-1, -1};
         array_reset(*accessible);
         array_reset(*interactible);
+        array_reset(*path);
 
         state = .NEUTRAL;
     }
@@ -152,11 +152,12 @@ deselect_unit :: () {
 put_unit_back :: (map : *Map) {
     using cursor;
 
-    remove_occupant(map, selected.square);
+    map.occupancy[selected.square.col][selected.square.row] = null;
     occupy(map, selected_initial_square, selected);
     selected.square = selected_initial_square;
     square = selected_initial_square;
     array_reset(*accessible);
+    array_reset(*path);
     selected_initial_square = .{-1, -1};
     selected = null;
 
@@ -167,14 +168,15 @@ place_unit :: (map : *Map) {
     using cursor;
     assert(state == .MOVING);
 
-    square_occupant := get_occupant(map, square);
+    square_occupant := map.occupancy[square.col][square.row];
     if square_occupant && square_occupant != selected return;
     if !array_find(accessible, square) return;
 
-    remove_occupant(map, selected_initial_square);
+    map.occupancy[selected_initial_square.col][selected_initial_square.row] = null;
     occupy(map, square, selected);
     selected.square = square;
     array_reset(*accessible);
+    array_reset(*path);
 
     selected = null;
     selected_initial_square = Square.{-1, -1};
@@ -185,7 +187,7 @@ begin_targeting :: (map : *Map) {
     using cursor;
 
     if !selected {
-        selected = get_occupant(map, square);
+        selected = map.occupancy[square.col][square.row];
         if !selected return;
     }
     else {
@@ -205,8 +207,11 @@ begin_targeting :: (map : *Map) {
 attack_target :: (map : *Map) {
     using cursor;
 
-    target := get_occupant(map, square);
+    if !array_find(interactible, square) return;
+
+    target := map.occupancy[square.col][square.row];
     if !target return;
+    if target.team == selected.team return;
 
     resolve_attack(selected, target);
 

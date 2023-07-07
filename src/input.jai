@@ -56,17 +56,17 @@ handle_events :: () {
                 }
 
                 if event.key.keysym.sym == SDLK_0 {
-                    program_state.paused = !program_state.paused;
+                    program_paused = !program_paused;
                 }
 
                 if event.key.keysym.sym == SDLK_r {
-                    if program_state.mode == {
+                    if program_mode == {
                         case .GAME;
-                        program_state.mode = .EDITOR;
+                        program_mode = .EDITOR;
                         activate_mouse();
 
                         case .EDITOR;
-                        program_state.mode = .GAME;
+                        program_mode = .GAME;
                         deactivate_mouse();
                     }
                 }

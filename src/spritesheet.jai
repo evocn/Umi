@@ -36,7 +36,7 @@ draw_sprite :: (shader: Shader, using spritesheet : Spritesheet, index: int, squ
     set_vec2(shader, "relative_sheet_scale", relative_sheet_scale);
 
     model := Matrix4_Identity;
-    translate(*model, Vector3.{square.col * (1.0 / SCREEN_TILES_COLUMNS), (grid_height - square.row - 1) * (1.0 / SCREEN_TILES_ROWS), 1});
+    translate(*model, Vector3.{square.col * (1.0 / SCREEN_TILES_COLUMNS), (map_height - square.row - 1) * (1.0 / SCREEN_TILES_ROWS), 1});
     scale(*model, Vector3.{1.0 / SCREEN_TILES_COLUMNS, 1.0 / SCREEN_TILES_ROWS, 1});
     set_mat4(shader, "model", model);
 

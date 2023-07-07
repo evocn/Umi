@@ -8,7 +8,7 @@ VERSION :: 1;
 sprites_path    :: "assets/sprites";
 fonts_path      :: "assets/fonts";
 
-grids_path      :: "data";
+tiles_path      :: "data";
 units_path      :: "data";
 
 pool: Flat_Pool;
@@ -30,14 +30,13 @@ spritesheet : Spritesheet;
 // Program-Level State
 //
 
-program_state : struct {
-    Program_Mode :: enum {
+using program_state : struct {
+    program_mode : enum {
         GAME;
         EDITOR;
     }
-    mode : Program_Mode;
 
-    paused : bool;
+    program_paused : bool;
 
     current_level_name := "level1";
 
@@ -49,9 +48,6 @@ program_state : struct {
 
 settings : struct {
     line_mode := false;
-}
-
-editor : struct {
 }
 
 debug : struct {
@@ -124,7 +120,7 @@ main :: () {
 
     // Init Gameplay Objects
     {
-        load_grid(*map, "level1.map");
+        load_tiles(*map, "level1.tiles");
 
         success := load_units(*units, "level1.units");
         assert(success);
@@ -156,20 +152,28 @@ main :: () {
         handle_events();
 
         // Simulate
-        if program_state.mode == .GAME {
-            if !program_state.paused {
+        if program_mode == .GAME {
+            if !program_paused {
                 update_cursor(*map);
+
+                for units {
+                    if it.dead then remove it;
+                }
             }
         }
 
         // Editor
-        if program_state.mode == .EDITOR {
-            update_and_draw_editor();
+        if program_mode == .EDITOR {
+            update_and_draw_editor(*map, *units);
+
+            if !program_state.imgui_capturing_keyboard {
+                update_editor_cursor(*map);
+            }
         }
 
         // Render
         render(map, units);
-        if program_state.mode == .EDITOR {
+        if program_mode == .EDITOR {
             ImGui_ImplSdl_RenderDrawLists(ImGui.GetDrawData());
         }
         SDL_GL_SwapWindow(window);

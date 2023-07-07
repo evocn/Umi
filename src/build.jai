@@ -40,7 +40,7 @@ build :: () {
     add_build_file(tprint("%/serialization.jai", #filepath), w);
 
     add_build_file(tprint("%/unit.jai", #filepath), w);
-    add_build_file(tprint("%/grid.jai", #filepath), w);
+    add_build_file(tprint("%/map.jai", #filepath), w);
     add_build_file(tprint("%/path.jai", #filepath), w);
     add_build_file(tprint("%/cursor.jai", #filepath), w);
     add_build_file(tprint("%/combat.jai", #filepath), w);

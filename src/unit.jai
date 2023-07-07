@@ -11,14 +11,12 @@ Unit :: struct {
     unit_flags : Unit_Flags;
 
     movement : int;
-    range : int;
-
-    max_health : int;
+    min_range : int;
+    max_range : int;
 
     // State
     // Initialized
     using square : Square;
-    health : int;       @NoSerialize
 
     moved : bool;       @NoSerialize
     exhausted : bool;   @NoSerialize
@@ -33,4 +31,5 @@ Team :: enum {
 
 Unit_Flags :: enum_flags {
     FLYING;
+    PASS;
 }

@@ -33,7 +33,7 @@ render :: (map : Map, units: [..] *Unit)
         orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
         set_mat4(shader, "projection", orthographic);
 
-        for column, x: map.grid {
+        for column, x: map.tiles {
             for tile, y: column {
                 tile_index := get_tile_sprite_index(tile.tile_kind);
                 draw_sprite(shader, spritesheet, tile_index, .{x, y});
@@ -55,16 +55,15 @@ render :: (map : Map, units: [..] *Unit)
 
         // Draw Cursor
         draw_sprite(shader, spritesheet, 49 * 12 + 35, cursor.square, blue);
+
+        // Editor Cursor
+        if program_mode == .EDITOR {
+            draw_sprite(shader, spritesheet, 49 * 12 + 37, editor.cursor, white);
+        }
     }
 
     // Draw UI Elements
     {
-        shader := render_context.shader;
-        use_shader(shader);
-        defer disable_shaders();
-
-        orthographic := orthographic_projection_matrix(0, 10.0, 0, 10.0, -1, 1);
-        set_mat4(shader, "projection", orthographic);
     }
 
     // Draw Text
