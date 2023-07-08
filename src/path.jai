@@ -40,8 +40,7 @@ move_down_path :: (path: *Path, desired_distance: int) -> Square {
 }
 
 // @NOTE: This is for debugging purposes. Check here first if there's wonky AI stuff going on.
-print_distance_field :: (using map : Map, origin: Square) {
-    traversed := traverse(map, origin);
+print_distance_field :: (traversed: Traversal_Result) {
     for col: traversed.field {
         for data_point: col {
             print("%\t", data_point.distance);
@@ -52,7 +51,10 @@ print_distance_field :: (using map : Map, origin: Square) {
 
 get_shortest_path :: (using map : Map, unit: Unit, destination: Square) -> Path, success: bool {
     path: Path;
-    traversed := traverse(map, unit.square, unit.team, cast(bool)(unit.unit_flags & .FLYING));
+
+    // @TODO: This is funky. We determine walkable squares in a different way than we determine shortest paths.
+    // I'd like to not have to special case these qualifiers.
+    traversed := traverse(map, unit.square, unit.team, flying=cast(bool)(unit.unit_flags & .FLYING), pass=cast(bool)(unit.unit_flags & .PASS));
 
     destination_is_reachable := traversed.field[destination.col][destination.row].reachable;
     //destination_is_occupied  := traversed.field[destination.col][destination.row].occupied;
@@ -137,11 +139,11 @@ traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := fals
             new_square_occupant := map.occupancy[new_square.col][new_square.row];
             field[col][row].occupied = new_square_occupant != null;
 
-            new_square_is_occupied_by_enemy_unit := (new_square_occupant != null && new_square_occupant.team != team) && !pass;
-            if new_square_is_occupied_by_enemy_unit then continue;
+            cannot_traverse_due_to_enemy_unit := (new_square_occupant != null && new_square_occupant.team != team) && !pass;
+            if cannot_traverse_due_to_enemy_unit then continue;
 
-            new_square_is_impassible := is_impassible(map.tiles[new_square.col][new_square.row]) && !flying;
-            if new_square_is_impassible then continue;
+            cannot_traverse_due_to_impassible_tile := is_impassible(map.tiles[new_square.col][new_square.row]) && !flying;
+            if cannot_traverse_due_to_impassible_tile then continue;
 
             // @TODO: Different costs for tile type traversals will go here (Desert, water, mountain tiles, etc)
             new_distance := field[from_square.col][from_square.row].distance + 1;
@@ -151,6 +153,7 @@ traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := fals
             new_distance_by_air_is_shorter := new_distance_by_air < field[col][row].distance_by_air;
 
             if !new_distance_is_shorter && !new_distance_by_air_is_shorter then continue;
+
             if new_distance_is_shorter
                 field[col][row].distance = new_distance;
             if new_distance_by_air_is_shorter

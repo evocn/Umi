@@ -7,11 +7,11 @@ VERSION :: 1;
 
 sprites_path    :: "assets/sprites";
 fonts_path      :: "assets/fonts";
+music_path      :: "assets/audio/music";
+sfx_path        :: "assets/audio/sfx";
 
 tiles_path      :: "data";
 units_path      :: "data";
-
-pool: Flat_Pool;
 
 window : *SDL_Window;
 gl_context : *SDL_GLContext;
@@ -23,9 +23,10 @@ aspect_ratio  : float = 1.78;
 
 running : bool;
 
-quad : Quad;
-fonts : Table(string, Font);
-spritesheet : Spritesheet;
+// Audio Stuff
+sound_player : *Sound_Player;
+music : *Mixer_Sound_Data;
+sounds: Table(string, *Mixer_Sound_Data);
 
 // Program-Level State
 //
@@ -46,45 +47,31 @@ using program_state : struct {
     framerate : float;
 }
 
+pool: Flat_Pool;
+
 settings : struct {
     line_mode := false;
+    // fps
+    // resolution
+    // fullscreened
 }
 
 debug : struct {
-    lines : [4] string;
+    lines : [16] string;
 }
 
 // Render-Level State
 //
 
-render_context : struct {
+rendering : struct {
     using shaders : struct {
         shader      : Shader;
         text_shader : Shader;
     }
-}
 
-// Game-Level State
-//
-
-game_state : struct {
-    teams := Team.[.BLUE, .RED];
-    current_turn_team_index : int;
-}
-
-whose_turn :: () -> Team {
-    using game_state;
-    return teams[current_turn_team_index];
-}
-
-next_turn :: () -> Team {
-    using game_state;
-
-    current_turn_team_index += 1;
-    if current_turn_team_index > teams.count
-        current_turn_team_index = 0;
-
-    return whose_turn();
+    quad : Quad;
+    fonts : Table(string, Font);
+    spritesheet : Spritesheet;
 }
 
 // Main
@@ -99,15 +86,17 @@ main :: () {
 
     // Init Rendering Structures
     {
+        using rendering;
         // Shaders
-        render_context.shader       = make_shader("screen.vs", "texture.fs");
-        render_context.text_shader  = make_shader("text.vs", "text.fs");
+        shader       = make_shader("screen.vs", "texture.fs");
+        text_shader  = make_shader("text.vs", "text.fs");
 
         // Primitives
         init_quad_rendering_objects(*quad);
 
         // Fonts
         table_add(*fonts, "Header", make_font("JosefinSans-Regular.ttf", 24));
+        // @BUG: This crashes the program for some reason...
         //table_add(*fonts, "Body",   make_font("OpenSans-BoldItalic.ttf", 22));
         
         // Sprites
@@ -144,22 +133,38 @@ main :: () {
         dt = current_time - last_frame;
         last_frame = current_time;
 
-        // Debug Console
-        debug.lines[0] = tprint("Cursor Position: %", cursor.square);
-        debug.lines[1] = tprint("Cursor State: %", cursor.state);
+        //update_sound_player(dt);
 
-        // Handle Events
         handle_events();
 
-        // Simulate
+        // Simulation
         if program_mode == .GAME {
             if !program_paused {
-                update_cursor(*map);
+                turn := whose_turn();
+                if #complete turn == {
+                    case .BLUE;
+                    cursor_update(*map, *units);
+
+                    case .RED;
+                    ai_update(*map, *units, dt);
+
+                    case .NONE;
+                    print("This team shouldn't be active!\n");
+                }
 
                 for units {
-                    if it.dead then remove it;
+                    if it.dead {
+                        remove_occupant(*map, it.square);
+                        remove it;
+                    }
                 }
             }
+
+            for command_queue {
+                execute(it);
+                free(it);
+            }
+            array_reset(*command_queue);
         }
 
         // Editor
@@ -170,6 +175,10 @@ main :: () {
                 update_editor_cursor(*map);
             }
         }
+
+        // Set Debug Console
+        debug.lines[0] = tprint("Turn: %", whose_turn());
+        debug.lines[1] = tprint("Cursor State: %", cursor.state);
 
         // Render
         render(map, units);
@@ -184,9 +193,9 @@ main :: () {
     array_reset(*units);
     reset(*pool, overwrite_memory=true);
 
-    for fonts
-    deinit(*it.characters);
-    deinit(*fonts);
+    for rendering.fonts
+        deinit(*it.characters);
+    deinit(*rendering.fonts);
 
     ImGui_ImplSdl_Shutdown();
     ImGui.DestroyContext(imgui_context);
@@ -209,11 +218,16 @@ using Basic :: #import "Basic"()(MEMORY_DEBUGGER=DEBUG_MEMORY);
 #import "Text_File_Handler";
 #import "Flat_Pool";
 
-#import "File";     // read_ and write_ entire_file()
-#import "System";   // get_path_of_running_executable()
+Thread      :: #import "Thread";   // For lock() and unlock(). (used with audio.jai)
+Wav_File    :: #import "Wav_File"; // For get_wav_header() and wav format stuff.
+File        :: #import "File";     // For read_ and write_ entire_file()
+File_Utilities :: #import "File_Utilities"; // for file_list()
+System      :: #import "System";   // For get_path_of_running_executable()
+Random      :: #import "Random";   // For random_get_within_range()
 
 #import "SDL";
 #import "GL";
 ImGui :: #import "ImGui";
 #import "stb_image";
 #import "freetype255";
+#import "Sound_Player";

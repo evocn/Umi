@@ -22,12 +22,14 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
     ImGui_ImplSdl_NewFrame(window);
     ImGui.NewFrame();
 
+    save_load(map, units);
+
     units_editor(units);
     if selected_unit {
         unit_editor(selected_unit, units);
     }
 
-    cursor_display(map);
+    tile_editor(map);
 
     settings_editor();
 
@@ -49,6 +51,38 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
     ImGui.Render();
 }
 
+save_load :: (map: *Map, units: *[..] *Unit) {
+    ImGui.Begin("Menu");
+    {
+        ImGui.Text("Current level: %", program_state.current_level_name);
+        if(ImGui.Button("Save")) {
+            success := save_tiles(map, tprint("%.tiles", program_state.current_level_name));
+            if !success {
+                log_error("Error saving tiles.\n");
+            }
+            success = save_units(units.*, tprint("%.units", program_state.current_level_name));
+            if !success {
+                log_error("Error saving units.\n");
+            }
+        }
+        ImGui.SameLine();
+        if(ImGui.Button("Load")) {
+            success := load_tiles(map, tprint("%.tiles", program_state.current_level_name));
+            if !success {
+                log_error("Error loading tiles.\n");
+            }
+
+            success = load_units(units, tprint("%.units", program_state.current_level_name));
+            if !success {
+                log_error("Error loading units.\n");
+            }
+
+            editor.selected_unit = null;
+        }
+    }
+    ImGui.End();
+}
+
 unit_editor :: (using unit: *Unit, units : *[..] *Unit) {
     using editor;
 
@@ -56,13 +90,16 @@ unit_editor :: (using unit: *Unit, units : *[..] *Unit) {
     {
         ImGui.Text("%", name);
 
-        // @TODO: Get name editing in the editor.
         /*
-        label := temp_c_string("Name");
-        cStr: *u8 = talloc(name.count+5); // 5 extra bytes
-        memset(cStr, 0, name.count+5);
-        memcpy(cStr, name.data, name.count);
-        ImGui.InputText(label, cStr, xx(name.count));
+        if name.count ImGui.InputText("Name", name.data, xx name.count);
+        else ImGui.InputText("name", "(null)", 6);
+
+        str := "Hello, Sailor!";
+        cStr: *u8 = talloc(str.count+5); // 5 extra bytes
+        memset(cStr, 0, str.count+5);
+        memcpy(cStr, str.data, str.count);
+        ImGui.InputText("Name", cStr, xx str.count);
+        print("%\n", to_string(cStr));
         */
 
         if ImGui.Button("delete") {
@@ -92,16 +129,6 @@ last_selected_unit: int = -1;
 units_editor :: (units : *[..] *Unit) {
     ImGui.Begin("Units");
     {
-        ImGui.Text("Current level: %", program_state.current_level_name);
-        if(ImGui.Button("Save")) {
-            success := save_units(units.*, tprint("%.units", program_state.current_level_name));
-        }
-        ImGui.SameLine();
-        if(ImGui.Button("Load")) {
-            success := load_units(units, tprint("%.units", program_state.current_level_name));
-            editor.selected_unit = null;
-        }
-
         if(ImGui.Button("New")) {
             a: Allocator;
             a.proc = flat_pool_allocator_proc;
@@ -146,19 +173,29 @@ settings_editor :: () {
 //
 //
 
-cursor_display :: (using map: *Map) {
+tile_editor :: (using map: *Map) {
     using editor;
 
     ImGui.Begin("Cursor");
     {
+        tile := *tiles[cursor.col][cursor.row];
         ImGui.Text("The cursor is over %.", cursor);
-        ImGui.Text("That tile is: %", tiles[cursor.col][cursor.row]);
+        ImGui.Text("That tile is: %", tile.*);
 
         occupant := occupancy[cursor.col][cursor.row];
         if occupant 
             ImGui.Text("Its occupant is %", occupant.name);
         else
             ImGui.Text("It is unoccupied.");
+
+        ti := type_info(Tile_Kind);
+        if ImGui.SliderInt("Kind", xx *tile.tile_kind, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx tile.tile_kind]))
+            tile.sprite_index = default_tile_sprite_index(tile.tile_kind);
+
+        if ImGui.Button("Sprite")
+            tile.sprite_index = default_tile_sprite_index(tile.tile_kind);
+        ImGui.SameLine();
+        ImGui.DragInt("### 531", xx *tile.sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
     }
     ImGui.End();
 }

@@ -23,13 +23,11 @@ Unit :: struct {
     dead : bool;        @NoSerialize
 }
 
-Team :: enum {
-    NONE;
-    BLUE;
-    RED;
-}
-
 Unit_Flags :: enum_flags {
     FLYING;
     PASS;
+}
+
+kill :: (using unit: *Unit) {
+    dead = true;
 }

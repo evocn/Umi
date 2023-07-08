@@ -46,30 +46,34 @@ handle_events :: () {
             case SDL_KEYDOWN;
                 if event.key.keysym.sym == SDLK_ESCAPE running = false;
 
-                // Settings
-                if event.key.keysym.sym == SDLK_l {
-                    if settings.line_mode
-                        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                    else
-                        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                    settings.line_mode = !settings.line_mode;
-                }
+                if !program_state.imgui_capturing_keyboard {
+                    // Settings
+                    if event.key.keysym.sym == SDLK_l {
+                        if settings.line_mode
+                            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                        else
+                            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                        settings.line_mode = !settings.line_mode;
+                    }
 
-                if event.key.keysym.sym == SDLK_0 {
-                    program_paused = !program_paused;
-                }
+                    if event.key.keysym.sym == SDLK_0 {
+                        program_paused = !program_paused;
+                    }
 
-                if event.key.keysym.sym == SDLK_r {
-                    if program_mode == {
-                        case .GAME;
-                        program_mode = .EDITOR;
-                        activate_mouse();
+                    if event.key.keysym.sym == SDLK_r {
+                        if program_mode == {
+                            case .GAME;
+                            program_mode = .EDITOR;
+                            activate_mouse();
 
-                        case .EDITOR;
-                        program_mode = .GAME;
-                        deactivate_mouse();
+                            case .EDITOR;
+                            program_mode = .GAME;
+                            deactivate_mouse();
+                        }
                     }
                 }
+
+                if event.key.repeat != 0 return;
 
                 // Actual Inputs
                 if event.key.keysym.sym == SDLK_w input.up    = true;

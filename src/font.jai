@@ -16,10 +16,17 @@ make_font :: (filename: string, size: u32) -> Font {
 }
 
 draw_text :: (shader: Shader, font: Font, text: string, 
-              x: float, y: float, scale := 1.0, color := Vector4.{0, 0, 0, 1})
+              x: float, y: float, scale := 1.0, color := white)
 {
     set_vec4(shader, "color", color);
     render_text(font, text, x, y, scale);
+}
+
+draw_text_centered :: (shader: Shader, font: Font, text: string, 
+                       y: float, scale := 1.0, color := white)
+{
+    set_vec4(shader, "color", color);
+    render_text(font, text, window_width / 2.0, y, scale);
 }
 
 //
@@ -53,44 +60,14 @@ render_text :: (font : Font, text : string, x : float, y : float, scale : float)
         h := glyph.size.y * scale;
 
         // update VBO for each character
-        vertices : [6][4] float;
-
-        tmp : [4] float;
-        tmp[0] = xpos;
-        tmp[1] = ypos + h;
-        tmp[2] = 0.0;
-        tmp[3] = 0.0;
-        vertices[0] = tmp;
-
-        tmp[0] = xpos;
-        tmp[1] = ypos;
-        tmp[2] = 0.0;
-        tmp[3] = 1.0;
-        vertices[1] = tmp;
-
-        tmp[0] = xpos + w;
-        tmp[1] = ypos;
-        tmp[2] = 1.0;
-        tmp[3] = 1.0;
-        vertices[2] = tmp;
-
-        tmp[0] = xpos;
-        tmp[1] = ypos + h;
-        tmp[2] = 0.0;
-        tmp[3] = 0.0;
-        vertices[3] = tmp;
-
-        tmp[0] = xpos + w;
-        tmp[1] = ypos;
-        tmp[2] = 1.0;
-        tmp[3] = 1.0;
-        vertices[4] = tmp;
-
-        tmp[0] = xpos + w;
-        tmp[1] = ypos + h;
-        tmp[2] = 1.0;
-        tmp[3] = 0.0;
-        vertices[5] = tmp;
+        vertices : [6][4] float = .[
+            .[xpos,     ypos + h,   0.0, 0.0],
+            .[xpos,     ypos,       0.0, 1.0],
+            .[xpos + w, ypos,       1.0, 1.0],
+            .[xpos,     ypos + h,   0.0, 0.0],
+            .[xpos + w, ypos,       1.0, 1.0],
+            .[xpos + w, ypos + h,   1.0, 0.0],
+        ];
 
         // render glyph texture over quad
         glBindTexture(GL_TEXTURE_2D, glyph.id);

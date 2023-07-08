@@ -15,7 +15,7 @@ save_units :: (units : [..] *Unit, filename : string) -> success : bool {
         if !success return false;
     }
 
-    write_entire_file(tprint("%/%", units_path, filename), *builder);
+    File.write_entire_file(tprint("%/%", units_path, filename), *builder);
     log("Saved units to \"%\".\n", filename);
 
     return true;
@@ -216,33 +216,49 @@ unserialize  :: (to_unserialize: *Unit_Flags, handler: *Text_File_Handler) -> su
 //
 
 #scope_module
-save_tiles :: (using map : Map, filename : string) {
-    print("Saving %\n", filename);
+save_tiles :: (using map : Map, filename : string) -> bool {
+    log("Saving %\n", filename);
     builder: String_Builder;
     defer free_buffers(*builder);
 
     init_string_builder(*builder);
-    print_to_builder(*builder, "[%] # Version Number\n\n", VERSION);
-    print_to_builder(*builder, "% # Width\n", map_width);
-    print_to_builder(*builder, "% # Height\n\n", map_height);
+    print_to_builder(*builder, "[%]\t# Version Number\n\n", VERSION);
+    print_to_builder(*builder, "%\t# Width\n", map_width);
+    print_to_builder(*builder, "%\t# Height\n\n", map_height);
 
+    print_to_builder(*builder, "# Tiles:\n");
     print_tiles_to_builder(*builder, tiles);
 
-    write_entire_file(tprint("%/%", tiles_path, filename), builder_to_string(*builder));
+    success := File.write_entire_file(tprint("%/%", tiles_path, filename), builder_to_string(*builder));
+
+    return success;
 }
 
-load_tiles :: (using map : *Map, filename : string) {
-    print("Loading %\n", filename);
+load_tiles :: (using map : *Map, filename : string) -> bool {
+    log("Loading %\n", filename);
     success := parse_tiles(map, tprint("%/%", tiles_path, filename));
-    assert(success, "Unable to load file %\n", filename);
+    return success;
 }
 
 print_tiles_to_builder :: (builder : *String_Builder, tiles : [map_width][map_height] Tile) {
-    for col : 0..map_width-1 {
-        for row : 0..map_height-1 {
-            print_to_builder(builder, "%", cast(int)tiles[col][row].tile_kind);
+    exceptions: [..] Square;
+    defer array_reset(*exceptions);
+
+    for row : 0..map_height-1 {
+        for col : 0..map_width-1 {
+            kind := tiles[col][row].tile_kind;
+            if tiles[col][row].sprite_index != default_tile_sprite_index(kind)
+                array_add(*exceptions, .{col, row});
+
+            print_to_builder(builder, "%", cast(int)kind);
         }
         print_to_builder(builder, "\n");
+    }
+
+    print_to_builder(builder, "\n");
+    print_to_builder(builder, "# Sprite Index Exceptions:\n");
+    for exceptions {
+        print_to_builder(builder, "% % %\n", it.col, it.row, tiles[it.col][it.row].sprite_index);
     }
 }
 
@@ -272,8 +288,25 @@ parse_tiles :: (using map : *Map, full_path : string) -> bool {
     for row : 0..map_height-1 {
         line, found = consume_next_line(*handler);
         for character, col : cast([] u8)line {
-            tiles[col][row].tile_kind = cast(Tile_Kind)(character - 48);
+            kind := cast(Tile_Kind)(character - 48);
+            tiles[col][row].tile_kind = kind;
+            tiles[col][row].sprite_index = default_tile_sprite_index(kind);
         }
+    }
+
+    line, found = consume_next_line(*handler);
+    while found {
+        values := split(line, cast(u8)(#char " "));
+        if values.count != 3
+            return error_out(handler, "Problem with sprite indices. Should be in the format x y index.");
+
+        col := string_to_int(values[0]);
+        row := string_to_int(values[1]);
+        index := string_to_int(values[2]);
+
+        tiles[col][row].sprite_index = index;
+
+        line, found = consume_next_line(*handler);
     }
 
     return true;

@@ -24,19 +24,19 @@ render :: (map : Map, units: [..] *Unit)
 
     // Draw Game Board
     {
-        shader := render_context.shader;
+        shader := rendering.shader;
         use_shader(shader);
         defer disable_shaders();
 
-        bind(spritesheet.texture, 0);
+        bind(rendering.spritesheet.texture, 0);
 
         orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
         set_mat4(shader, "projection", orthographic);
 
         for column, x: map.tiles {
             for tile, y: column {
-                tile_index := get_tile_sprite_index(tile.tile_kind);
-                draw_sprite(shader, spritesheet, tile_index, .{x, y});
+                tile_index := tile.sprite_index;
+                draw_sprite(shader, rendering.spritesheet, tile_index, .{x, y});
             }
         }
 
@@ -54,11 +54,11 @@ render :: (map : Map, units: [..] *Unit)
         }
 
         // Draw Cursor
-        draw_sprite(shader, spritesheet, 49 * 12 + 35, cursor.square, blue);
+        draw_sprite(shader, rendering.spritesheet, 49 * 12 + 35, cursor.square, blue);
 
         // Editor Cursor
         if program_mode == .EDITOR {
-            draw_sprite(shader, spritesheet, 49 * 12 + 37, editor.cursor, white);
+            draw_sprite(shader, rendering.spritesheet, 49 * 12 + 37, editor.cursor, white);
         }
     }
 
@@ -68,16 +68,16 @@ render :: (map : Map, units: [..] *Unit)
 
     // Draw Text
     {
-        shader := render_context.text_shader;
+        shader := rendering.text_shader;
         use_shader(shader);
         defer disable_shaders();
 
         orthographic := orthographic_projection_matrix(0, xx window_width, 0, xx window_height, -1, 1);
         set_mat4(shader, "projection", orthographic);
 
-        font, found := table_find(*fonts, "Header");
+        font, found := table_find(*rendering.fonts, "Header");
         for debug.lines {
-            draw_text(shader, font, it, 10, window_height - 10 - cast(float)(it_index + 1) * font.height, 1.0);
+            draw_text_centered(shader, font, it, 5 + cast(float)(it_index) * font.height, scale = 1.0, color = blue);
         }
     }
 }
@@ -93,7 +93,16 @@ draw_unit :: (using unit : Unit, shader : Shader) {
         case .RED;   color = red;
     }
 
-    draw_sprite(shader, spritesheet, sprite_index, square, color);
+    draw_sprite(shader, rendering.spritesheet, sprite_index, square, color);
+
+    if whose_turn() == team {
+        if !moved {
+            draw_sprite(shader, rendering.spritesheet, 1056, square, white);
+        }
+        else if !exhausted {
+            draw_sprite(shader, rendering.spritesheet, 1007, square, white);
+        }
+    }
 }
 
 draw_squares_overlay :: (shader : Shader, squares : [..] Square, color := white) {
@@ -103,23 +112,11 @@ draw_squares_overlay :: (shader : Shader, squares : [..] Square, color := white)
 }
 
 draw_square_overlay :: (shader : Shader, square : Square, color : Color) {
-    draw_sprite(shader, spritesheet, 49 * 13 + 41, square, color);
+    draw_sprite(shader, rendering.spritesheet, 49 * 13 + 41, square, color);
 }
 
 draw_path :: (shader : Shader, path: Path, color : Color) {
     for path {
         draw_square_overlay(shader, it, color);
-    }
-}
-
-// 
-//
-
-get_tile_sprite_index :: (kind : Tile_Kind) -> int {
-    if #complete kind == {
-        case .NONE;     return 0;
-        case .COVER;    return 6;
-        case .WALL;     return 101;
-        case .GAP;      return 103;
     }
 }

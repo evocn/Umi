@@ -27,7 +27,7 @@ cursor : struct {
     path : Path;
 }
 
-update_cursor :: (map : *Map) {
+cursor_update :: (map : *Map, units: *[..] *Unit) {
     using cursor;
 
     if state == {
@@ -38,7 +38,7 @@ update_cursor :: (map : *Map) {
             maybe_move_cursor();
 
             if input.button_1 {
-                begin_moving(map);
+                begin_moving_unit(map);
                 input.button_1 = false;
             }
 
@@ -46,13 +46,21 @@ update_cursor :: (map : *Map) {
                 begin_targeting(map);
                 input.button_3 = false;
             }
+
+            if input.button_4 {
+                next_turn(units);
+                input.button_4 = false;
+            }
+
             return;
         }
 
         case .MOVING;
         {
-            // @LEAK: There's something going on here, we need to free the path, and I think we do, but I think this extra copy is funky.
-            if maybe_move_cursor() {
+            maybe_move_cursor();
+
+            // @FIX: This has to be in the command now.
+            /*
                 if array_find(cursor.accessible, cursor.square) {
                     new_path, success := get_shortest_path(map, selected, cursor.square);
                     if success {
@@ -66,6 +74,7 @@ update_cursor :: (map : *Map) {
                     array_reset(*path);
                 }
             }
+            */
 
             if input.button_1 {
                 place_unit(map);
@@ -91,7 +100,7 @@ update_cursor :: (map : *Map) {
 
             if input.button_1 {
                 if square == selected.square {
-                    begin_moving(map);
+                    begin_moving_unit(map);
                 }
                 else {
                     attack_target(map);
@@ -115,148 +124,62 @@ update_cursor :: (map : *Map) {
 }
 
 //
+// Commands
 //
 
-begin_moving :: (map : *Map) {
-    using cursor;
-
-    if !selected {
-        selected = map.occupancy[square.col][square.row];
-        if !selected return;
-    }
-    else {
-        square = selected.square;
-        array_reset(*interactible);
-    }
-
-    selected_initial_square = square;
-    accessible = get_accessible_squares_from_position(map, selected);
-
-    state = .MOVING;
-}
-
-deselect_unit :: () {
-    using cursor;
-
-    if selected {
-        selected_initial_square = .{-1, -1};
-        array_reset(*accessible);
-        array_reset(*interactible);
-        array_reset(*path);
-
-        state = .NEUTRAL;
-    }
-    selected = null;
-}
-
-put_unit_back :: (map : *Map) {
-    using cursor;
-
-    map.occupancy[selected.square.col][selected.square.row] = null;
-    occupy(map, selected_initial_square, selected);
-    selected.square = selected_initial_square;
-    square = selected_initial_square;
-    array_reset(*accessible);
-    array_reset(*path);
-    selected_initial_square = .{-1, -1};
-    selected = null;
-
-    state = .NEUTRAL;
-}
-
-place_unit :: (map : *Map) {
-    using cursor;
-    assert(state == .MOVING);
-
-    square_occupant := map.occupancy[square.col][square.row];
-    if square_occupant && square_occupant != selected return;
-    if !array_find(accessible, square) return;
-
-    map.occupancy[selected_initial_square.col][selected_initial_square.row] = null;
-    occupy(map, square, selected);
-    selected.square = square;
-    array_reset(*accessible);
-    array_reset(*path);
-
-    selected = null;
-    selected_initial_square = Square.{-1, -1};
-    state = .NEUTRAL;
+begin_moving_unit :: (map : *Map) {
+    command := New(Begin_Moving_Unit_Command);
+    command.map = map;
+    array_add(*command_queue, cast(*Command)command);
 }
 
 begin_targeting :: (map : *Map) {
-    using cursor;
+    command := New(Begin_Targeting_Command);
+    command.map = map;
+    array_add(*command_queue, cast(*Command)command);
+}
 
-    if !selected {
-        selected = map.occupancy[square.col][square.row];
-        if !selected return;
-    }
-    else {
-        square = selected.square;
-        array_reset(*accessible);
-    }
+deselect_unit :: () {
+    command := New(Deselect_Unit_Command);
+    array_add(*command_queue, cast(*Command)command);
+}
 
-    selected_initial_square = square;
-    interactible = get_interactible_squares_from_position(map, selected);
-
-    // We might need to filter out stuff based on the type of attacks later...
-    //filter_out_impassible(*interactible, map);
-
-    state = .TARGETING;
+place_unit :: (map : *Map) {
+    command := New(Place_Unit_Command);
+    command.map = map;
+    array_add(*command_queue, cast(*Command)command);
 }
 
 attack_target :: (map : *Map) {
-    using cursor;
-
-    if !array_find(interactible, square) return;
-
-    target := map.occupancy[square.col][square.row];
-    if !target return;
-    if target.team == selected.team return;
-
-    resolve_attack(selected, target);
-
-    deselect_unit();
+    command := New(Attack_Target_Command);
+    command.map = map;
+    array_add(*command_queue, cast(*Command)command);
 }
 
 //
 //
 
-maybe_move_cursor :: () -> moved: bool {
-    moved: bool;
+maybe_move_cursor :: () {
     if input.up {
         move_cursor(.NORTH);
         input.up = false;
-        moved = true;
     }
     if input.left {
         move_cursor(.WEST);
         input.left = false;
-        moved = true;
     }
     if input.down {
         move_cursor(.SOUTH);
         input.down = false;
-        moved = true;
     }
     if input.right {
         move_cursor(.EAST);
         input.right = false;
-        moved = true;
     }
-    return moved;
 }
 
 move_cursor :: (direction : Direction) {
-    using cursor;
-
-    new_square : Square;
-    if direction == {
-        case .NORTH; new_square = Square.{col,   row-1};
-        case .SOUTH; new_square = Square.{col,   row+1};
-        case .WEST;  new_square = Square.{col-1, row};
-        case .EAST;  new_square = Square.{col+1, row};
-    }
-
-    if on_grid(new_square)
-        square = new_square;
+    command := New(Move_Cursor_Command);
+    command.direction = direction;
+    array_add(*command_queue, cast(*Command)command);
 }
