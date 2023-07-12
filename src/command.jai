@@ -10,8 +10,10 @@ Command_Kind :: enum #complete {
     BEGIN_MOVING_UNIT;
     BEGIN_TARGETING;
     PLACE_UNIT;
-    ATTACK_TARGET;
+    USE_ABILITY;
     DESELECT_UNIT;
+
+    MOVE_CURSOR_TO;
 }
 
 Command :: struct {
@@ -32,11 +34,14 @@ execute :: (using command: *Command) {
         case .PLACE_UNIT;
         execute(cast(*Place_Unit_Command)command);
 
-        case .ATTACK_TARGET;
-        execute(cast(*Attack_Target_Command)command);
+        case .USE_ABILITY;
+        execute(cast(*Use_Ability_Command)command);
 
         case .DESELECT_UNIT;
         execute(cast(*Deselect_Unit_Command)command);
+
+        case .MOVE_CURSOR_TO;
+        execute(cast(*Move_Cursor_To_Command)command);
     }
 }
 
@@ -69,6 +74,7 @@ Begin_Moving_Unit_Command :: struct {
     using #as base: Command;
     kind = .BEGIN_MOVING_UNIT;
     map: *Map;
+    team: Team;
 }
 
 execute :: (using command: *Begin_Moving_Unit_Command) {
@@ -85,7 +91,7 @@ execute :: (using command: *Begin_Moving_Unit_Command) {
         selected = map.occupancy[square.col][square.row];
         if !selected return;
 
-        if selected.team != .BLUE {
+        if selected.team != team {
             selected = null;
             return;
         }
@@ -107,12 +113,15 @@ Begin_Targeting_Command :: struct {
     using #as base: Command;
     kind = .BEGIN_TARGETING;
     map: *Map;
+    team: Team;
 }
 
 execute :: (using command: *Begin_Targeting_Command) {
     using cursor;
 
     if selected { // Switching from move mode
+        array_reset(*path);
+
         if selected.exhausted
             return;
 
@@ -123,7 +132,7 @@ execute :: (using command: *Begin_Targeting_Command) {
         selected = map.occupancy[square.col][square.row];
         if !selected return;
 
-        if selected.team != .BLUE {
+        if selected.team != team {
             selected = null;
             return;
         }
@@ -135,7 +144,7 @@ execute :: (using command: *Begin_Targeting_Command) {
     }
 
     selected_initial_square = square;
-    interactible = get_interactible_squares_from_position(map, selected);
+    interactible = get_ability_squares_from_position(map, selected.ability, selected);
 
     // We might need to filter out stuff based on the type of attacks later...
     //filter_out_impassible(*interactible, map);
@@ -155,8 +164,19 @@ execute :: (using command: *Place_Unit_Command) {
     assert(state == .MOVING);
 
     square_occupant := map.occupancy[square.col][square.row];
-    if square_occupant && square_occupant != selected return;
-    if !array_find(accessible, square) return;
+
+    if square_occupant {
+        if square_occupant == selected {
+            selected.moved = true;
+            deselect_unit();
+            return;
+        }
+        else {
+            return;
+        }
+    }
+
+    if !array_find(accessible, square) then return;
 
     remove_occupant(map, selected_initial_square);
     occupy(map, square, selected);
@@ -168,21 +188,24 @@ execute :: (using command: *Place_Unit_Command) {
     {
         using tile := *map.tiles[square.col][square.row];
 
-        if tile_kind == {
+        if kind == {
             case .KILL;
-            kill(selected);
+            if !cast(bool)(selected.flags & .IMMORTAL)
+                kill(selected);
 
             case .HOLE;
-            if !cast(bool)(selected.unit_flags & .FLYING)
+            if !cast(bool)(selected.flags & .FLYING)
                 kill(selected);
 
             case .MINE;
-            kill(selected);
-            tile_kind = .NONE;
+            if !cast(bool)(selected.flags & .IMMORTAL) {
+                kill(selected);
+            }
+            kind = .NONE;
             sprite_index = default_tile_sprite_index(.NONE);
 
             case .REWARD;
-            tile_kind = .SPENT_REWARD;
+            kind = .SPENT_REWARD;
             sprite_index = default_tile_sprite_index(.SPENT_REWARD);
             print("You get a reward now!\n");
 
@@ -195,13 +218,13 @@ execute :: (using command: *Place_Unit_Command) {
 }
 
 
-Attack_Target_Command :: struct {
+Use_Ability_Command :: struct {
     using #as base: Command;
-    kind = .ATTACK_TARGET;
+    kind = .USE_ABILITY;
     map: *Map;
 }
 
-execute :: (using command: *Attack_Target_Command) {
+execute :: (using command: *Use_Ability_Command) {
     using cursor;
 
     if !array_find(interactible, square) return;
@@ -210,10 +233,11 @@ execute :: (using command: *Attack_Target_Command) {
     if !target return;
     if target.team == selected.team return;
 
-    resolve_attack(selected, target);
+    resolve_ability(map, selected, target, null, .NORTH);
 
     selected.exhausted = true;
     // @CONSIDER: It might be interesting if you could move after attack, but for now attacking also uses your movement.
+    // Think of like a canto-type ability.
     selected.moved = true;
 
     deselect_unit();

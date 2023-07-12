@@ -12,7 +12,7 @@ init :: () -> bool {
 
     // SDL
     {
-        SDL_Init(SDL_INIT_VIDEO);
+        SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 
         // Create an application window with the following settings:
         window = SDL_CreateWindow("Tactics",
@@ -64,51 +64,118 @@ init :: () -> bool {
         //ImGui.StyleColorsLight();
     }
 
+    // Init Rendering Structures
+    {
+        using rendering;
+        // Shaders
+        shader       = make_shader("screen.vs", "texture.fs");
+        text_shader  = make_shader("text.vs", "text.fs");
+
+        // Primitives
+        init_quad_rendering_objects(*quad);
+
+        // Fonts
+        table_add(*fonts, "Header", make_font("JosefinSans-Regular.ttf", 24));
+        //table_add(*fonts, "Body",   make_font("OpenSans-BoldItalic.ttf", 22));
+        
+        // Sprites
+        success := make_spritesheet(*spritesheet, "sheet.png");
+        assert(success);
+    }
+
     //init_audio();
+
+    init_menus();
+
+    init_levels();
+
+    // Init Gamepad
+    if SDL_NumJoysticks() > 0 {
+        print("Houston, we have a gamepad!\n");
+        gamepad = SDL_JoystickOpen(0);
+        assert(gamepad != null);
+    }
 
     return true;
 }
 
-/*
 init_audio :: () {
-    sound_player = New(Sound_Player);
-    sound_player.update_history = true;
+}
 
-    //
-    // Load sound effects
-    //
-    load_sound :: (basename: string) -> *Mixer_Sound_Data {
-        name := tprint("%/%.wav", sfx_path, basename);
-        data := load_audio_file(name);
+init_menus :: () {
+    {
+        using menu;
+        name = "Pause";
 
-        if !data {
-            log_error("Could not load wav file: %\n", name);
-            assert(false);
-        }
+        a: Allocator;
+        a.proc = flat_pool_allocator_proc;
+        a.data = *pool;
 
-        return data;
+        resume := New(Go_Element, allocator=a);
+        resume.name = "Resume";
+        resume.callback = resume_game;
+        array_add(*elements, cast(*Menu_Element)resume);
+
+        /*
+        master := New(Slider_Element);
+        master.name = "Master";
+        master.value = *sound_player.master_volume;
+        array_add(*elements, cast(*Menu_Element)master);
+
+        music := New(Slider_Element);
+        music.name = "Music";
+        music.value = *sound_player.mix_music;
+        array_add(*elements, cast(*Menu_Element)music);
+
+        sfx := New(Slider_Element);
+        sfx.name = "sfx";
+        sfx.value = *sound_player.mix_props;
+        array_add(*elements, cast(*Menu_Element)sfx);
+        */
+
+        quit := New(Go_Element, allocator=a);
+        quit.name = "Quit";
+        quit.callback = quit_game;
+        array_add(*elements, cast(*Menu_Element)quit);
     }
+}
 
-    sound_paths := File_Utilities.file_list(sfx_path, recursive = true, follow_symlinks = false);
+//
+//
 
-    for sound_paths {
+levels : [..] string;
+init_levels :: () {
+    array_reset(*levels);
+
+    levels_paths := File_Utilities.file_list(levels_path, recursive = true, follow_symlinks = false);
+
+    for levels_paths {
         short_name := path_strip_extension(path_filename(it));
-        table_add(*sounds, short_name, load_sound(short_name));
+        array_add(*levels, short_name);
     }
 
-    // Start Screen Music
-    // @TODO: Put this where we initialize the start screen and stuff.
-    play_music("mohican");
+    for levels_paths {
+        free(it.data);
+    }
+    array_free(levels_paths);
+}
 
-    wmInfo : SDL_SysWMinfo;
-    SDL_VERSION(*wmInfo.version);
-    SDL_GetWindowWMInfo(window, *wmInfo);
-    hwnd := wmInfo.info.win.window;
+/*
+read_levels_file :: () -> bool {
+    handler : Text_File_Handler;
+    defer deinit(*handler);
 
-    success := init(sound_player, hwnd, true, true);
-    //assert(success);
+    filename := "levels.txt";
+    start_file(*handler, filename, tprint("%/%", levels_path, filename), optional = false);
+    if handler.failed return false;
 
-    sound_player.mix_props = 1.0;
+    line, found := consume_next_line(*handler);
+    while found {
+        array_add(*levels, line);
+        line, found := consume_next_line(*handler);
+    }
+
+    return true;
 }
 */
 

@@ -3,27 +3,38 @@ Todo
 Alex Hartford
 June 2023
 
-Gameplay Code (Almost all of it). We want a working demo ASAP.
+Abilities
+* Two per unit?
 
-Gamepad Support
+Naming
+* Levels
+* Units
 
-Menu System.
+undo for gameplay
+Different sprite sheets (So grant doesn't have to trawl through 1077 sprites to make a new unit)
 
-Port over the audio from Wizardnauts
+AI
+* Different Behaviors
+* Maybe don't go after immortal units?
+
+Audio
 * Music
 * SFX
 * Mixer
 
-UI System.
+Bugs
+----
+Enemy units that cant quite make it over a slow tile think they can, and the AI
+  can't move them.
+Can't load a second font for some reason...
+Audio Player...
 
-Hotloaded Variable Tweaks File
-
-AI.
-
+Later
+-----
+Five-Color Aesthetic? Generalize the code?
 Cutscenes.
-
-Start Screen.
-
-Credits.
-
+Hotloaded Variable Tweaks File.
 Better Font.
+Start Screen.
+Credits.
+Chunk the spritesheet up

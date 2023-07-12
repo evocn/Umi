@@ -3,7 +3,7 @@
 // Alex Hartford
 // June 2023
 
-// @TODO: There is a crash when I load multiple things... Look into this.
+// @BUG: There is a crash when I load multiple fonts... Look into this.
 
 Font :: struct {
     characters : Table(u8, Character_Glyph);
@@ -26,7 +26,7 @@ draw_text_centered :: (shader: Shader, font: Font, text: string,
                        y: float, scale := 1.0, color := white)
 {
     set_vec4(shader, "color", color);
-    render_text(font, text, window_width / 2.0, y, scale);
+    render_text(font, text, 0, y, scale, centered = true);
 }
 
 //
@@ -43,17 +43,31 @@ initialize_freetype :: () {
     }
 }
 
-render_text :: (font : Font, text : string, x : float, y : float, scale : float)
+render_text :: (font : Font, text : string, x : float, y : float, scale : float, $centered := true)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(font.vao);
+
+    #if centered {
+        total_width : float;
+        for cast([] u8)text {
+            glyph, found := table_find(*font.characters, it);
+            assert(found);
+
+            total_width += (glyph.advance >> 6) * scale;
+        }
+    }
 
     for cast([] u8)text
     {
         glyph, found := table_find(*font.characters, it);
         assert(found);
 
-        xpos := x + glyph.bearing.x * scale;
+        xpos : float;
+        #if centered
+            xpos = x + ((window_width - total_width) / 2.0) + glyph.bearing.x * scale;
+        else
+            xpos = x + glyph.bearing.x * scale;
         ypos := y - (glyph.size.y - glyph.bearing.y) * scale;
 
         w := glyph.size.x * scale;

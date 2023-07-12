@@ -6,6 +6,10 @@
 editor : struct {
     cursor : Square = .{map_width / 2, map_height / 2};
     selected_unit : *Unit;
+
+    moving_unit : *Unit;
+
+    should_save : bool;
 }
 
 //
@@ -22,18 +26,39 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
     ImGui_ImplSdl_NewFrame(window);
     ImGui.NewFrame();
 
-    save_load(map, units);
+    new_context := context;
+    new_context.logger      = save_load_logger;
+    push_context new_context {
+        if should_save {
+            should_save = false;
+
+            success : bool;
+
+            success = save_units(units.*, "all.units");
+            if !success {
+                log_error("Error saving units.\n");
+            }
+
+            success = save_level(map, tprint("%.level", program_state.current_level_name));
+            if !success {
+                log_error("Error saving level.\n");
+            }
+        }
+
+        save_load(map, units);
+    }
 
     units_editor(units);
     if selected_unit {
-        unit_editor(selected_unit, units);
+        unit_editor(selected_unit, units, map);
+        percolate_changes_to_map_units(map, selected_unit);
     }
+
+    level_editor(map);
 
     tile_editor(map);
 
     settings_editor();
-
-    debug_display();
     
     using ImGui.MouseCursor;
     if ImGui.GetMouseCursor() == {
@@ -51,83 +76,214 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
     ImGui.Render();
 }
 
+level_index := -1;
 save_load :: (map: *Map, units: *[..] *Unit) {
     ImGui.Begin("Menu");
     {
-        ImGui.Text("Current level: %", program_state.current_level_name);
-        if(ImGui.Button("Save")) {
-            success := save_tiles(map, tprint("%.tiles", program_state.current_level_name));
-            if !success {
-                log_error("Error saving tiles.\n");
-            }
-            success = save_units(units.*, tprint("%.units", program_state.current_level_name));
-            if !success {
-                log_error("Error saving units.\n");
-            }
-        }
+        if(ImGui.Button("Save"))
+            editor.should_save = true;
+
         ImGui.SameLine();
         if(ImGui.Button("Load")) {
-            success := load_tiles(map, tprint("%.tiles", program_state.current_level_name));
-            if !success {
-                log_error("Error loading tiles.\n");
-            }
-
-            success = load_units(units, tprint("%.units", program_state.current_level_name));
-            if !success {
-                log_error("Error loading units.\n");
-            }
-
+            load_units(units, "all.units");
+            init_level(map, units.*, program_state.current_level_name);
             editor.selected_unit = null;
+            editor.moving_unit = null;
+        }
+
+        ImGui.SameLine();
+        if(ImGui.Button("New")) {
+            success := save_level(map, "new.level");
+            if !success {
+                log_error("Error making new level.\n");
+            }
+            init_levels();
+            program_state.current_level_name = "new";
+            init_level(map, units.*, program_state.current_level_name);
+        }
+
+        ImGui.SameLine();
+        if(ImGui.Button("Delete")) {
+            success := File.file_delete(tprint("%/%.level", levels_path, program_state.current_level_name));
+            assert(success);
+            init_levels();
+            program_state.current_level_name = "test";
+            init_level(map, units.*, program_state.current_level_name);
+        }
+
+        _, level_index = array_find(levels, program_state.current_level_name);
+        if ImGui.BeginListBox("###007", Vector2.{-FLOAT32_MIN, -FLOAT32_MIN}) {
+            for levels {
+                if ImGui.Selectable(temp_c_string(it), level_index == it_index) {
+                    level_index = it_index;
+                    program_state.current_level_name = it;
+
+                    init_level(map, units.*, it);
+                    editor.selected_unit = null;
+                    editor.moving_unit = null;
+                }
+            }
+            ImGui.EndListBox();
         }
     }
     ImGui.End();
 }
 
-unit_editor :: (using unit: *Unit, units : *[..] *Unit) {
-    using editor;
-
-    ImGui.Begin("Unit");
+last_moving_unit := -1;
+level_editor :: (using map: *Map) {
+    ImGui.Begin("Level");
     {
-        ImGui.Text("%", name);
+        ImGui.Text("%", program_state.current_level_name);
 
-        /*
-        if name.count ImGui.InputText("Name", name.data, xx name.count);
-        else ImGui.InputText("name", "(null)", 6);
-
-        str := "Hello, Sailor!";
-        cStr: *u8 = talloc(str.count+5); // 5 extra bytes
-        memset(cStr, 0, str.count+5);
-        memcpy(cStr, str.data, str.count);
-        ImGui.InputText("Name", cStr, xx str.count);
-        print("%\n", to_string(cStr));
-        */
-
-        if ImGui.Button("delete") {
-            array_ordered_remove_by_value(units, selected_unit);
-            selected_unit = null;
+        if ImGui.Button("Remove") {
+            success := array_ordered_remove_by_value(*units, editor.moving_unit);
+            editor.moving_unit = null;
+            last_moving_unit = -1;
+            ImGui.End();
+            return;
+        }
+        ImGui.SameLine();
+        if ImGui.Button("Deselect") {
+            last_moving_unit = -1;
+            editor.moving_unit = null;
         }
 
-        {
-            using selected_unit;
-            ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
+        for units {
+            if editor.moving_unit == it {
+                last_moving_unit = it_index;
+            }
+        }
 
-            ti := type_info(Team);
-            ImGui.SliderInt("Team", xx *team, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx team]));
-
-            imgui_flags_editor(*(selected_unit.unit_flags));
-
-
-            ImGui.InputInt("Movement",  xx *movement);
-            ImGui.InputInt("Min Range", xx *min_range);
-            ImGui.InputInt("Max Range", xx *max_range);
+        if editor.moving_unit == null then last_moving_unit = -1;
+        if ImGui.BeginListBox("###420", Vector2.{-FLOAT32_MIN, -FLOAT32_MIN}) {
+            for units {
+                if ImGui.Selectable(temp_c_string(tprint("% | %", it_index, it.name)), last_moving_unit == it_index) {
+                    last_moving_unit = it_index;
+                    editor.moving_unit = it;
+                    editor.cursor = it.square;
+                }
+            }
+            ImGui.EndListBox();
         }
     }
     ImGui.End();
+}
+
+unit_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
+    using editor;
+
+    ImGui.SetNextWindowPos(.{1000, 400}, ImGui.Cond.Once);
+    ImGui.SetNextWindowSize(.{250, 250}, ImGui.Cond.Once);
+  
+    window_name : *u8;
+    if unit.name.count then window_name = temp_c_string(unit.name);
+    else window_name = "(null)";
+    ImGui.Begin(window_name);
+    {
+        if ImGui.BeginTabBar("Unit Tabs")
+        {
+            if ImGui.BeginTabItem("Properties")
+            {
+                ImGui.Text("%", name);
+
+                /*
+                cStr: *u8 = talloc(32); // 5 extra bytes
+                memset(cStr, 0, 32);
+                memcpy(cStr, name.data, name.count);
+                ImGui.InputText("Name", cStr, 32);
+                memcpy(name.data, cStr, 32);
+                */
+
+                if ImGui.Button("delete unit template") {
+                    success := array_ordered_remove_by_value(units, selected_unit);
+                    selected_unit = null;
+                    ImGui.End();
+                    return;
+                }
+
+                if ImGui.Button("Add to level") {
+                    unoccupied, available_spaces := get_unoccupied(map);
+                    if available_spaces {
+                        a: Allocator;
+                        a.proc = flat_pool_allocator_proc;
+                        a.data = *level_pool;
+
+                        new_unit := New(Unit, allocator=a);
+                        memcpy(new_unit, selected_unit, size_of(Unit));
+                        new_unit.id = map.units.count;
+                        array_add(*map.units, new_unit);
+
+                        new_unit.square = unoccupied[0];
+                        occupy(map, new_unit.square, new_unit);
+                    }
+                    else {
+                        log_error("Cannot add any more units to this level!\n");
+                    }
+                }
+
+                {
+                    using selected_unit;
+                    ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
+
+                    ti := type_info(Team);
+                    ImGui.SliderInt("Team", xx *team, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx team]));
+
+                    ImGui.InputInt("Movement",  xx *movement);
+                }
+
+                ImGui.EndTabItem();
+            }
+            if ImGui.BeginTabItem("Passive")
+            {
+                imgui_flags_editor(*(selected_unit.flags));
+                ImGui.EndTabItem();
+            }
+            if (ImGui.BeginTabItem("Active"))
+            {
+                print("%\n", ability_name.count);
+                ImGui.Text("%", ability_name);
+                ImGui.InputText("Ability Name", ability_buffer.data, ability_buffer.count);
+                if ImGui.Button("Reset") {
+                    ability_name = copy_string(to_string(ability_buffer.data, 8));
+                    memset(ability_buffer.data, 0, ability_buffer.count);
+                }
+
+                ti := type_info(Ability_Kind);
+                ImGui.SliderInt("Kind", xx *ability_kind, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability_kind]));
+
+                ImGui.InputInt("Min",  xx *min_range);
+                ImGui.InputInt("Max",  xx *max_range);
+
+                ImGui.InputInt("Amount",  xx *amount);
+                ImGui.InputInt("Turns",  xx *turns);
+
+                ti = type_info(Ability_Orientation);
+                ImGui.SliderInt("Orient.", xx *orientation, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx orientation]));
+
+                ImGui.EndTabItem();
+            }
+            ImGui.EndTabBar();
+        }
+    }
+    ImGui.End();
+}
+ability_buffer : [64] u8;
+
+percolate_changes_to_map_units :: (map: *Map, unit: *Unit) {
+    for map.units {
+        if it.name == unit.name {
+            unit_copy := New(Unit, allocator=temp);
+            memcpy(unit_copy, it, size_of(Unit));
+            memcpy(it, unit, size_of(Unit));
+            it.id = unit_copy.id;
+            it.square = unit_copy.square;
+        }
+    }
 }
 
 last_selected_unit: int = -1;
 units_editor :: (units : *[..] *Unit) {
-    ImGui.Begin("Units");
+    ImGui.Begin("Unit Templates");
     {
         if(ImGui.Button("New")) {
             a: Allocator;
@@ -142,6 +298,11 @@ units_editor :: (units : *[..] *Unit) {
             array_add(units, new_unit);
             editor.selected_unit = new_unit;
         }
+        ImGui.SameLine();
+        if ImGui.Button("Deselect") {
+            last_selected_unit = -1;
+            editor.selected_unit = null;
+        }
 
         if editor.selected_unit == null then last_selected_unit = -1;
         if ImGui.BeginListBox("###420", Vector2.{-FLOAT32_MIN, -FLOAT32_MIN}) {
@@ -152,19 +313,6 @@ units_editor :: (units : *[..] *Unit) {
                 }
             }
             ImGui.EndListBox();
-        }
-    }
-    ImGui.End();
-}
-
-settings_editor :: () {
-    ImGui.Begin("Settings");
-    {
-        if ImGui.Checkbox("Line Mode", *settings.line_mode) {
-            if settings.line_mode
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            else
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     }
     ImGui.End();
@@ -188,27 +336,38 @@ tile_editor :: (using map: *Map) {
         else
             ImGui.Text("It is unoccupied.");
 
+        if ImGui.Button(" Kind ") {
+            tile.kind = .NONE;
+            tile.sprite_index = default_tile_sprite_index(tile.kind);
+        }
+        ImGui.SameLine();
         ti := type_info(Tile_Kind);
-        if ImGui.SliderInt("Kind", xx *tile.tile_kind, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx tile.tile_kind]))
-            tile.sprite_index = default_tile_sprite_index(tile.tile_kind);
+        if ImGui.SliderInt("### 666", xx *tile.kind, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx tile.kind]))
+            tile.sprite_index = default_tile_sprite_index(tile.kind);
 
         if ImGui.Button("Sprite")
-            tile.sprite_index = default_tile_sprite_index(tile.tile_kind);
+            tile.sprite_index = default_tile_sprite_index(tile.kind);
         ImGui.SameLine();
         ImGui.DragInt("### 531", xx *tile.sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
     }
     ImGui.End();
 }
 
-debug_display :: () {
-    ImGui.Begin("Debug Display");
+settings_editor :: () {
+    ImGui.Begin("Editor");
     {
-        ImGui.Text("Editor");
-
         ImGui.Text("average % ms/frame (% FPS)", 
                    formatFloat(1000.0 / program_state.framerate, trailing_width=2), 
                    formatFloat(program_state.framerate, trailing_width=2)
                   );
+
+
+        if ImGui.Checkbox("Line Mode", *settings.line_mode) {
+            if settings.line_mode
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            else
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
     }
     ImGui.End();
 }
@@ -223,11 +382,18 @@ update_editor_cursor :: (map: *Map) {
     maybe_move_editor_cursor();
 
     if input.button_1 {
-        begin_editing_unit(map);
+        if moving_unit && get_occupant(map, cursor) == null {
+            remove_occupant(map, moving_unit.square);
+            occupy(map, cursor, moving_unit);
+            moving_unit.square = cursor;
+        }
+        else {
+            editor_begin_moving_unit(map);
+        }
     }
 
     if input.button_2 {
-        stop_editing_unit(map);
+        editor_stop_moving_unit(map);
     }
 }
 
@@ -265,16 +431,16 @@ move_editor_cursor :: (direction : Direction) {
         editor.cursor = new_square;
 }
 
-begin_editing_unit :: (using map: *Map) {
+editor_begin_moving_unit :: (using map: *Map) {
     using editor;
     occupant := occupancy[cursor.col][cursor.row];
     if occupant {
-        selected_unit = occupant;
+        moving_unit = occupant;
     }
 }
 
-stop_editing_unit :: (using map: *Map) {
-    editor.selected_unit = null;
+editor_stop_moving_unit :: (using map: *Map) {
+    editor.moving_unit = null;
 }
 
 //
@@ -297,11 +463,8 @@ imgui_flags_editor :: (flags: *$T) {
         }
     }
 
-    if ImGui.TreeNode(temp_c_string(tprint("%\n", ti.name))) {
-        for ti.names {
-            ImGui.Selectable(temp_c_string(it), *selections[it_index]);
-        }
-        ImGui.TreePop();
+    for ti.names {
+        ImGui.Selectable(temp_c_string(it), *selections[it_index]);
     }
 
     flags.* = 0;

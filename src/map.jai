@@ -9,6 +9,15 @@ map_height :: 9;
 Map :: struct {
     tiles : [map_width][map_height] Tile;
     occupancy : [map_width][map_height] *Unit;
+    units : [..] *Unit;
+}
+
+get_tile :: (using map: Map, using square: Square) -> Tile {
+    return tiles[col][row];
+}
+
+get_occupant :: (using map: Map, using square: Square) -> *Unit {
+    return occupancy[col][row];
 }
 
 occupy :: (using map: *Map, using square: Square, unit: *Unit) {
@@ -19,20 +28,41 @@ remove_occupant :: (using map: *Map, using square: Square) {
     occupancy[col][row] = null;
 }
 
-Tile_Kind :: enum #specified {
-    NONE            :: 0;
-    COVER           :: 1;
-    WALL            :: 2;
-    REWARD          :: 3;
-    SPENT_REWARD    :: 4;
-    OBJECTIVE       :: 5;
-    KILL            :: 6;
-    MINE            :: 7;
-    HOLE            :: 8;
+get_unoccupied :: (using map: *Map) -> [] Square, bool {
+    unoccupied : [..] Square;
+    unoccupied.allocator = temp;
+
+    for col: 0..occupancy.count-1 {
+        for row: 0..occupancy[col].count-1 {
+            if !occupancy[col][row] then array_add(*unoccupied, .{col, row});
+        }
+    }
+
+    return unoccupied, unoccupied.count > 0;
+}
+
+Tile_Kind :: enum u8 #specified {
+    NONE            :: 0x0;
+    WALL            :: 0x1;
+    REWARD          :: 0x2;
+    SPENT_REWARD    :: 0x3;
+    OBJECTIVE       :: 0x4;
+    KILL            :: 0x5;
+    MINE            :: 0x6;
+    HOLE            :: 0x7;
+    SLOW            :: 0x8;
+    COVER           :: 0x9;
+    HALF_COVER      :: 0xa;
+    // :: 11;
+    // :: 12;
+    // :: 13;
+    // :: 14;
+    // :: 15;
+    // Once we go past these, we have to parse the tiles differently, because we store them in a single hex digit.
 }
 
 Tile :: struct {
-    tile_kind : Tile_Kind;
+    kind : Tile_Kind;
     sprite_index : int;
 }
 
@@ -40,7 +70,7 @@ Tile :: struct {
 //
 
 is_impassible :: (using tile: Tile) -> bool {
-    if tile_kind == .WALL
+    if kind == .WALL
         return true;
 
     return false;
@@ -51,14 +81,16 @@ is_impassible :: (using tile: Tile) -> bool {
 
 default_tile_sprite_index :: (kind : Tile_Kind) -> int {
     if #complete kind == {
-        case .NONE;      return 0;
-        case .COVER;     return 6;
-        case .WALL;      return 101;
-        case .REWARD;    return 302;
+        case .NONE;         return 0;
+        case .WALL;         return 101;
+        case .REWARD;       return 302;
         case .SPENT_REWARD; return 303;
-        case .OBJECTIVE; return 360;
-        case .KILL;      return 49 * 12 + 34;
-        case .MINE;      return 486;
-        case .HOLE;      return 301;
+        case .OBJECTIVE;    return 360;
+        case .KILL;         return 49 * 12 + 34;
+        case .MINE;         return 486;
+        case .HOLE;         return 301;
+        case .SLOW;         return 737;
+        case .COVER;        return 148;
+        case .HALF_COVER;   return 147;
     }
 }

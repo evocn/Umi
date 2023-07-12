@@ -10,8 +10,6 @@ cursor : struct {
         NEUTRAL;
         MOVING;    // Soft limit
         TARGETING; // Hard limit?
-
-        NONE;
     }
 
     selected : *Unit;
@@ -27,12 +25,10 @@ cursor : struct {
     path : Path;
 }
 
-cursor_update :: (map : *Map, units: *[..] *Unit) {
+cursor_update :: (using map : *Map) {
     using cursor;
 
     if state == {
-        case .NONE; return;
-
         case .NEUTRAL;
         {
             maybe_move_cursor();
@@ -48,7 +44,7 @@ cursor_update :: (map : *Map, units: *[..] *Unit) {
             }
 
             if input.button_4 {
-                next_turn(units);
+                next_turn(map);
                 input.button_4 = false;
             }
 
@@ -57,24 +53,12 @@ cursor_update :: (map : *Map, units: *[..] *Unit) {
 
         case .MOVING;
         {
-            maybe_move_cursor();
-
-            // @FIX: This has to be in the command now.
-            /*
-                if array_find(cursor.accessible, cursor.square) {
-                    new_path, success := get_shortest_path(map, selected, cursor.square);
-                    if success {
-                        path = new_path;
-                    }
-                    else {
-                        array_reset(*new_path);
-                    }
-                }
-                else {
-                    array_reset(*path);
-                }
+            if array_find(cursor.accessible, cursor.square) {
+                array_reset(*path);
+                path =, success := get_shortest_path(map, selected, cursor.square);
             }
-            */
+
+            maybe_move_cursor();
 
             if input.button_1 {
                 place_unit(map);
@@ -103,7 +87,7 @@ cursor_update :: (map : *Map, units: *[..] *Unit) {
                     begin_moving_unit(map);
                 }
                 else {
-                    attack_target(map);
+                    use_ability(map);
                 }
                 input.button_1 = false;
             }
@@ -114,7 +98,7 @@ cursor_update :: (map : *Map, units: *[..] *Unit) {
             }
 
             if input.button_3 {
-                attack_target(map);
+                use_ability(map);
                 input.button_3 = false;
             }
 
@@ -122,42 +106,6 @@ cursor_update :: (map : *Map, units: *[..] *Unit) {
         }
     }
 }
-
-//
-// Commands
-//
-
-begin_moving_unit :: (map : *Map) {
-    command := New(Begin_Moving_Unit_Command);
-    command.map = map;
-    array_add(*command_queue, cast(*Command)command);
-}
-
-begin_targeting :: (map : *Map) {
-    command := New(Begin_Targeting_Command);
-    command.map = map;
-    array_add(*command_queue, cast(*Command)command);
-}
-
-deselect_unit :: () {
-    command := New(Deselect_Unit_Command);
-    array_add(*command_queue, cast(*Command)command);
-}
-
-place_unit :: (map : *Map) {
-    command := New(Place_Unit_Command);
-    command.map = map;
-    array_add(*command_queue, cast(*Command)command);
-}
-
-attack_target :: (map : *Map) {
-    command := New(Attack_Target_Command);
-    command.map = map;
-    array_add(*command_queue, cast(*Command)command);
-}
-
-//
-//
 
 maybe_move_cursor :: () {
     if input.up {
@@ -178,8 +126,43 @@ maybe_move_cursor :: () {
     }
 }
 
+//
+// Commands
+//
+
 move_cursor :: (direction : Direction) {
     command := New(Move_Cursor_Command);
     command.direction = direction;
+    array_add(*command_queue, cast(*Command)command);
+}
+
+begin_moving_unit :: (map : *Map) {
+    command := New(Begin_Moving_Unit_Command);
+    command.map = map;
+    command.team = .BLUE;
+    array_add(*command_queue, cast(*Command)command);
+}
+
+begin_targeting :: (map : *Map) {
+    command := New(Begin_Targeting_Command);
+    command.map = map;
+    command.team = .BLUE;
+    array_add(*command_queue, cast(*Command)command);
+}
+
+deselect_unit :: () {
+    command := New(Deselect_Unit_Command);
+    array_add(*command_queue, cast(*Command)command);
+}
+
+place_unit :: (map : *Map) {
+    command := New(Place_Unit_Command);
+    command.map = map;
+    array_add(*command_queue, cast(*Command)command);
+}
+
+use_ability :: (map : *Map) {
+    command := New(Use_Ability_Command);
+    command.map = map;
     array_add(*command_queue, cast(*Command)command);
 }

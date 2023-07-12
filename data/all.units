@@ -1,0 +1,71 @@
+[1] # Version
+
+Fighter	# name
+1	# team
+27	# sprite_index
+3	# movement
+6	# flags
+# ability
+!	# ability_name
+0	# ability_kind
+0	# min_range
+0	# max_range
+0	# amount
+0	# turns
+0	# orientation
+
+Dog	# name
+2	# team
+374	# sprite_index
+2	# movement
+0	# flags
+# ability
+!	# ability_name
+0	# ability_kind
+0	# min_range
+0	# max_range
+0	# amount
+0	# turns
+0	# orientation
+
+Horse	# name
+1	# team
+371	# sprite_index
+5	# movement
+0	# flags
+# ability
+!	# ability_name
+0	# ability_kind
+0	# min_range
+0	# max_range
+0	# amount
+0	# turns
+0	# orientation
+
+Gnome	# name
+2	# team
+467	# sprite_index
+1	# movement
+2	# flags
+# ability
+!	# ability_name
+0	# ability_kind
+0	# min_range
+0	# max_range
+0	# amount
+0	# turns
+0	# orientation
+
+Fairy	# name
+2	# team
+276	# sprite_index
+5	# movement
+1	# flags
+# ability
+Pogchamp	# ability_name
+0	# ability_kind
+0	# min_range
+0	# max_range
+0	# amount
+0	# turns
+0	# orientation

@@ -39,22 +39,25 @@ build :: () {
     add_build_file(tprint("%/editor.jai", #filepath), w);
     add_build_file(tprint("%/serialization.jai", #filepath), w);
 
-    add_build_file(tprint("%/command.jai", #filepath), w);
+    add_build_file(tprint("%/spine.jai", #filepath), w);
 
     add_build_file(tprint("%/manager.jai", #filepath), w);
+    add_build_file(tprint("%/cursor.jai", #filepath), w);
+    add_build_file(tprint("%/command.jai", #filepath), w);
+    add_build_file(tprint("%/ai.jai", #filepath), w);
+
     add_build_file(tprint("%/unit.jai", #filepath), w);
+    add_build_file(tprint("%/ability.jai", #filepath), w);
     add_build_file(tprint("%/map.jai", #filepath), w);
     add_build_file(tprint("%/path.jai", #filepath), w);
-    add_build_file(tprint("%/cursor.jai", #filepath), w);
     add_build_file(tprint("%/combat.jai", #filepath), w);
-    add_build_file(tprint("%/ai.jai", #filepath), w);
+
+    add_build_file(tprint("%/menu.jai", #filepath), w);
 
     add_build_file(tprint("%/render.jai", #filepath), w);
     add_build_file(tprint("%/font.jai", #filepath), w);
     add_build_file(tprint("%/primitives.jai", #filepath), w);
     add_build_file(tprint("%/parse_utils.jai", #filepath), w);
-
-    add_build_file(tprint("%/audio.jai", #filepath), w);
 
     add_build_file(tprint("%/shader.jai", #filepath), w);
     add_build_file(tprint("%/texture.jai", #filepath), w);

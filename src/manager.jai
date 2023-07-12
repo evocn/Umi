@@ -17,11 +17,18 @@ Team :: enum {
 //
 //
 
+set_turn :: (team: Team) {
+    using manager;
+
+    _, index := array_find(teams, team);
+    current_turn_team_index = index;
+}
+
 whose_turn :: inline () -> Team {
     return manager.teams[manager.current_turn_team_index];
 }
 
-next_turn :: (units: *[..] *Unit) -> Team {
+next_turn :: (using map: *Map) -> Team {
     using manager;
 
     current_turn_team_index += 1;
@@ -29,7 +36,7 @@ next_turn :: (units: *[..] *Unit) -> Team {
         current_turn_team_index = 0;
 
     turn := whose_turn();
-    for units.* {
+    for units {
         if it.team == turn {
             it.moved = false;
             it.exhausted = false;

@@ -28,6 +28,11 @@ radians :: (degrees: float) -> float {
     return degrees * PI / 180.0;
 }
 
+random_choice :: (array: [] $T) -> T {
+    index := cast(int)(Random.random_get_zero_to_one() * array.count);
+    return array[index];
+}
+
 //
 //
 
