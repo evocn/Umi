@@ -17,7 +17,7 @@ resolve_ability :: (map: *Map, user : *Unit, victim : *Unit, ability: *Ability, 
         return;
     }
 
-    if cast(bool)(victim.flags & .IMMORTAL | .IMPERVIOUS) return;
+    if cast(bool)(victim.flags & .IMMORTAL | victim.flags & .IMPERVIOUS) return;
 
     kill(victim);
 }

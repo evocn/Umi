@@ -45,13 +45,13 @@ Horse	# name
 Gnome	# name
 2	# team
 467	# sprite_index
-1	# movement
+2	# movement
 2	# flags
 # ability
 !	# ability_name
 0	# ability_kind
-0	# min_range
-0	# max_range
+2	# min_range
+2	# max_range
 0	# amount
 0	# turns
 0	# orientation
@@ -62,7 +62,21 @@ Fairy	# name
 5	# movement
 1	# flags
 # ability
-Pogchamp	# ability_name
+!	# ability_name
+0	# ability_kind
+0	# min_range
+0	# max_range
+0	# amount
+0	# turns
+0	# orientation
+
+Cat	# name
+0	# team
+677	# sprite_index
+0	# movement
+0	# flags
+# ability
+!	# ability_name
 0	# ability_kind
 0	# min_range
 0	# max_range

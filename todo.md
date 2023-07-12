@@ -6,6 +6,8 @@ June 2023
 Abilities
 * Two per unit?
 
+Half-Res
+
 Naming
 * Levels
 * Units

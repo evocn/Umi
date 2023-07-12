@@ -248,9 +248,9 @@ unserialize  :: (to_unserialize: *Unit_Flags, handler: *Text_File_Handler) -> su
     <<to_unserialize = cast(Unit_Flags)i;
     return success;
 }
-unserialize  :: (to_unserialize: Ability, handler : *Text_File_Handler) -> success: bool { 
+unserialize  :: (to_unserialize: *Ability, handler : *Text_File_Handler) -> success: bool { 
     success : bool;
-    success = unserialize_structure(*to_unserialize, handler);
+    success = unserialize_structure(to_unserialize, handler);
     return success;
 }
 unserialize  :: (to_unserialize: *Ability_Kind, handler: *Text_File_Handler) -> success: bool {
