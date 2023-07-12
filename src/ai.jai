@@ -123,7 +123,7 @@ ai_plan :: (using map: *Map) {
     defer array_reset(*path);
     assert(success); // For now...
 
-    move_to = move_down_path(map.*, *path, selected.*, selected.movement);
+    move_to = move_down_path(map.*, *path, selected.*);
 
     {
         command := New(Move_Cursor_To_Command);

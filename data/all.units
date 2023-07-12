@@ -17,7 +17,7 @@ Fighter	# name
 Dog	# name
 2	# team
 374	# sprite_index
-5	# movement
+1	# movement
 0	# flags
 # ability
 !	# ability_name

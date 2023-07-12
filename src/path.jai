@@ -65,8 +65,20 @@ get_accessible_squares_from_position :: (using map : Map, unit : Unit) -> [..] S
 // @NOTE: Paths are backwards in this engine. There are some good reasons for this.
 Path :: [..] Square;
 
-move_down_path :: (map: Map, path: *Path, unit: Unit, desired_distance: int) -> Square {
-    distance := min(desired_distance, path.count);
+move_down_path :: (map: Map, path: *Path, unit: Unit) -> Square {
+    distance := min(unit.movement, path.count);
+    print("%\n", distance);
+    i : int = 0;
+    for < path.* {
+        print("Investigating %\n", i);
+        if distance < i break;
+        if it != unit.square && get_tile(map, it).kind == .SLOW {
+            distance -= 1;
+        }
+        i += 1;
+    }
+    if distance < 0 then return unit.square;
+
     furthest_index := max(path.count - distance, 1);
 
     occupant := get_occupant(map, path.*[furthest_index - 1]);
