@@ -39,7 +39,7 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
                 log_error("Error saving units.\n");
             }
 
-            success = save_level(map, tprint("%.level", program_state.current_level_name));
+            success = save_level(map, tprint("%.level", levels[program_state.current_level_index]));
             if !success {
                 log_error("Error saving level.\n");
             }
@@ -86,7 +86,7 @@ save_load :: (map: *Map, units: *[..] *Unit) {
         ImGui.SameLine();
         if(ImGui.Button("Load")) {
             load_units(units, "all.units");
-            init_level(map, units.*, program_state.current_level_name);
+            init_level(map, units.*, levels[program_state.current_level_index]);
             editor.selected_unit = null;
             editor.moving_unit = null;
         }
@@ -98,27 +98,26 @@ save_load :: (map: *Map, units: *[..] *Unit) {
                 log_error("Error making new level.\n");
             }
             init_levels();
-            program_state.current_level_name = "new";
-            init_level(map, units.*, program_state.current_level_name);
+            _, program_state.current_level_index = array_find(levels, "new");
+            init_level(map, units.*, levels[program_state.current_level_index]);
+            //
         }
 
         ImGui.SameLine();
         if(ImGui.Button("Delete")) {
-            success := File.file_delete(tprint("%/%.level", levels_path, program_state.current_level_name));
+            success := File.file_delete(tprint("%/%.level", levels_path, levels[program_state.current_level_index]));
             assert(success);
             init_levels();
-            program_state.current_level_name = "test";
-            init_level(map, units.*, program_state.current_level_name);
+            program_state.current_level_index = 0;
+            init_level(map, units.*, levels[program_state.current_level_index]);
         }
 
-        _, level_index = array_find(levels, program_state.current_level_name);
         if ImGui.BeginListBox("###007", Vector2.{-FLOAT32_MIN, -FLOAT32_MIN}) {
             for levels {
-                if ImGui.Selectable(temp_c_string(it), level_index == it_index) {
-                    level_index = it_index;
-                    program_state.current_level_name = it;
+                if ImGui.Selectable(temp_c_string(it), program_state.current_level_index == it_index) {
+                    program_state.current_level_index = it_index;
 
-                    init_level(map, units.*, it);
+                    init_level(map, units.*, levels[it_index]);
                     editor.selected_unit = null;
                     editor.moving_unit = null;
                 }
@@ -129,11 +128,24 @@ save_load :: (map: *Map, units: *[..] *Unit) {
     ImGui.End();
 }
 
+ability_buffer : [64] u8;
+name_buffer    : [64] u8;
+level_buffer   : [64] u8;
+
 last_moving_unit := -1;
 level_editor :: (using map: *Map) {
     ImGui.Begin("Level");
     {
-        ImGui.Text("%", program_state.current_level_name);
+        if ImGui.InputText("### 9999", level_buffer.data, level_buffer.count) {
+            a: Allocator;
+            a.proc = flat_pool_allocator_proc;
+            a.data = *pool;
+
+            levels[program_state.current_level_index] = copy_string(to_string(level_buffer.data), allocator=a);
+            memset(level_buffer.data, 0, level_buffer.count);
+        }
+        ImGui.SameLine();
+        ImGui.Text("%", levels[program_state.current_level_index]);
 
         if ImGui.Button("Remove") {
             success := array_ordered_remove_by_value(*units, editor.moving_unit);
@@ -175,24 +187,22 @@ unit_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
     ImGui.SetNextWindowPos(.{1000, 400}, ImGui.Cond.Once);
     ImGui.SetNextWindowSize(.{250, 250}, ImGui.Cond.Once);
   
-    window_name : *u8;
-    if unit.name.count then window_name = temp_c_string(unit.name);
-    else window_name = "(null)";
-    ImGui.Begin(window_name);
+    ImGui.Begin("Unit");
     {
         if ImGui.BeginTabBar("Unit Tabs")
         {
             if ImGui.BeginTabItem("Properties")
             {
-                ImGui.Text("%", name);
+                if ImGui.InputText("### 9999", name_buffer.data, name_buffer.count) {
+                    a: Allocator;
+                    a.proc = flat_pool_allocator_proc;
+                    a.data = *pool;
 
-                /*
-                cStr: *u8 = talloc(32); // 5 extra bytes
-                memset(cStr, 0, 32);
-                memcpy(cStr, name.data, name.count);
-                ImGui.InputText("Name", cStr, 32);
-                memcpy(name.data, cStr, 32);
-                */
+                    name = copy_string(to_string(name_buffer.data), allocator=a);
+                    memset(name_buffer.data, 0, name_buffer.count);
+                }
+                ImGui.SameLine();
+                ImGui.Text("%", name);
 
                 if ImGui.Button("delete unit template") {
                     success := array_ordered_remove_by_value(units, selected_unit);
@@ -240,13 +250,16 @@ unit_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
             }
             if (ImGui.BeginTabItem("Active"))
             {
-                print("%\n", ability_name.count);
-                ImGui.Text("%", ability_name);
-                ImGui.InputText("Ability Name", ability_buffer.data, ability_buffer.count);
-                if ImGui.Button("Reset") {
-                    ability_name = copy_string(to_string(ability_buffer.data, 8));
+                if ImGui.InputText("### 4444", ability_buffer.data, ability_buffer.count) {
+                    a: Allocator;
+                    a.proc = flat_pool_allocator_proc;
+                    a.data = *pool;
+
+                    ability_name = copy_string(to_string(ability_buffer.data), allocator=a);
                     memset(ability_buffer.data, 0, ability_buffer.count);
                 }
+                ImGui.SameLine();
+                ImGui.Text("%", ability_name);
 
                 ti := type_info(Ability_Kind);
                 ImGui.SliderInt("Kind", xx *ability_kind, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability_kind]));
@@ -267,7 +280,6 @@ unit_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
     }
     ImGui.End();
 }
-ability_buffer : [64] u8;
 
 percolate_changes_to_map_units :: (map: *Map, unit: *Unit) {
     for map.units {

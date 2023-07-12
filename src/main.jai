@@ -26,7 +26,7 @@ using program_state : struct {
 
     program_paused : bool;
 
-    current_level_name := "test";
+    current_level_index := 0;
 
     imgui_capturing_mouse    := false;
     imgui_capturing_keyboard := false;
@@ -94,11 +94,7 @@ main :: () {
         success = load_units(*units, "all.units");
         assert(success);
 
-        for units {
-            print("%\n", it.ability_name);
-        }
-
-        init_level(*map, units, current_level_name);
+        init_level(*map, units, levels[current_level_index]);
     }
 
     // The Loop

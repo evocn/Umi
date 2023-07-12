@@ -12,16 +12,6 @@ if !serialize(s.ability, "ability", builder) return false;
 //
 // #insert text. Generated from C:/Users/alexa/Code/tactics/src//serialization.jai:190.
 //
-if !unserialize(*s.name, handler) return false;
-if !unserialize(*s.team, handler) return false;
-if !unserialize(*s.sprite_index, handler) return false;
-if !unserialize(*s.movement, handler) return false;
-if !unserialize(*s.flags, handler) return false;
-if !unserialize(*s.ability, handler) return false;
-
-//
-// #insert text. Generated from C:/Users/alexa/Code/tactics/src//serialization.jai:190.
-//
 if !unserialize(*s.ability_name, handler) return false;
 if !unserialize(*s.ability_kind, handler) return false;
 if !unserialize(*s.min_range, handler) return false;
@@ -29,6 +19,16 @@ if !unserialize(*s.max_range, handler) return false;
 if !unserialize(*s.amount, handler) return false;
 if !unserialize(*s.turns, handler) return false;
 if !unserialize(*s.orientation, handler) return false;
+
+//
+// #insert text. Generated from C:/Users/alexa/Code/tactics/src//serialization.jai:190.
+//
+if !unserialize(*s.name, handler) return false;
+if !unserialize(*s.team, handler) return false;
+if !unserialize(*s.sprite_index, handler) return false;
+if !unserialize(*s.movement, handler) return false;
+if !unserialize(*s.flags, handler) return false;
+if !unserialize(*s.ability, handler) return false;
 
 //
 // #insert text. Generated from C:/Users/alexa/Code/tactics/src//serialization.jai:95.

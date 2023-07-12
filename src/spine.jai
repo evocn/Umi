@@ -5,7 +5,7 @@
 
 resolve_game_over :: (map: *Map, units: [..] *Unit) {
     if input.button_1 {
-        init_level(map, units, current_level_name);
+        init_level(map, units, levels[current_level_index]);
         program_mode = .GAME;
         input.button_1 = false;
     }
