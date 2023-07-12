@@ -392,14 +392,15 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
 
 #scope_file
 print_tiles_to_builder :: (builder : *String_Builder, tiles : [map_width][map_height] Tile) {
+    exceptions: [..] Square;
+    defer array_reset(*exceptions);
+
     new_context := context;
     push_context new_context 
     {
         format_int := *context.print_style.default_format_int;
         format_int.base = 16;
 
-        exceptions: [..] Square;
-        defer array_reset(*exceptions);
 
         for row : 0..map_height-1 {
             for col : 0..map_width-1 {
@@ -411,13 +412,12 @@ print_tiles_to_builder :: (builder : *String_Builder, tiles : [map_width][map_he
             }
             print_to_builder(builder, "\n");
         }
+    }
 
-        print_to_builder(builder, "---\n");
-        print_to_builder(builder, "# Sprite Index Exceptions:\n");
-        for exceptions {
-            print_to_builder(builder, "% % %\n", it.col, it.row, tiles[it.col][it.row].sprite_index);
-        }
-
+    print_to_builder(builder, "---\n");
+    print_to_builder(builder, "# Sprite Index Exceptions:\n");
+    for exceptions {
+        print_to_builder(builder, "% % %\n", it.col, it.row, tiles[it.col][it.row].sprite_index);
     }
 }
 

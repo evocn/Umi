@@ -67,7 +67,7 @@ ai_plan :: (using map: *Map) {
     move_to : Square;
 
     // If a unit cannot attack, it chooses a square to go to at random.
-    if selected.ability.min_range == 0 && selected.ability.max_range == 0 {
+    if (target == null) || (selected.ability.min_range == 0 && selected.ability.max_range == 0) {
         accessible := get_accessible_squares_from_position(map.*, selected);
         assert(accessible.count != 0);
 
@@ -91,6 +91,7 @@ ai_plan :: (using map: *Map) {
 
     // If it can attack, pick the best square to attack it from.
     squares_to_attack_from := get_squares_you_could_use_an_ability_from(map.*, selected.ability, selected, target);
+    print("%\n", squares_to_attack_from);
     assert(squares_to_attack_from.count != 0); // For now...
 
     // @TODO: Choose the right square here, by having it avoid land mines, pits, etc.

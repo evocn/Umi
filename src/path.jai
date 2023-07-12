@@ -7,12 +7,18 @@ get_squares_you_could_use_an_ability_from :: (using map : Map, ability: Ability,
     squares_to_attack_from : [..] Square;
     squares_to_attack_from.allocator = temp;
 
-    traversed := traverse(map, target.square, attacker.team, flying=true, pass=true, land_stride=true);
+    traversed := traverse(map, target.square, attacker.team,
+                          flying=cast(bool)(attacker.flags & .FLYING), 
+                          pass=cast(bool)(attacker.flags & .PASS), 
+                          land_stride=cast(bool)(attacker.flags & .LAND_STRIDE)
+                         );
+    print_reachable(traversed);
     for traversed.squares {
         square_within_range := it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range;
         occupant := get_occupant(map, it.square);
         square_can_be_occupied := occupant == null || occupant.id == attacker.id;
-        if square_within_range && square_can_be_occupied {
+        square_is_reachable := it.reachable;
+        if square_within_range && square_can_be_occupied && square_is_reachable {
             array_add(*squares_to_attack_from, it.square);
         }
     }
@@ -77,6 +83,15 @@ move_down_path :: (map: Map, path: *Path, unit: Unit, desired_distance: int) -> 
     return path.*[path.count-1];
 }
 
+print_reachable :: (traversed: Traversal_Result) {
+    for col: traversed.field {
+        for data_point: col {
+            print("%\t", data_point.reachable);
+        }
+        print("\n");
+    }
+}
+
 print_distance_field :: (traversed: Traversal_Result) {
     for col: traversed.field {
         for data_point: col {
@@ -95,31 +110,43 @@ print_air_distance_field :: (traversed: Traversal_Result) {
     }
 }
 
-get_shortest_path :: (using map : Map, unit: Unit, destination: Square) -> Path, success: bool {
+get_shortest_path :: (using map : Map, unit: Unit, dest: Square) -> Path, success: bool {
     path: Path;
 
     // @TODO: This is funky. We determine walkable squares in a different way than we determine shortest paths.
     // I'd like to not have to special case these qualifiers.
     traversed := traverse(map, unit.square, unit.team, flying=cast(bool)(unit.flags & .FLYING), pass=cast(bool)(unit.flags & .PASS));
 
+    destination := dest;
+
     destination_is_reachable := traversed.field[destination.col][destination.row].reachable;
     //destination_is_occupied  := traversed.field[destination.col][destination.row].occupied;
     destination_is_origin := unit.square == destination;
 
-    /*
+    rows :: int.[-1,  0,  1,  0];
+    cols :: int.[ 0,  1,  0, -1];
+
     if !destination_is_reachable {
-        log("Destination is unreachable!\n");
-        return path, false;
+        print("Destination is unreachable!\n");
+
+        shortest_distance_of_the_directions := 100;
+        shortest_square : Square;
+        for i : 0..3 {
+            using new_square := Square.{destination.col + cols[i], destination.row + rows[i]};
+            if !on_grid(new_square) then continue;
+
+            if traversed.field[col][row].distance < shortest_distance_of_the_directions {
+                shortest_square = new_square;
+                shortest_distance_of_the_directions = traversed.field[col][row].distance;
+            }
+        }
+        destination = shortest_square;
     }
-    */
     if destination_is_origin {
         array_add(*path, destination);
         //log("Destination is origin.\n");
         return path, true;
     }
-
-    rows :: int.[-1,  0,  1,  0];
-    cols :: int.[ 0,  1,  0, -1];
 
     next := destination;
     while next != unit.square {
@@ -181,7 +208,6 @@ traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := fals
 
     while unexplored {
         from_square := pop(*unexplored);
-        field[from_square.col][from_square.row].reachable = true;
         field[from_square.col][from_square.row].square = from_square;
 
         for i : 0..3 {
@@ -196,6 +222,8 @@ traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := fals
 
             cannot_traverse_due_to_impassible_tile := is_impassible(map.tiles[new_square.col][new_square.row]) && !flying;
             if cannot_traverse_due_to_impassible_tile then continue;
+
+            field[from_square.col][from_square.row].reachable = true;
 
             //
 
