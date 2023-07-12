@@ -61,13 +61,10 @@ ai_plan :: (using map: *Map) {
         array_insert_at(*command_queue, cast(*Command)command, 0);
     }
 
-    // Find Blue Unit
-    target := find_nearest_unit(map.*, selected, (x) => (x.team == .BLUE));
-
     move_to : Square;
 
     // If a unit cannot attack, it chooses a square to go to at random.
-    if (target == null) || (selected.ability.min_range == 0 && selected.ability.max_range == 0) {
+    if selected.ability.min_range == 0 && selected.ability.max_range == 0 {
         accessible := get_accessible_squares_from_position(map.*, selected);
         assert(accessible.count != 0);
 
@@ -89,24 +86,26 @@ ai_plan :: (using map: *Map) {
         return;
     }
 
-    // If it can attack, pick the best square to attack it from.
-    squares_to_attack_from := get_squares_you_could_use_an_ability_from(map.*, selected.ability, selected, target);
-    print("%\n", squares_to_attack_from);
-    assert(squares_to_attack_from.count != 0); // For now...
+    // Find Blue Unit
+    target : *Unit;
 
-    // @TODO: Choose the right square here, by having it avoid land mines, pits, etc.
-    best_square_to_attack_from : Square;
     shortest_distance := 100;
-    for squares_to_attack_from {
-        test_path, success := get_shortest_path(map, selected, it);
-        defer array_reset(*test_path);
-        if !success continue;
+    blue_units := query_units(map.units, (x) => (x.team == .BLUE));
+    for blue: blue_units {
+        squares_for_this_target := get_squares_you_could_use_an_ability_from(map.*, selected.ability, selected, blue);
+        for squares_for_this_target {
+            test_path, success := get_shortest_path(map, selected, it);
+            defer array_reset(*test_path);
+            if !success continue;
 
-        if test_path.count < shortest_distance {
-            shortest_distance = test_path.count;
-            best_square_to_attack_from = it;
+            if test_path.count < shortest_distance {
+                shortest_distance = test_path.count;
+                move_to = it;
+                target = blue;
+            }
         }
     }
+
 
     // If there are no squares you could attack a unit from...
     if shortest_distance == 100 {
@@ -120,7 +119,7 @@ ai_plan :: (using map: *Map) {
         return;
     }
 
-    path, success := get_shortest_path(map, selected, best_square_to_attack_from);
+    path, success := get_shortest_path(map, selected, move_to);
     defer array_reset(*path);
     assert(success); // For now...
 

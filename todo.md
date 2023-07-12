@@ -3,14 +3,7 @@ Todo
 Alex Hartford
 June 2023
 
-Abilities
-* Two per unit?
-
 Half-Res
-
-Naming
-* Levels
-* Units
 
 undo for gameplay
 Different sprite sheets (So grant doesn't have to trawl through 1077 sprites to make a new unit)

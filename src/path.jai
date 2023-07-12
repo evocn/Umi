@@ -12,7 +12,6 @@ get_squares_you_could_use_an_ability_from :: (using map : Map, ability: Ability,
                           pass=cast(bool)(attacker.flags & .PASS), 
                           land_stride=cast(bool)(attacker.flags & .LAND_STRIDE)
                          );
-    print_reachable(traversed);
     for traversed.squares {
         square_within_range := it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range;
         occupant := get_occupant(map, it.square);
@@ -110,14 +109,12 @@ print_air_distance_field :: (traversed: Traversal_Result) {
     }
 }
 
-get_shortest_path :: (using map : Map, unit: Unit, dest: Square) -> Path, success: bool {
+get_shortest_path :: (using map : Map, unit: Unit, destination: Square) -> Path, success: bool {
     path: Path;
 
     // @TODO: This is funky. We determine walkable squares in a different way than we determine shortest paths.
     // I'd like to not have to special case these qualifiers.
     traversed := traverse(map, unit.square, unit.team, flying=cast(bool)(unit.flags & .FLYING), pass=cast(bool)(unit.flags & .PASS));
-
-    destination := dest;
 
     destination_is_reachable := traversed.field[destination.col][destination.row].reachable;
     //destination_is_occupied  := traversed.field[destination.col][destination.row].occupied;
@@ -128,19 +125,7 @@ get_shortest_path :: (using map : Map, unit: Unit, dest: Square) -> Path, succes
 
     if !destination_is_reachable {
         print("Destination is unreachable!\n");
-
-        shortest_distance_of_the_directions := 100;
-        shortest_square : Square;
-        for i : 0..3 {
-            using new_square := Square.{destination.col + cols[i], destination.row + rows[i]};
-            if !on_grid(new_square) then continue;
-
-            if traversed.field[col][row].distance < shortest_distance_of_the_directions {
-                shortest_square = new_square;
-                shortest_distance_of_the_directions = traversed.field[col][row].distance;
-            }
-        }
-        destination = shortest_square;
+        return path, false;
     }
     if destination_is_origin {
         array_add(*path, destination);
