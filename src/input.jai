@@ -65,6 +65,9 @@ handle_events :: () {
                 if event.key.keysym.sym == SDLK_0
                     program_paused = !program_paused;
 
+                if event.key.keysym.sym == SDLK_g
+                    debug.active = !debug.active;
+
                 // Editor Special Inputs
                 if program_mode == .EDITOR {
                     if event.key.keysym.sym == SDLK_s && SDL_GetModState() & KMOD_LCTRL {

@@ -13,7 +13,7 @@ black_hex : Hex_Color : 0x02080b;
 white_hex : Hex_Color : 0xfcf3d9;
 red_hex   : Hex_Color : 0xd42a20;
 blue_hex  : Hex_Color : 0x0e638e;
-yellow_hex: Hex_Color : 0xfac22b;
+third_hex : Hex_Color : 0xfac22b;
 /**/
 
 /*
@@ -22,7 +22,7 @@ black_hex : Hex_Color : 0x4f7969;
 white_hex : Hex_Color : 0xdee3e2;
 red_hex   : Hex_Color : 0xd86969;
 blue_hex  : Hex_Color : 0x78b3d6;
-pink_hex  : Hex_Color : 0xfccbcb;
+third_hex : Hex_Color : 0xfccbcb;
 */
 
 // 4 Color Palettes
@@ -32,6 +32,7 @@ black_hex : Hex_Color : 0x181322;
 white_hex : Hex_Color : 0xcdc1a7;
 red_hex   : Hex_Color : 0xa2423a;
 blue_hex  : Hex_Color : 0x4b372c;
+third_hex : Hex_Color : 0x000000;
 */
 
 /*
@@ -40,20 +41,23 @@ white_hex : Hex_Color : 0xffffff;
 black_hex : Hex_Color : 0x060608;
 red_hex   : Hex_Color : 0xf42e1f;
 blue_hex  : Hex_Color : 0x2f256b;
+third_hex : Hex_Color : 0x000000;
 */
 
 /*
 // CGA MIBEND4 Palette
-white_hex : u32 : 0xf7ecb9;
-black_hex : u32 : 0x291f23;
-red_hex   : u32 : 0xbd502f;
-blue_hex  : u32 : 0x34d1af;
+white_hex : Hex_Color : 0xf7ecb9;
+black_hex : Hex_Color : 0x291f23;
+red_hex   : Hex_Color : 0xbd502f;
+blue_hex  : Hex_Color : 0x34d1af;
+third_hex : Hex_Color : 0x000000;
 */
 
 black :: #run color_from_hex(black_hex);
 white :: #run color_from_hex(white_hex);
 red   :: #run color_from_hex(red_hex);
 blue  :: #run color_from_hex(blue_hex);
+third :: #run color_from_hex(third_hex);
 
 color_from_hex :: ($h: u32) -> Color {
     color : Color;
@@ -123,6 +127,11 @@ render :: (map : Map)
         if program_mode == .EDITOR {
             draw_sprite(shader, rendering.spritesheet, 49 * 12 + 37, editor.cursor, white);
         }
+
+        // Debug draw
+        if debug.active {
+            draw_numbers_on_map(shader);
+        }
     }
 
     // Draw UI Elements
@@ -138,9 +147,10 @@ render :: (map : Map)
         orthographic := orthographic_projection_matrix(0, xx window_width, 0, xx window_height, -1, 1);
         set_mat4(shader, "projection", orthographic);
 
-        font, found := table_find(*rendering.fonts, "Header");
-        for debug.lines {
-            draw_text_centered(shader, font, it, 5 + cast(float)(it_index) * font.height, scale = 1.0, color = blue);
+        if debug.active {
+            for debug.lines {
+                draw_text_centered(shader, font, it, 5 + cast(float)(it_index) * font.height, scale = 1.0, color = third);
+            }
         }
     }
 }
@@ -151,10 +161,10 @@ render :: (map : Map)
 draw_unit :: (using unit : Unit, shader : Shader) {
     if whose_turn() == team {
         if !moved {
-            draw_sprite(shader, rendering.spritesheet, 1072, square, white);
+            draw_sprite(shader, rendering.spritesheet, 1072, square, third);
         }
         if !exhausted {
-            draw_sprite(shader, rendering.spritesheet, 1071, square, white);
+            draw_sprite(shader, rendering.spritesheet, 1071, square, third);
         }
     }
 
@@ -166,6 +176,19 @@ draw_unit :: (using unit : Unit, shader : Shader) {
     }
 
     draw_sprite(shader, rendering.spritesheet, sprite_index, square, color);
+
+    if cast(bool)(effects & .SHIELD) {
+        draw_sprite(shader, rendering.spritesheet, 1022, square, third);
+    }
+    if cast(bool)(effects & .SPEED) {
+        draw_sprite(shader, rendering.spritesheet, 1023, square, third);
+    }
+    if cast(bool)(effects & .PARALYZED) {
+        draw_sprite(shader, rendering.spritesheet, 1024, square, third);
+    }
+    if cast(bool)(effects & .AUGMENT) {
+        draw_sprite(shader, rendering.spritesheet, 1025, square, third);
+    }
 }
 
 draw_squares_overlay :: (shader : Shader, squares : [..] Square, color := white) {
@@ -220,8 +243,6 @@ render_menu :: (using menu: Menu) {
         orthographic := orthographic_projection_matrix(0, xx window_width, 0, xx window_height, -1, 1);
         set_mat4(shader, "projection", orthographic);
 
-        font, found := table_find(*rendering.fonts, "Header");
-
         draw_text_centered(shader, font, name, font.height * 10.0, scale = 1.0, color = red);
 
         base_height := font.height * 9.0;
@@ -251,9 +272,25 @@ render_game_over :: () {
         orthographic := orthographic_projection_matrix(0, xx window_width, 0, xx window_height, -1, 1);
         set_mat4(shader, "projection", orthographic);
 
-        font, found := table_find(*rendering.fonts, "Header");
-
         draw_text_centered(shader, font, "Game Over", xx (window_height - font.height), scale = 1.0, color = red);
         draw_text_centered(shader, font, "<Select> to restart", xx (window_height - 2.0 * font.height), scale = 0.8, color = white);
+    }
+}
+
+//
+// Debug Overlays
+//
+
+get_number_sprite_index :: (i: int) -> int {
+    return i + 868;
+}
+
+draw_numbers_on_map :: (shader: Shader) {
+    using debug.traversed;
+
+    for col: field {
+        for col {
+            draw_sprite(shader, rendering.spritesheet, get_number_sprite_index(it.distance), it.square, third);
+        }
     }
 }

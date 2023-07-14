@@ -8,16 +8,15 @@ Fighter	# name
 # ability
 !	# ability_name
 0	# ability_kind
-0	# min_range
-0	# max_range
+1	# min_range
+3	# max_range
 0	# amount
-0	# turns
 0	# orientation
 
 Dog	# name
 2	# team
 374	# sprite_index
-1	# movement
+5	# movement
 0	# flags
 # ability
 !	# ability_name
@@ -25,7 +24,6 @@ Dog	# name
 1	# min_range
 1	# max_range
 0	# amount
-0	# turns
 0	# orientation
 
 Horse	# name
@@ -36,10 +34,9 @@ Horse	# name
 # ability
 !	# ability_name
 0	# ability_kind
-0	# min_range
-0	# max_range
+1	# min_range
+1	# max_range
 0	# amount
-0	# turns
 0	# orientation
 
 Gnome	# name
@@ -53,33 +50,160 @@ Gnome	# name
 2	# min_range
 2	# max_range
 0	# amount
-0	# turns
 0	# orientation
 
 Fairy	# name
 2	# team
 276	# sprite_index
 3	# movement
-3	# flags
+19	# flags
 # ability
 !	# ability_name
 0	# ability_kind
 1	# min_range
 1	# max_range
 0	# amount
-0	# turns
 0	# orientation
 
-Cat	# name
-0	# team
-677	# sprite_index
+Wizard	# name
+1	# team
+73	# sprite_index
 0	# movement
 0	# flags
 # ability
-Claw	# ability_name
+!	# ability_name
 0	# ability_kind
-0	# min_range
-0	# max_range
+2	# min_range
+5	# max_range
 0	# amount
-0	# turns
+0	# orientation
+
+Statue	# name
+2	# team
+470	# sprite_index
+1	# movement
+28	# flags
+# ability
+!	# ability_name
+0	# ability_kind
+1	# min_range
+1	# max_range
+0	# amount
+0	# orientation
+
+Tank	# name
+2	# team
+991	# sprite_index
+1	# movement
+8	# flags
+# ability
+!	# ability_name
+0	# ability_kind
+1	# min_range
+8	# max_range
+0	# amount
+0	# orientation
+
+Soldier	# name
+2	# team
+222	# sprite_index
+2	# movement
+0	# flags
+# ability
+!	# ability_name
+0	# ability_kind
+3	# min_range
+3	# max_range
+0	# amount
+0	# orientation
+
+Gunner	# name
+1	# team
+224	# sprite_index
+3	# movement
+0	# flags
+# ability
+!	# ability_name
+0	# ability_kind
+2	# min_range
+4	# max_range
+0	# amount
+0	# orientation
+
+Speedster	# name
+1	# team
+649	# sprite_index
+0	# movement
+0	# flags
+# ability
+Enspeeden	# ability_name
+4	# ability_kind
+1	# min_range
+3	# max_range
+0	# amount
+0	# orientation
+
+Defender	# name
+1	# team
+686	# sprite_index
+0	# movement
+0	# flags
+# ability
+Enshielden	# ability_name
+3	# ability_kind
+1	# min_range
+3	# max_range
+0	# amount
+0	# orientation
+
+Dancer	# name
+1	# team
+423	# sprite_index
+4	# movement
+0	# flags
+# ability
+Dance	# ability_name
+6	# ability_kind
+1	# min_range
+1	# max_range
+0	# amount
+0	# orientation
+
+Paralyzer	# name
+1	# team
+464	# sprite_index
+6	# movement
+0	# flags
+# ability
+Paralyze	# ability_name
+7	# ability_kind
+1	# min_range
+1	# max_range
+0	# amount
+0	# orientation
+
+Augmenter	# name
+1	# team
+709	# sprite_index
+0	# movement
+0	# flags
+# ability
+Augment	# ability_name
+5	# ability_kind
+1	# min_range
+5	# max_range
+0	# amount
+0	# orientation
+
+Warp Cat	# name
+1	# team
+373	# sprite_index
+0	# movement
+0	# flags
+# ability
+Warp	# ability_name
+2	# ability_kind
+1	# min_range
+7	# max_range
+0	# amount
 0	# orientation

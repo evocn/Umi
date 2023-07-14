@@ -147,8 +147,52 @@ level_editor :: (using map: *Map) {
         ImGui.SameLine();
         ImGui.Text("%", levels[program_state.current_level_index]);
 
+        if ImGui.Button("Add") {
+            if editor.selected_unit {
+                new_unit_square : Square;
+                if !get_occupant(map, editor.cursor) {
+                    new_unit_square = editor.cursor;
+                }
+                else
+                {
+                    unoccupied, available_spaces := get_unoccupied(map);
+                    new_unit_square = unoccupied[0];
+
+                    if !available_spaces {
+                        log_error("Cannot add any more units to this level!\n");
+                        ImGui.End();
+                        return;
+                    }
+                }
+
+                a: Allocator;
+                a.proc = flat_pool_allocator_proc;
+                a.data = *level_pool;
+
+                new_unit := New(Unit, allocator=a);
+                memcpy(new_unit, editor.selected_unit, size_of(Unit));
+                new_unit.id = map.next_id;
+                map.next_id += 1;
+                array_add(*map.units, new_unit);
+
+                new_unit.square = new_unit_square;
+                occupy(map, new_unit.square, new_unit);
+            }
+            else {
+                log_error("You don't have a unit template selected to add to the level!\n");
+            }
+        }
+        ImGui.SameLine();
         if ImGui.Button("Remove") {
+            if editor.moving_unit == null {
+                log_error("You don't have a unit selected to remove!\n");
+                ImGui.End();
+                return;
+            }
+
+            remove_occupant(map, editor.moving_unit.square);
             success := array_ordered_remove_by_value(*units, editor.moving_unit);
+
             editor.moving_unit = null;
             last_moving_unit = -1;
             ImGui.End();
@@ -204,33 +248,6 @@ unit_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 ImGui.SameLine();
                 ImGui.Text("%", name);
 
-                if ImGui.Button("delete unit template") {
-                    success := array_ordered_remove_by_value(units, selected_unit);
-                    selected_unit = null;
-                    ImGui.End();
-                    return;
-                }
-
-                if ImGui.Button("Add to level") {
-                    unoccupied, available_spaces := get_unoccupied(map);
-                    if available_spaces {
-                        a: Allocator;
-                        a.proc = flat_pool_allocator_proc;
-                        a.data = *level_pool;
-
-                        new_unit := New(Unit, allocator=a);
-                        memcpy(new_unit, selected_unit, size_of(Unit));
-                        new_unit.id = map.units.count;
-                        array_add(*map.units, new_unit);
-
-                        new_unit.square = unoccupied[0];
-                        occupy(map, new_unit.square, new_unit);
-                    }
-                    else {
-                        log_error("Cannot add any more units to this level!\n");
-                    }
-                }
-
                 {
                     using selected_unit;
                     ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
@@ -268,7 +285,6 @@ unit_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 ImGui.InputInt("Max",  xx *max_range);
 
                 ImGui.InputInt("Amount",  xx *amount);
-                ImGui.InputInt("Turns",  xx *turns);
 
                 ti = type_info(Ability_Orientation);
                 ImGui.SliderInt("Orient.", xx *orientation, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx orientation]));
@@ -297,6 +313,11 @@ last_selected_unit: int = -1;
 units_editor :: (units : *[..] *Unit) {
     ImGui.Begin("Unit Templates");
     {
+        if ImGui.Button("Deselect") {
+            last_selected_unit = -1;
+            editor.selected_unit = null;
+        }
+        ImGui.SameLine();
         if(ImGui.Button("New")) {
             a: Allocator;
             a.proc = flat_pool_allocator_proc;
@@ -309,11 +330,6 @@ units_editor :: (units : *[..] *Unit) {
 
             array_add(units, new_unit);
             editor.selected_unit = new_unit;
-        }
-        ImGui.SameLine();
-        if ImGui.Button("Deselect") {
-            last_selected_unit = -1;
-            editor.selected_unit = null;
         }
 
         if editor.selected_unit == null then last_selected_unit = -1;

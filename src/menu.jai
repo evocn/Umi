@@ -144,12 +144,31 @@ quit_game :: () {
     running = false;
 }
 
-/*
 toggle_fullscreen :: () {
+    using settings;
+
     desire_fullscreen : bool;
     if !fullscreen then desire_fullscreen = true;
     fullscreen = !fullscreen;
 
-    success:, window_width, window_height = Window_Creation.toggle_fullscreen(window, desire_fullscreen, *saved);
+    display_mode : SDL_DisplayMode;
+
+    SDL_GetDesktopDisplayMode(0, *display_mode);
+
+    if desire_fullscreen {
+        SDL_SetWindowResizable(window, SDL_FALSE);
+        SDL_SetWindowBordered(window, SDL_FALSE);
+        SDL_SetWindowPosition(window, 0, 0);
+        SDL_SetWindowSize(window, display_mode.w, display_mode.h);
+    }
+    else {
+        SDL_SetWindowResizable(window, SDL_TRUE);
+        SDL_SetWindowBordered(window, SDL_TRUE);
+        SDL_SetWindowSize(window, WINDOW_WIDTH, WINDOW_HEIGHT);
+    }
+
+    SDL_GetWindowDisplayMode(window, *display_mode);
+
+    // @TODO: When fonts are figured out at last...
+    //init_fonts();
 }
-*/

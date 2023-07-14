@@ -146,8 +146,12 @@ execute :: (using command: *Begin_Targeting_Command) {
     selected_initial_square = square;
     interactible = get_ability_squares_from_position(map, selected.ability, selected);
 
-    // We might need to filter out stuff based on the type of attacks later...
-    //filter_out_impassible(*interactible, map);
+    // Filter ability use squares based on the type of the ability.
+    if selected.ability.ability_kind == {
+        case .WARP;
+        filter_out_impassible(*interactible, map);
+        filter_out_occupied(*interactible, map);
+    }
 
     state = .TARGETING;
 }
@@ -184,35 +188,7 @@ execute :: (using command: *Place_Unit_Command) {
 
     selected.moved = true;
 
-    // Resolve gameplay tile effects
-    {
-        using tile := *map.tiles[square.col][square.row];
-
-        if kind == {
-            case .KILL;
-            if !cast(bool)(selected.flags & .IMMORTAL)
-                kill(selected);
-
-            case .HOLE;
-            if !cast(bool)(selected.flags & .FLYING)
-                kill(selected);
-
-            case .MINE;
-            if !cast(bool)(selected.flags & .IMMORTAL) {
-                kill(selected);
-            }
-            kind = .NONE;
-            sprite_index = default_tile_sprite_index(.NONE);
-
-            case .REWARD;
-            kind = .SPENT_REWARD;
-            sprite_index = default_tile_sprite_index(.SPENT_REWARD);
-            print("You get a reward now!\n");
-
-            case .OBJECTIVE;
-            print("You finished the level!\n");
-        }
-    }
+    resolve_landing_effects(map, selected);
 
     deselect_unit();
 }
@@ -229,11 +205,42 @@ execute :: (using command: *Use_Ability_Command) {
 
     if !array_find(interactible, square) return;
 
-    target := map.occupancy[square.col][square.row];
-    if !target return;
-    if target.team == selected.team return;
+    ability_has_target : bool;
+    {
+        using k := selected.ability.ability_kind;
+        ability_has_target = (k == .ATTACK || 
+                              k == .PARALYZE || 
+                              k == .SHIELD_BUFF || 
+                              k == .AUGMENT_BUFF || 
+                              k == .SPEED_BUFF || 
+                              k == .PUSH || 
+                              k == .DANCE
+                             );
+    }
 
-    resolve_ability(map, selected, target, null, .NORTH);
+    if ability_has_target {
+        target := map.occupancy[square.col][square.row];
+        if !target return;
+
+        // Filter on what units you should be able to use the ability for.
+        if selected.ability.ability_kind == {
+            case .ATTACK;        #through;
+            case .PARALYZE;
+            if target.team == selected.team return;
+
+            case .SHIELD_BUFF;   #through;
+            case .AUGMENT_BUFF;  #through;
+            case .SPEED_BUFF;
+            if target.team != selected.team return;
+
+            case .PUSH;
+        }
+
+        resolve_ability(map, selected, target, square);
+    }
+    else {
+        resolve_ability(map, selected, null, square);
+    }
 
     selected.exhausted = true;
     // @CONSIDER: It might be interesting if you could move after attack, but for now attacking also uses your movement.

@@ -9,6 +9,8 @@ map_height :: 9;
 Map :: struct {
     tiles : [map_width][map_height] Tile;
     occupancy : [map_width][map_height] *Unit;
+
+    next_id : int;
     units : [..] *Unit;
 }
 
@@ -76,6 +78,20 @@ is_impassible :: (using tile: Tile) -> bool {
     return false;
 }
 
+filter_out_impassible :: (squares : *[..] Square, using map: Map) {
+    for <<squares {
+        tile := get_tile(map, it);
+        if is_impassible(tile) remove it;
+    }
+
+}
+
+filter_out_occupied :: (squares : *[..] Square, using map: Map) {
+    for << squares {
+        if get_occupant(map, it) remove it;
+    }
+}
+
 //
 //
 
@@ -94,3 +110,37 @@ default_tile_sprite_index :: (kind : Tile_Kind) -> int {
         case .HALF_COVER;   return 147;
     }
 }
+
+
+//
+//
+// Resolve gameplay tile effects
+resolve_landing_effects :: (map: *Map, unit: *Unit) {
+    using tile := *map.tiles[unit.square.col][unit.square.row];
+
+    if kind == {
+        case .KILL;
+        if !cast(bool)(unit.flags & .IMMORTAL)
+            kill(unit);
+
+        case .HOLE;
+        if !cast(bool)(unit.flags & .FLYING)
+            kill(unit);
+
+        case .MINE;
+        if !cast(bool)(unit.flags & .IMMORTAL) {
+            kill(unit);
+        }
+        kind = .NONE;
+        sprite_index = default_tile_sprite_index(.NONE);
+
+        case .REWARD;
+        kind = .SPENT_REWARD;
+        sprite_index = default_tile_sprite_index(.SPENT_REWARD);
+        print("You get a reward now!\n");
+
+        case .OBJECTIVE;
+        print("You finished the level!\n");
+    }
+}
+

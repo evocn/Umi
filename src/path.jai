@@ -12,6 +12,8 @@ get_squares_you_could_use_an_ability_from :: (using map : Map, ability: Ability,
                           pass=cast(bool)(attacker.flags & .PASS), 
                           land_stride=cast(bool)(attacker.flags & .LAND_STRIDE)
                          );
+
+    debug.traversed = traversed;
     for traversed.squares {
         square_within_range := it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range;
         occupant := get_occupant(map, it.square);
@@ -28,9 +30,15 @@ get_squares_you_could_use_an_ability_from :: (using map : Map, ability: Ability,
 get_ability_squares_from_position :: (using map : Map, ability: Ability, unit : Unit) -> [..] Square {
     interactible : [..] Square;
 
+    maximum_range := ability.max_range;
+    if cast(bool)(unit.effects & .AUGMENT) {
+        maximum_range += 1;
+    }
+
     traversed := traverse(map, unit.square, unit.team, flying=true, pass=true, land_stride=true);
+    debug.traversed = traversed;
     for traversed.squares {
-        if it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range
+        if it.distance_by_air <= maximum_range && it.distance_by_air >= ability.min_range
             array_add(*interactible, it.square);
     }
     return interactible;
@@ -44,8 +52,15 @@ get_accessible_squares_from_position :: (using map : Map, unit : Unit) -> [..] S
                           pass=cast(bool)(unit.flags & .PASS), 
                           land_stride=cast(bool)(unit.flags & .LAND_STRIDE)
                          );
+    debug.traversed = traversed;
+
+    maximum_distance := unit.movement;
+    if cast(bool)(unit.effects & .SPEED) {
+        maximum_distance += 3;
+    }
+
     for traversed.squares {
-        square_within_range := it.distance <= unit.movement;
+        square_within_range := it.distance <= maximum_distance;
         occupant := get_occupant(map, it.square);
         square_can_be_occupied := occupant == null || occupant.id == unit.id;
         if square_within_range && square_can_be_occupied {
@@ -67,10 +82,8 @@ Path :: [..] Square;
 
 move_down_path :: (map: Map, path: *Path, unit: Unit) -> Square {
     distance := min(unit.movement, path.count);
-    print("%\n", distance);
     i : int = 0;
     for < path.* {
-        print("Investigating %\n", i);
         if distance < i break;
         if it != unit.square && get_tile(map, it).kind == .SLOW {
             distance -= 1;
@@ -168,7 +181,6 @@ get_shortest_path :: (using map : Map, unit: Unit, destination: Square) -> Path,
     return path, true;
 }
 
-#scope_file
 Traversal_Result :: struct {
     Data_Point :: struct {
         reachable : bool;
@@ -183,6 +195,7 @@ Traversal_Result :: struct {
     squares : [map_width * map_height] Data_Point;
 }
 
+#scope_file
 // @TODO: It would be nice if we didn't end up with a proliferation of flags.
 traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := false, pass := false, land_stride := false) -> Traversal_Result {
     rows :: int.[-1,  0,  1,  0];

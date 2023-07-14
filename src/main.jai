@@ -7,8 +7,11 @@ window          : *SDL_Window;
 gl_context      : *SDL_GLContext;
 imgui_context   : *ImGui.ImGuiContext;
 
-window_width  : s32 = 1280;
-window_height : s32 = 720;
+WINDOW_WIDTH  :: 1280;
+WINDOW_HEIGHT :: 720;
+
+window_width  : s32 = WINDOW_WIDTH;
+window_height : s32 = WINDOW_HEIGHT;
 aspect_ratio  : float = 1.78;
 
 running : bool;
@@ -42,11 +45,13 @@ settings : struct {
     line_mode := false;
     // fps
     // resolution
-    // fullscreened
+    fullscreen := false;
 }
 
 debug : struct {
+    active: bool;
     lines : [16] string;
+    traversed : Traversal_Result;
 }
 
 rendering : struct {
@@ -56,9 +61,9 @@ rendering : struct {
     }
 
     quad : Quad;
-    fonts : Table(string, Font);
     spritesheet : Spritesheet;
 }
+font : Font;
 
 // Loggers
 //
@@ -193,9 +198,7 @@ main :: () {
     array_reset(*menu.elements);
     array_reset(*levels);
 
-    for rendering.fonts
-        deinit(*it.characters);
-    deinit(*rendering.fonts);
+    deinit(*font.characters);
 
     ImGui_ImplSdl_Shutdown();
     ImGui.DestroyContext(imgui_context);

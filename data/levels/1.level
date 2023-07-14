@@ -19,16 +19,28 @@
 # Level Units:
 
 Fighter
-7 4
+4 4
 
 Dog
 11 8
 
 Horse
+7 6
+
+Speedster
+7 4
+
+Defender
+9 5
+
+Dancer
 8 6
 
-Fairy
-3 6
+Paralyzer
+12 5
 
-Wizard
-4 4
+Augmenter
+5 5
+
+Warp Cat
+3 2

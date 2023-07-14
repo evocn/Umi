@@ -378,7 +378,8 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
                 return false;
             }
 
-            new_unit.id = map.units.count;
+            new_unit.id = map.next_id;
+            map.next_id += 1;
             array_add(*map.units, new_unit);
 
             unit_name, success = consume_next_line(*handler);

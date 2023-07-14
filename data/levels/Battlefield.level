@@ -1,0 +1,46 @@
+[1]	# Version Number
+
+16	# Width
+9	# Height
+
+# Tiles:
+00000000a0a00000
+000000600500a000
+0000000a00090000
+0000000060000000
+000600a05000a000
+0000000000000000
+00005000a6a90000
+0000006000000000
+0000000a000a0000
+---
+# Sprite Index Exceptions:
+9 1 707
+8 4 707
+4 6 707
+---
+# Level Units:
+
+Tank
+1 6
+
+Tank
+1 1
+
+Soldier
+3 2
+
+Soldier
+3 8
+
+Soldier
+5 5
+
+Gunner
+13 2
+
+Gunner
+14 6
+
+Horse
+14 4

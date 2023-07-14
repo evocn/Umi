@@ -38,8 +38,16 @@ next_turn :: (using map: *Map) -> Team {
     turn := whose_turn();
     for units {
         if it.team == turn {
+            if cast(bool)(it.effects & .PARALYZED) {
+                it.moved = true;
+                it.exhausted = true;
+                it.effects = 0;
+                continue;
+            }
+
             it.moved = false;
             it.exhausted = false;
+            it.effects = 0;
         }
     }
 

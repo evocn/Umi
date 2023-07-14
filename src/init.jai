@@ -74,14 +74,12 @@ init :: () -> bool {
         // Primitives
         init_quad_rendering_objects(*quad);
 
-        // Fonts
-        table_add(*fonts, "Header", make_font("JosefinSans-Regular.ttf", 24));
-        //table_add(*fonts, "Body",   make_font("OpenSans-BoldItalic.ttf", 22));
-        
         // Sprites
         success := make_spritesheet(*spritesheet, "sheet.png");
         assert(success);
     }
+
+    init_fonts();
 
     //init_audio();
 
@@ -99,6 +97,12 @@ init :: () -> bool {
     return true;
 }
 
+init_fonts :: () {
+    deinit(*font.characters);
+    font = make_font("JosefinSans-Regular.ttf", xx (window_height / 16));
+}
+        
+
 init_audio :: () {
 }
 
@@ -115,6 +119,11 @@ init_menus :: () {
         resume.name = "Resume";
         resume.callback = resume_game;
         array_add(*elements, cast(*Menu_Element)resume);
+
+        fullscreen := New(Go_Element, allocator=a);
+        fullscreen.name = "Fullscreen";
+        fullscreen.callback = toggle_fullscreen;
+        array_add(*elements, cast(*Menu_Element)fullscreen);
 
         /*
         master := New(Slider_Element);

@@ -20,6 +20,7 @@ Unit :: struct {
     moved : bool;           @NoSerialize
     exhausted : bool;       @NoSerialize
     dead : bool;            @NoSerialize
+    effects : Unit_Effects; @NoSerialize
 }
 
 Unit_Flags :: enum_flags {
@@ -28,6 +29,13 @@ Unit_Flags :: enum_flags {
     IMPERVIOUS;
     IMMORTAL;
     LAND_STRIDE;
+}
+
+Unit_Effects :: enum_flags {
+    SHIELD;
+    SPEED;
+    PARALYZED;
+    AUGMENT;
 }
 
 kill :: (using unit: *Unit) {

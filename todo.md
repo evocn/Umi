@@ -6,7 +6,6 @@ June 2023
 Half-Res
 
 undo for gameplay
-Different sprite sheets (So grant doesn't have to trawl through 1077 sprites to make a new unit)
 
 AI
 * Different Behaviors
@@ -19,17 +18,14 @@ Audio
 
 Bugs
 ----
-Enemy units that cant quite make it over a slow tile think they can, and the AI
-  can't move them.
 Can't load a second font for some reason...
 Audio Player...
 
 Later
 -----
-Five-Color Aesthetic? Generalize the code?
 Cutscenes.
 Hotloaded Variable Tweaks File.
 Better Font.
 Start Screen.
 Credits.
-Chunk the spritesheet up
+Chunk the spritesheet up (Once we've sort of finalized the design of things)
