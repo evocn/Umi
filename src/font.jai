@@ -19,7 +19,7 @@ draw_text :: (shader: Shader, font: Font, text: string,
               x: float, y: float, scale := 1.0, color := white)
 {
     set_vec4(shader, "color", color);
-    render_text(font, text, x, y, scale);
+    render_text(font, text, x, y, scale, centered = false);
 }
 
 draw_text_centered :: (shader: Shader, font: Font, text: string, 

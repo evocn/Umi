@@ -27,6 +27,30 @@ get_squares_you_could_use_an_ability_from :: (using map : Map, ability: Ability,
     return squares_to_attack_from;
 }
 
+get_squares_right_next_to_unit :: (using map: Map, source: Unit, target: Unit) -> [..] Square {
+    squares_right_next_to_unit : [..] Square;
+    squares_right_next_to_unit.allocator = temp;
+
+    traversed := traverse(map, target.square, source.team,
+                          flying=cast(bool)(source.flags & .FLYING), 
+                          pass=cast(bool)(source.flags & .PASS), 
+                          land_stride=cast(bool)(source.flags & .LAND_STRIDE)
+                         );
+
+    debug.traversed = traversed;
+    for traversed.squares {
+        square_within_range := it.distance_by_air == 1;
+        occupant := get_occupant(map, it.square);
+        square_can_be_occupied := occupant == null || occupant.id == source.id;
+        square_is_reachable := it.reachable;
+        if square_within_range && square_can_be_occupied && square_is_reachable {
+            array_add(*squares_right_next_to_unit, it.square);
+        }
+    }
+
+    return squares_right_next_to_unit;
+}
+
 get_ability_squares_from_position :: (using map : Map, ability: Ability, unit : Unit) -> [..] Square {
     interactible : [..] Square;
 

@@ -3,18 +3,32 @@ Todo
 Alex Hartford
 June 2023
 
-Half-Res
+Goal: Playtesting without being present.
 
-undo for gameplay
+Strategy layer system
+* Pool of gathered heroes
+* Choosing units per level
+* Adding to the pool per battle.
+
+Smaller/Larger game boards?
 
 AI
-* Different Behaviors
-* Maybe don't go after immortal units?
+* AI goes after immortal units...
+* AI that can flee
+* AI that can use buffs?
+* etc.
 
 Audio
 * Music
 * SFX
 * Mixer
+
+UI
+* Maybe shows you the outcome of an attack?
+
+Multiple abilities per unit?
+
+Combination attacks?
 
 Bugs
 ----
@@ -23,9 +37,9 @@ Audio Player...
 
 Later
 -----
+Half-Res
+undo for gameplay
 Cutscenes.
-Hotloaded Variable Tweaks File.
-Better Font.
 Start Screen.
 Credits.
 Chunk the spritesheet up (Once we've sort of finalized the design of things)

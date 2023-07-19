@@ -1,7 +1,7 @@
 [1]	# Version Number
 
 16	# Width
-9	# Height
+8	# Height
 
 # Tiles:
 00000000a0a00000
@@ -12,35 +12,49 @@
 0000000000000000
 00005000a6a90000
 0000006000000000
-0000000a000a0000
 ---
 # Sprite Index Exceptions:
 9 1 707
 8 4 707
 4 6 707
 ---
-# Level Units:
 
-Tank
-1 6
+tank	# name
+2	# team
+1 6	# square
+0	# ai
 
-Tank
-1 1
+tank	# name
+2	# team
+1 1	# square
+0	# ai
 
-Soldier
-3 2
+soldier	# name
+2	# team
+3 2	# square
+0	# ai
 
-Soldier
-3 8
+soldier	# name
+2	# team
+3 7	# square
+0	# ai
 
-Soldier
-5 5
+soldier	# name
+2	# team
+5 5	# square
+0	# ai
 
-Gunner
-13 2
+gunner	# name
+1	# team
+13 2	# square
+0	# ai
 
-Gunner
-14 6
+gunner	# name
+1	# team
+14 6	# square
+0	# ai
 
-Horse
-14 4
+horse	# name
+1	# team
+14 4	# square
+0	# ai

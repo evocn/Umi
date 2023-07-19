@@ -8,8 +8,8 @@ cursor : struct {
 
     state : enum {
         NEUTRAL;
-        MOVING;    // Soft limit
-        TARGETING; // Hard limit?
+        MOVING;
+        TARGETING;
     }
 
     selected : *Unit;
@@ -17,8 +17,6 @@ cursor : struct {
 
     targeted : *Unit;
 
-    // @TODO: We could probably combine these into one array which changes its purpose based on the mode...
-    // This would simplify things on our end, and be smaller too, which would be nice.
     accessible : [..] Square;
     interactible : [..] Square;
 

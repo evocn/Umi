@@ -1,22 +1,20 @@
 [1] # Version
 
-Fighter	# name
-1	# team
+fighter	# name
 27	# sprite_index
 3	# movement
 2	# flags
 # ability
 !	# ability_name
-0	# ability_kind
+1	# ability_kind
 1	# min_range
-3	# max_range
+1	# max_range
 0	# amount
 0	# orientation
 
-Dog	# name
-2	# team
+dog	# name
 374	# sprite_index
-5	# movement
+4	# movement
 0	# flags
 # ability
 !	# ability_name
@@ -26,8 +24,7 @@ Dog	# name
 0	# amount
 0	# orientation
 
-Horse	# name
-1	# team
+horse	# name
 371	# sprite_index
 5	# movement
 18	# flags
@@ -39,8 +36,7 @@ Horse	# name
 0	# amount
 0	# orientation
 
-Gnome	# name
-2	# team
+gnome	# name
 467	# sprite_index
 2	# movement
 16	# flags
@@ -52,8 +48,7 @@ Gnome	# name
 0	# amount
 0	# orientation
 
-Fairy	# name
-2	# team
+fairy	# name
 276	# sprite_index
 3	# movement
 19	# flags
@@ -65,21 +60,19 @@ Fairy	# name
 0	# amount
 0	# orientation
 
-Wizard	# name
-1	# team
+wizard	# name
 73	# sprite_index
-0	# movement
+1	# movement
 0	# flags
 # ability
 !	# ability_name
-0	# ability_kind
+3	# ability_kind
 2	# min_range
 5	# max_range
 0	# amount
 0	# orientation
 
-Statue	# name
-2	# team
+statue	# name
 470	# sprite_index
 1	# movement
 28	# flags
@@ -91,8 +84,7 @@ Statue	# name
 0	# amount
 0	# orientation
 
-Tank	# name
-2	# team
+tank	# name
 991	# sprite_index
 1	# movement
 8	# flags
@@ -104,8 +96,7 @@ Tank	# name
 0	# amount
 0	# orientation
 
-Soldier	# name
-2	# team
+soldier	# name
 222	# sprite_index
 2	# movement
 0	# flags
@@ -117,8 +108,7 @@ Soldier	# name
 0	# amount
 0	# orientation
 
-Gunner	# name
-1	# team
+gunner	# name
 224	# sprite_index
 3	# movement
 0	# flags
@@ -130,8 +120,7 @@ Gunner	# name
 0	# amount
 0	# orientation
 
-Speedster	# name
-1	# team
+speedster	# name
 649	# sprite_index
 0	# movement
 0	# flags
@@ -143,8 +132,7 @@ Enspeeden	# ability_name
 0	# amount
 0	# orientation
 
-Defender	# name
-1	# team
+defender	# name
 686	# sprite_index
 0	# movement
 0	# flags
@@ -156,8 +144,7 @@ Enshielden	# ability_name
 0	# amount
 0	# orientation
 
-Dancer	# name
-1	# team
+dancer	# name
 423	# sprite_index
 4	# movement
 0	# flags
@@ -169,8 +156,7 @@ Dance	# ability_name
 0	# amount
 0	# orientation
 
-Paralyzer	# name
-1	# team
+paralyzer	# name
 464	# sprite_index
 6	# movement
 0	# flags
@@ -182,8 +168,7 @@ Paralyze	# ability_name
 0	# amount
 0	# orientation
 
-Augmenter	# name
-1	# team
+augmenter	# name
 709	# sprite_index
 0	# movement
 0	# flags
@@ -195,8 +180,7 @@ Augment	# ability_name
 0	# amount
 0	# orientation
 
-Warp Cat	# name
-1	# team
+warp cat	# name
 373	# sprite_index
 0	# movement
 0	# flags

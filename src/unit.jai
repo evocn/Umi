@@ -5,8 +5,7 @@
 
 Unit :: struct {
     // Properties
-    name : string;
-    team : Team;
+    name : string;          @Always
     sprite_index : int;
 
     movement : int;
@@ -14,9 +13,13 @@ Unit :: struct {
 
     using ability: Ability;
 
+    // Per-Level
+    team : Team;            @PerLevel
+    using square : Square;  @PerLevel
+    ai: AI_Behavior;        @PerLevel
+
     // State
     id : int;               @NoSerialize
-    using square : Square;  @NoSerialize
     moved : bool;           @NoSerialize
     exhausted : bool;       @NoSerialize
     dead : bool;            @NoSerialize
@@ -36,6 +39,19 @@ Unit_Effects :: enum_flags {
     SPEED;
     PARALYZED;
     AUGMENT;
+}
+
+AI_Behavior :: enum {
+    NO_BEHAVIOR;
+    PURSUE;
+    PURSUE_AFTER_1;
+    PURSUE_AFTER_2;
+    PURSUE_AFTER_3;
+    BOSS;
+    ATTACK_IN_RANGE;
+    ATTACK_IN_TWO;
+    FLEE;
+    TREASURE_THEN_FLEE;
 }
 
 kill :: (using unit: *Unit) {

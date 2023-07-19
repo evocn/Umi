@@ -99,7 +99,8 @@ init :: () -> bool {
 
 init_fonts :: () {
     deinit(*font.characters);
-    font = make_font("JosefinSans-Regular.ttf", xx (window_height / 16));
+    font = make_font("mkd.ttf", xx (window_height / 16));
+    //font = make_font("josefin.ttf", xx (window_height / 16));
 }
         
 
@@ -109,19 +110,19 @@ init_audio :: () {
 init_menus :: () {
     {
         using menu;
-        name = "Pause";
+        name = "pause";
 
         a: Allocator;
         a.proc = flat_pool_allocator_proc;
         a.data = *pool;
 
         resume := New(Go_Element, allocator=a);
-        resume.name = "Resume";
+        resume.name = "resume";
         resume.callback = resume_game;
         array_add(*elements, cast(*Menu_Element)resume);
 
         fullscreen := New(Go_Element, allocator=a);
-        fullscreen.name = "Fullscreen";
+        fullscreen.name = "fullscreen";
         fullscreen.callback = toggle_fullscreen;
         array_add(*elements, cast(*Menu_Element)fullscreen);
 
@@ -143,7 +144,7 @@ init_menus :: () {
         */
 
         quit := New(Go_Element, allocator=a);
-        quit.name = "Quit";
+        quit.name = "quit";
         quit.callback = quit_game;
         array_add(*elements, cast(*Menu_Element)quit);
     }

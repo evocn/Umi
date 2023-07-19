@@ -43,9 +43,9 @@ level_pool  : Flat_Pool;
 
 settings : struct {
     line_mode := false;
+    fullscreen := false;
     // fps
     // resolution
-    fullscreen := false;
 }
 
 debug : struct {
@@ -99,6 +99,7 @@ main :: () {
         success = load_units(*units, "all.units");
         assert(success);
 
+        // @TODO: Default level
         init_level(*map, units, levels[current_level_index]);
     }
 
@@ -164,8 +165,8 @@ main :: () {
         }
 
         // Set Debug Console
-        debug.lines[0] = tprint("Turn: %", whose_turn());
-        debug.lines[1] = tprint("Cursor State: %", cursor.state);
+        debug.lines[0] = to_lower_copy(tprint("Turn % - %", manager.turn_number, whose_turn()), allocator=temp);
+        debug.lines[1] = to_lower_copy(tprint("Cursor State - %", cursor.state), allocator=temp);
 
         // Render
         if #complete program_mode == {

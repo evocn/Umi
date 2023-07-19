@@ -25,7 +25,7 @@ save_units :: (units : [..] *Unit, filename : string) -> success : bool {
 
     for units {
         print_to_builder(*builder, "\n");
-        success := serialize_structure(it.*, *builder);
+        success := serialize_structure(it.*, *builder, per_level=false);
         if !success return false;
     }
 
@@ -54,7 +54,7 @@ load_units :: (units : *[..] *Unit, filename : string) -> success : bool {
 
     while handler.file_data {
         new_unit := New(Unit, allocator=a);
-        success := unserialize_structure(new_unit, *handler);
+        success := unserialize_structure(new_unit, *handler, per_level=false);
         if !success error(handler, "File Handler problem with %.\n", filename);
         array_add(units, new_unit);
     }
@@ -68,7 +68,7 @@ load_units :: (units : *[..] *Unit, filename : string) -> success : bool {
 
 // %1          = member name
 // type_of(%1) = member type
-for_each_member :: ($T: Type, format: string) -> string
+for_each_member :: ($T: Type, format: string, per_level : bool) -> string
 {
     builder: String_Builder;
     defer free_buffers(*builder);
@@ -80,8 +80,10 @@ for_each_member :: ($T: Type, format: string) -> string
     {
         if member.flags & .CONSTANT continue;
 
-        for note: member.notes {
-            if note == "NoSerialize" then continue member;
+        if !array_find(member.notes, "Always") {
+            if array_find(member.notes, "NoSerialize") then continue; 
+            if per_level && !array_find(member.notes, "PerLevel") then continue;
+            if !per_level && array_find(member.notes, "PerLevel") then continue;
         }
 
         print_to_builder(*builder, format, member.name);
@@ -90,9 +92,9 @@ for_each_member :: ($T: Type, format: string) -> string
     return builder_to_string(*builder);
 }
 
-serialize_structure :: (s: $T, builder: *String_Builder) -> success: bool
+serialize_structure :: (s: $T, builder: *String_Builder, $per_level : bool) -> success: bool
 {
-    #insert #run for_each_member(T, "if !serialize(s.%1, \"%1\", builder) return false;\n" );
+    #insert #run for_each_member(T, "if !serialize(s.%1, \"%1\", builder) return false;\n", per_level);
     return true;
 }
 
@@ -164,7 +166,7 @@ serialize  :: (to_serialize: Unit_Flags, name : string, builder: *String_Builder
 }
 serialize  :: (to_serialize: Ability, name : string, builder: *String_Builder) -> success: bool {
     if name print_to_builder(builder, "# %\n", name);
-    success := serialize_structure(to_serialize, builder);
+    success := serialize_structure(to_serialize, builder, false);
     return success;
 }
 serialize  :: (to_serialize: Ability_Kind, name : string, builder: *String_Builder) -> success: bool {
@@ -179,15 +181,21 @@ serialize  :: (to_serialize: Ability_Orientation, name : string, builder: *Strin
     append(builder, "\n");
     return true;
 }
+serialize  :: (to_serialize: AI_Behavior, name : string, builder: *String_Builder) -> success: bool {
+    print_to_builder(builder, "%", cast(int)to_serialize);
+    if name print_to_builder(builder, "\t# %", name);
+    append(builder, "\n");
+    return true;
+}
 
 //
 //
 //
 
-unserialize_structure :: (s: *$T, handler: *Text_File_Handler) -> success: bool
+unserialize_structure :: (s: *$T, handler: *Text_File_Handler, $per_level : bool) -> success: bool
 {
     success : bool;
-    #insert #run for_each_member(T, "if !unserialize(*s.%1, handler) return false;\n" );
+    #insert #run for_each_member(T, "if !unserialize(*s.%1, handler) return false;\n", per_level);
     return true;
 }
 
@@ -250,7 +258,7 @@ unserialize  :: (to_unserialize: *Unit_Flags, handler: *Text_File_Handler) -> su
 }
 unserialize  :: (to_unserialize: *Ability, handler : *Text_File_Handler) -> success: bool { 
     success : bool;
-    success = unserialize_structure(to_unserialize, handler);
+    success = unserialize_structure(to_unserialize, handler, false);
     return success;
 }
 unserialize  :: (to_unserialize: *Ability_Kind, handler: *Text_File_Handler) -> success: bool {
@@ -263,6 +271,12 @@ unserialize  :: (to_unserialize: *Ability_Orientation, handler: *Text_File_Handl
     <<to_unserialize = cast(Ability_Orientation)i;
     return success;
 }
+unserialize  :: (to_unserialize: *AI_Behavior, handler: *Text_File_Handler) -> success: bool {
+    i, success := parse_int(handler);
+    <<to_unserialize = cast(AI_Behavior)i;
+    return success;
+}
+
 
 //
 // Level Loading/Saving
@@ -281,7 +295,12 @@ save_level :: (using map : Map, filename : string) -> bool {
     print_to_builder(*builder, "# Tiles:\n");
     print_tiles_to_builder(*builder, tiles);
     print_to_builder(*builder, "---\n");
-    print_units_to_builder(*builder, units);
+
+    for units {
+        print_to_builder(*builder, "\n");
+        success := serialize_structure(it.*, *builder, per_level=true);
+        if !success return false;
+    }
 
     success := File.write_entire_file(tprint("%/%", levels_path, filename), builder_to_string(*builder, allocator=temp));
 
@@ -351,38 +370,26 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
         a.proc = flat_pool_allocator_proc;
         a.data = *level_pool;
 
-        unit_name, success := consume_next_line(*handler);
-        while success {
+        while handler.file_data {
             new_unit := New(Unit, allocator=a);
-            if !success {
-                error(handler, "Expected a Unit name while parsing level %.\n", filename);
-                return false;
-            }
 
-            found_unit : bool;
+            success := unserialize_structure(new_unit, *handler, per_level=true);
+
             for units {
-                if unit_name == it.name {
+                if new_unit.name == it.name {
+                    unit_copy := New(Unit, allocator=temp);
+                    memcpy(unit_copy, new_unit, size_of(Unit));
                     memcpy(new_unit, it, size_of(Unit));
-                    found_unit = true;
+                    new_unit.team = unit_copy.team;
+                    new_unit.ai = unit_copy.ai;
+                    new_unit.id = unit_copy.id;
+                    new_unit.square = unit_copy.square;
                     break;
                 }
             }
-            if !found_unit {
-                error(handler, "Invalid unit name: We don't know who % is! While parsing level %.\n", unit_name, filename);
-                return false;
-            }
 
-            new_unit.square, success = parse_square(*handler);
-            if !success {
-                error(handler, "Expected a square while parsing level %.\n", filename);
-                return false;
-            }
-
-            new_unit.id = map.next_id;
-            map.next_id += 1;
+            if !success error(handler, "File Handler problem with %.\n", filename);
             array_add(*map.units, new_unit);
-
-            unit_name, success = consume_next_line(*handler);
         }
     }
 
@@ -419,13 +426,5 @@ print_tiles_to_builder :: (builder : *String_Builder, tiles : [map_width][map_he
     print_to_builder(builder, "# Sprite Index Exceptions:\n");
     for exceptions {
         print_to_builder(builder, "% % %\n", it.col, it.row, tiles[it.col][it.row].sprite_index);
-    }
-}
-
-print_units_to_builder :: (builder : *String_Builder, units: [..] *Unit) {
-    print_to_builder(builder, "# Level Units:\n");
-    for units {
-        print_to_builder(builder, "\n%\n", it.name);
-        print_to_builder(builder, "%\n", it.square);
     }
 }

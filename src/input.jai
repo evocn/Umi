@@ -62,6 +62,10 @@ handle_events :: () {
                     }
                 }
 
+                if event.key.keysym.sym == SDLK_k {
+                    program_mode = .GAME_OVER;
+                }
+
                 if event.key.keysym.sym == SDLK_0
                     program_paused = !program_paused;
 
@@ -84,6 +88,9 @@ handle_events :: () {
                     else if program_mode == .MENU {
                         program_mode = .GAME;
                     }
+                    else if program_mode == .GAME_OVER {
+                        running = false;
+                    }
                 }
 
                 // Main Program Inputs
@@ -100,6 +107,7 @@ handle_events :: () {
                 }
 
                 // Settings
+                /*
                 if event.key.keysym.sym == SDLK_l {
                     if settings.line_mode
                         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -107,6 +115,7 @@ handle_events :: () {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                     settings.line_mode = !settings.line_mode;
                 }
+                */
 
             case SDL_MOUSEBUTTONDOWN;
                 if event.button.button == SDL_BUTTON_LEFT input.left_click = true;
@@ -125,7 +134,6 @@ handle_events :: () {
 
             case SDL_JOYAXISMOTION;
                 if event.jaxis.which == 0 {
-                    print("HERE\n");
                     if event.jaxis.axis == 0 {
                         if event.jaxis.value < -JOYSTICK_DEAD_ZONE
                             input.left = true;

@@ -4,7 +4,7 @@
 // July 2023
 
 map_width  :: 16;
-map_height :: 9;
+map_height :: 8;
 
 Map :: struct {
     tiles : [map_width][map_height] Tile;

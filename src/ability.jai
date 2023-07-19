@@ -4,6 +4,7 @@
 // July 2023
 
 Ability_Kind :: enum {
+    NONE;
     ATTACK;
     PUSH;
     WARP;
@@ -46,6 +47,8 @@ resolve_ability :: (map: *Map, user : *Unit, victim : *Unit, square: Square) {
     log("% used the % ability on %.\n", user.name, user.ability.ability_kind, victim.name);
 
     if #complete user.ability.ability_kind == {
+        case .NONE;
+
         case .ATTACK;
 
         tile := get_tile(map.*, victim.square);
@@ -97,7 +100,7 @@ resolve_ability :: (map: *Map, user : *Unit, victim : *Unit, square: Square) {
 
         case .WARP;
         remove_occupant(map, user.square);
-        occupy(map, square, victim);
+        occupy(map, square, user);
         user.square = square;
         resolve_landing_effects(map, user);
 

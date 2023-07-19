@@ -25,5 +25,6 @@ init_level :: (map: *Map, units: [..] *Unit, level_name : string) {
 
     for map.units occupy(map, it.square, it);
 
+    manager.turn_number = 0;
     set_turn(.BLUE);
 }

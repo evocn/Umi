@@ -50,8 +50,12 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
 
     units_editor(units);
     if selected_unit {
-        unit_editor(selected_unit, units, map);
+        template_editor(selected_unit, units, map);
         percolate_changes_to_map_units(map, selected_unit);
+    }
+
+    if moving_unit {
+        unit_editor(moving_unit, map);
     }
 
     level_editor(map);
@@ -225,13 +229,28 @@ level_editor :: (using map: *Map) {
     ImGui.End();
 }
 
-unit_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
+unit_editor :: (using unit: *Unit, map: *Map) {
+    ImGui.SetNextWindowPos(.{50, 400}, ImGui.Cond.Once);
+    ImGui.SetNextWindowSize(.{200, 100}, ImGui.Cond.Once);
+  
+    ImGui.Begin("Unit");
+    {
+        ti := type_info(Team);
+        ImGui.SliderInt("Team", xx *team, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx team]));
+
+        ti = type_info(AI_Behavior);
+        ImGui.SliderInt("AI", xx *ai, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ai]));
+    }
+    ImGui.End();
+}
+
+template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
     using editor;
 
     ImGui.SetNextWindowPos(.{1000, 400}, ImGui.Cond.Once);
     ImGui.SetNextWindowSize(.{250, 250}, ImGui.Cond.Once);
   
-    ImGui.Begin("Unit");
+    ImGui.Begin("Template");
     {
         if ImGui.BeginTabBar("Unit Tabs")
         {
@@ -251,9 +270,6 @@ unit_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 {
                     using selected_unit;
                     ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
-
-                    ti := type_info(Team);
-                    ImGui.SliderInt("Team", xx *team, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx team]));
 
                     ImGui.InputInt("Movement",  xx *movement);
                 }
@@ -303,6 +319,8 @@ percolate_changes_to_map_units :: (map: *Map, unit: *Unit) {
             unit_copy := New(Unit, allocator=temp);
             memcpy(unit_copy, it, size_of(Unit));
             memcpy(it, unit, size_of(Unit));
+            it.team = unit_copy.team;
+            it.ai = unit_copy.ai;
             it.id = unit_copy.id;
             it.square = unit_copy.square;
         }
@@ -418,10 +436,17 @@ update_editor_cursor :: (map: *Map) {
         else {
             editor_begin_moving_unit(map);
         }
+        input.button_1 = false;
     }
 
     if input.button_2 {
-        editor_stop_moving_unit(map);
+        if moving_unit {
+            editor_stop_moving_unit(map);
+        }
+        else {
+            maybe_remove_unit_under_cursor(map);
+        }
+        input.button_2 = false;
     }
 }
 
@@ -469,6 +494,15 @@ editor_begin_moving_unit :: (using map: *Map) {
 
 editor_stop_moving_unit :: (using map: *Map) {
     editor.moving_unit = null;
+}
+
+maybe_remove_unit_under_cursor :: (using map: *Map) {
+    using editor;
+    occupant := occupancy[cursor.col][cursor.row];
+    if occupant {
+        remove_occupant(map, occupant.square);
+        array_ordered_remove_by_value(*map.units, occupant);
+    }
 }
 
 //

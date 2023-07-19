@@ -15,29 +15,28 @@
 ---
 # Sprite Index Exceptions:
 ---
-# Level Units:
 
-fighter
-0
-7 4
-0
+fighter	# name
+1	# team
+7 4	# square
+0	# ai
 
-dog
-0
-11 7
-0
+dog	# name
+0	# team
+11 7	# square
+0	# ai
 
-horse
-0
-8 6
-0
+horse	# name
+0	# team
+8 6	# square
+0	# ai
 
-fairy
-0
-3 6
-0
+fairy	# name
+0	# team
+3 6	# square
+0	# ai
 
-wizard
-0
-4 4
-0
+wizard	# name
+1	# team
+4 5	# square
+0	# ai

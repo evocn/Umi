@@ -4,6 +4,7 @@
 // July 2023
 
 manager : struct {
+    turn_number := 0;
     teams := Team.[.BLUE, .RED];
     current_turn_team_index : int;
 }
@@ -36,6 +37,9 @@ next_turn :: (using map: *Map) -> Team {
         current_turn_team_index = 0;
 
     turn := whose_turn();
+
+    if turn == .BLUE then turn_number += 1;
+
     for units {
         if it.team == turn {
             if cast(bool)(it.effects & .PARALYZED) {

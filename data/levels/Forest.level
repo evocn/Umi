@@ -1,7 +1,7 @@
 [1]	# Version Number
 
 16	# Width
-9	# Height
+8	# Height
 
 # Tiles:
 1001110000000001
@@ -11,27 +11,37 @@
 0001111011110000
 0001000000010000
 0000011001010000
-0001111111000000
 1001111112011171
 ---
 # Sprite Index Exceptions:
 ---
-# Level Units:
 
-Fighter
-0 3
+fighter	# name
+1	# team
+0 3	# square
+0	# ai
 
-Horse
-0 5
+horse	# name
+1	# team
+0 5	# square
+0	# ai
 
-Gnome
-15 2
+gnome	# name
+2	# team
+15 2	# square
+0	# ai
 
-Fairy
-15 4
+fairy	# name
+2	# team
+15 4	# square
+0	# ai
 
-Dog
-15 6
+dog	# name
+2	# team
+15 6	# square
+0	# ai
 
-Wizard
-0 4
+wizard	# name
+1	# team
+0 4	# square
+0	# ai
