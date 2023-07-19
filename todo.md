@@ -5,6 +5,8 @@ June 2023
 
 Goal: Playtesting without being present.
 
+Show enemy ranges
+
 Strategy layer system
 * Pool of gathered heroes
 * Choosing units per level

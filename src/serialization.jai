@@ -14,6 +14,12 @@ levels_path     :: "data/levels";
 units_path      :: "data";
 abilities_path  :: "data";
 
+next_id_value := 0;
+next_id :: () -> int {
+    next_id_value += 1;
+    return next_id_value - 1;
+}
+
 //
 //
 
@@ -366,6 +372,8 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
     {
         array_reset(*map.units);
 
+        next_id_value = 0;
+
         a: Allocator;
         a.proc = flat_pool_allocator_proc;
         a.data = *level_pool;
@@ -382,11 +390,12 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
                     memcpy(new_unit, it, size_of(Unit));
                     new_unit.team = unit_copy.team;
                     new_unit.ai = unit_copy.ai;
-                    new_unit.id = unit_copy.id;
                     new_unit.square = unit_copy.square;
                     break;
                 }
             }
+
+            new_unit.id = next_id();
 
             if !success error(handler, "File Handler problem with %.\n", filename);
             array_add(*map.units, new_unit);

@@ -235,6 +235,7 @@ unit_editor :: (using unit: *Unit, map: *Map) {
   
     ImGui.Begin("Unit");
     {
+        ImGui.Text("% | %", name, id);
         ti := type_info(Team);
         ImGui.SliderInt("Team", xx *team, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx team]));
 

@@ -86,14 +86,14 @@ fighter	# name
 dog	# name
 2	# team
 13 4	# square
-0	# ai
+1	# ai
 
 dog	# name
 2	# team
 9 7	# square
-0	# ai
+1	# ai
 
 dog	# name
 2	# team
 13 6	# square
-0	# ai
+1	# ai

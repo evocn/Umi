@@ -18,25 +18,15 @@
 
 fighter	# name
 1	# team
-7 4	# square
+9 5	# square
 0	# ai
 
 dog	# name
-0	# team
+2	# team
 11 7	# square
-0	# ai
-
-horse	# name
-0	# team
-8 6	# square
-0	# ai
-
-fairy	# name
-0	# team
-3 6	# square
 0	# ai
 
 wizard	# name
 1	# team
-4 5	# square
+7 3	# square
 0	# ai

@@ -108,18 +108,29 @@ Action :: struct {
 }
 
 action_choose :: (unit: Unit, map: Map) -> Action {
-    if #complete unit.ai == {
-        case .NO_BEHAVIOR;          return action_wait(unit);
-        case .PURSUE;               return action_pursue_and_attack_nearest(unit, map);
-        case .PURSUE_AFTER_1;       if manager.turn_number < 1 then return action_attack_in_range(unit, map); else return action_pursue_and_attack_nearest(unit, map);
-        case .PURSUE_AFTER_2;       if manager.turn_number < 2 then return action_attack_in_range(unit, map); else return action_pursue_and_attack_nearest(unit, map);
-        case .PURSUE_AFTER_3;       if manager.turn_number < 3 then return action_attack_in_range(unit, map); else return action_pursue_and_attack_nearest(unit, map);
-        case .BOSS;                 return action_wait_but_attack(unit, map);
-        case .ATTACK_IN_RANGE;      return action_attack_in_range(unit, map);
-        case .ATTACK_IN_TWO;        return action_attack_in_range(unit, map, extended=true);
-        case .FLEE;                 return action_wait(unit);
-        case .TREASURE_THEN_FLEE;   return action_wait(unit);
+    if unit.ability_kind == {
+        case .NONE;
+        return action_wait(unit);
+
+        case .ATTACK;
+        if #complete unit.ai == {
+            case .NO_BEHAVIOR;          return action_wait(unit);
+            case .PURSUE;               return action_pursue_and_attack_nearest(unit, map);
+            case .PURSUE_AFTER_1;       if manager.turn_number < 1 then return action_attack_in_range(unit, map); else return action_pursue_and_attack_nearest(unit, map);
+            case .PURSUE_AFTER_2;       if manager.turn_number < 2 then return action_attack_in_range(unit, map); else return action_pursue_and_attack_nearest(unit, map);
+            case .PURSUE_AFTER_3;       if manager.turn_number < 3 then return action_attack_in_range(unit, map); else return action_pursue_and_attack_nearest(unit, map);
+            case .BOSS;                 return action_wait_but_attack(unit, map);
+            case .ATTACK_IN_RANGE;      return action_attack_in_range(unit, map);
+            case .ATTACK_IN_TWO;        return action_attack_in_range(unit, map, extended=true);
+            case .FLEE;                 return action_wait(unit);
+            case .TREASURE_THEN_FLEE;   return action_wait(unit);
+        }
+
+        case;
+        log_error("This unit's AI cannot make choices for this ability yet! Wait for Alex!\n");
+        return action_wait(unit);
     }
+
 }
 
 action_attack_in_range :: (unit: Unit, map: Map, extended := false) -> Action {

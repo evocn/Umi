@@ -10,15 +10,15 @@ fighter	# name
 1	# min_range
 1	# max_range
 0	# amount
-0	# orientation
+3	# orientation
 
 dog	# name
 374	# sprite_index
-4	# movement
+5	# movement
 0	# flags
 # ability
 !	# ability_name
-0	# ability_kind
+1	# ability_kind
 1	# min_range
 1	# max_range
 0	# amount
@@ -62,12 +62,12 @@ fairy	# name
 
 wizard	# name
 73	# sprite_index
-1	# movement
+2	# movement
 0	# flags
 # ability
 !	# ability_name
-3	# ability_kind
-2	# min_range
+6	# ability_kind
+1	# min_range
 5	# max_range
 0	# amount
 0	# orientation

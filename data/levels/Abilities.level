@@ -24,7 +24,7 @@ fighter	# name
 dog	# name
 2	# team
 11 7	# square
-0	# ai
+6	# ai
 
 horse	# name
 1	# team
@@ -46,17 +46,12 @@ dancer	# name
 8 6	# square
 0	# ai
 
-paralyzer	# name
+warp cat	# name
 1	# team
-12 5	# square
+3 2	# square
 0	# ai
 
 augmenter	# name
 1	# team
 5 5	# square
-0	# ai
-
-warp cat	# name
-1	# team
-3 2	# square
 0	# ai

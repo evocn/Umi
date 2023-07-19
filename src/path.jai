@@ -104,6 +104,7 @@ get_accessible_squares_from_position :: (using map : Map, unit : Unit) -> [..] S
 // @NOTE: Paths are backwards in this engine. There are some good reasons for this.
 Path :: [..] Square;
 
+
 move_down_path :: (map: Map, path: *Path, unit: Unit) -> Square {
     distance := min(unit.movement, path.count);
     i : int = 0;
@@ -119,8 +120,12 @@ move_down_path :: (map: Map, path: *Path, unit: Unit) -> Square {
     furthest_index := max(path.count - distance, 1);
 
     occupant := get_occupant(map, path.*[furthest_index - 1]);
+    if occupant {
+        print("% %\n", occupant.id, unit.id);
+    }
     square_can_be_occupied := occupant == null || occupant.id == unit.id;
     while !square_can_be_occupied {
+        print("%\n", furthest_index);
         furthest_index += 1;
 
         occupant = get_occupant(map, path.*[furthest_index - 1]);

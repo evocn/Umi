@@ -72,14 +72,6 @@ handle_events :: () {
                 if event.key.keysym.sym == SDLK_g
                     debug.active = !debug.active;
 
-                // Editor Special Inputs
-                if program_mode == .EDITOR {
-                    if event.key.keysym.sym == SDLK_s && SDL_GetModState() & KMOD_LCTRL {
-                        editor.should_save = true;
-                        return;
-                    }
-                }
-
                 if event.key.keysym.sym == SDLK_ESCAPE {
                     if program_mode == .GAME {
                         program_mode = .MENU;
