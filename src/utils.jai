@@ -87,8 +87,19 @@ radians :: (degrees: float) -> float {
 }
 
 random_choice :: (array: [] $T) -> T {
-    index := cast(int)(Random.random_get_zero_to_one() * array.count);
+    index := cast(int)(random_get_zero_to_one() * array.count);
     return array[index];
+}
+
+roll_onscreen_time :: 5.0;
+roll_result : int;
+roll_time : float;
+
+roll_die :: (faces: int) -> int {
+    result := 1 + cast(int)(random_get_zero_to_one() * faces);
+    roll_result = result;
+    roll_time = roll_onscreen_time;
+    return result;
 }
 
 //
@@ -108,8 +119,8 @@ activate_mouse :: () {
 // Grid Methods
 //
 
-on_grid :: (using square : Square) -> bool {
-    return col >= 0 && col < map_width && row >= 0 && row < map_height;
+on_grid :: (using square : Square, map: Map) -> bool {
+    return col >= 0 && col < map.width && row >= 0 && row < map.height;
 }
 
 manhattan_distance :: (a : Square, b : Square) -> int {

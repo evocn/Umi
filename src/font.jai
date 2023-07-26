@@ -11,31 +11,33 @@ Font :: struct {
     vao, vbo : GLuint;
 }
 
-make_font :: (filename: string, size: u32) -> Font {
-    return initialize_font(filename, size);
+draw_text :: (shader: Shader, font: Font, text: string, 
+              square: Square, color := color_fg, second := false)
+{
+    set_vec4(shader, "color", color);
+    x := cast(float)square.col * TILE_SIZE + 2;
+    y := (TILE_SIZE / 2) * cast(int)!second + (PIXEL_HEIGHT - TILE_SIZE - cast(float)square.row * TILE_SIZE);
+    render_text(font, text, x, y, centered = false);
 }
 
 draw_text :: (shader: Shader, font: Font, text: string, 
-              x: float, y: float, scale := 1.0, color := white)
+              x: float, y: float, color := color_fg)
 {
     set_vec4(shader, "color", color);
-    render_text(font, text, x, y, scale, centered = false);
+    render_text(font, text, x, y, centered = false);
 }
 
 draw_text_centered :: (shader: Shader, font: Font, text: string, 
-                       y: float, scale := 1.0, color := white)
+                       y: float, color := color_fg)
 {
     set_vec4(shader, "color", color);
-    render_text(font, text, 0, y, scale, centered = true);
+    render_text(font, text, 0, y, centered = true);
 }
 
 //
 //
 
-#scope_file
-
-ft : *FT_Library;
-
+ft : FT_Library;
 initialize_freetype :: () {
     if FT_Init_FreeType(*ft) {
         log_error("Could not initialize the Freetype Library.\n");
@@ -43,10 +45,13 @@ initialize_freetype :: () {
     }
 }
 
-render_text :: (font : Font, text : string, x : float, y : float, scale : float, $centered := true)
+render_text :: (font : Font, text : string, x : float, y : float, $centered := true)
 {
     glActiveTexture(GL_TEXTURE0);
+    defer glBindTexture(GL_TEXTURE_2D, 0);
+
     glBindVertexArray(font.vao);
+    defer glBindVertexArray(0);
 
     #if centered {
         total_width : float;
@@ -54,7 +59,7 @@ render_text :: (font : Font, text : string, x : float, y : float, scale : float,
             glyph, found := table_find(*font.characters, it);
             assert(found);
 
-            total_width += (glyph.advance >> 6) * scale;
+            total_width += glyph.advance >> 6;
         }
     }
 
@@ -65,13 +70,13 @@ render_text :: (font : Font, text : string, x : float, y : float, scale : float,
 
         xpos : float;
         #if centered
-            xpos = x + ((window_width - total_width) / 2.0) + glyph.bearing.x * scale;
+            xpos = x + ((PIXEL_WIDTH - total_width) / 2.0) + glyph.bearing.x;
         else
-            xpos = x + glyph.bearing.x * scale;
-        ypos := y - (glyph.size.y - glyph.bearing.y) * scale;
+            xpos = x + glyph.bearing.x;
+        ypos := y - (glyph.size.y - glyph.bearing.y);
 
-        w := glyph.size.x * scale;
-        h := glyph.size.y * scale;
+        w := glyph.size.x;
+        h := glyph.size.y;
 
         // update VBO for each character
         vertices : [6][4] float = .[
@@ -93,10 +98,8 @@ render_text :: (font : Font, text : string, x : float, y : float, scale : float,
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (glyph.advance >> 6) * scale; // (2^6 = 64)
+        x += glyph.advance >> 6; // (2^6 = 64)
     }
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 //
@@ -109,24 +112,20 @@ Character_Glyph :: struct {
     advance : u64;     // Offset to advance to next glyph
 };
 
-initialize_font :: (filename : string, size : u32) -> Font {
-    if !ft {
-        initialize_freetype();
-    }
-
+initialize_font :: (font: *Font, filename : string, size : u32) {
     face : FT_Face;
     full_path := temp_c_string(tprint("%/%", fonts_path, filename));
-    if FT_New_Face(ft, full_path, 0, *face) {
-        log_error("Freetype failed to load font \"%\"\n", filename);
+    code := FT_New_Face(ft, full_path, 0, *face);
+    if code {
+        log_error("Freetype failed to load font \"%\": %\n", filename, code);
         assert(false);
     }
 
-    //                       w  h
+                          // w  h
     FT_Set_Pixel_Sizes(face, 0, size);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
 
-    font : Font;
     font.height = size;
 
     zero : u32;
@@ -163,9 +162,7 @@ initialize_font :: (filename : string, size : u32) -> Font {
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
 
-    init_font_rendering_objects(*font);
-
-    return font;
+    init_font_rendering_objects(font);
 }
 
 init_font_rendering_objects :: (using font : *Font) {

@@ -1,0 +1,59 @@
+[1]	# Version Number
+
+16	# Width
+8	# Height
+
+# Tiles:
+0000000000000000
+0011100000000000
+0011100000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+---
+# Sprite Index Exceptions:
+---
+
+kobaya	# name
+1	# team
+6 3	# square
+0	# ai
+0	# direction
+
+sekibune	# name
+1	# team
+7 3	# square
+0	# ai
+0	# direction
+
+atakebune	# name
+1	# team
+8 3	# square
+0	# ai
+0	# direction
+
+tekkosen	# name
+1	# team
+9 3	# square
+0	# ai
+0	# direction
+
+gyosen	# name
+1	# team
+7 2	# square
+0	# ai
+0	# direction
+
+gyosen	# name
+1	# team
+7 4	# square
+0	# ai
+0	# direction
+
+geobukseon	# name
+1	# team
+5 3	# square
+0	# ai
+0	# direction

@@ -37,30 +37,37 @@ build :: () {
     add_build_file(tprint("%/input.jai", #filepath), w);
 
     add_build_file(tprint("%/editor.jai", #filepath), w);
+
+    add_build_file(tprint("%/animator.jai", #filepath), w);
+    add_build_file(tprint("%/menu.jai", #filepath), w);
     add_build_file(tprint("%/serialization.jai", #filepath), w);
 
     add_build_file(tprint("%/spine.jai", #filepath), w);
-
     add_build_file(tprint("%/manager.jai", #filepath), w);
     add_build_file(tprint("%/cursor.jai", #filepath), w);
     add_build_file(tprint("%/command.jai", #filepath), w);
     add_build_file(tprint("%/ai.jai", #filepath), w);
 
-    add_build_file(tprint("%/unit.jai", #filepath), w);
-    add_build_file(tprint("%/ability.jai", #filepath), w);
     add_build_file(tprint("%/map.jai", #filepath), w);
     add_build_file(tprint("%/path.jai", #filepath), w);
+    add_build_file(tprint("%/unit.jai", #filepath), w);
+    add_build_file(tprint("%/ability.jai", #filepath), w);
+    add_build_file(tprint("%/effect.jai", #filepath), w);
 
-    add_build_file(tprint("%/menu.jai", #filepath), w);
+    add_build_file(tprint("%/viewport.jai", #filepath), w);
 
     add_build_file(tprint("%/render.jai", #filepath), w);
     add_build_file(tprint("%/font.jai", #filepath), w);
     add_build_file(tprint("%/primitives.jai", #filepath), w);
     add_build_file(tprint("%/parse_utils.jai", #filepath), w);
-
+    add_build_file(tprint("%/color.jai", #filepath), w);
     add_build_file(tprint("%/shader.jai", #filepath), w);
     add_build_file(tprint("%/texture.jai", #filepath), w);
+    add_build_file(tprint("%/sprite.jai", #filepath), w);
     add_build_file(tprint("%/spritesheet.jai", #filepath), w);
+    add_build_file(tprint("%/framebuffer.jai", #filepath), w);
+
+    add_build_file(tprint("%/audio.jai", #filepath), w);
 
 	// Set up ctags options
 	ctags: CTags;
@@ -77,6 +84,25 @@ build :: () {
 
 		if message.kind == .COMPLETE break;
 	}
+
+    // Create a manifest and an icon file.
+	#if OS == .WINDOWS {
+		exe_name := sprint("%/%.exe", options.output_path, options.output_executable_name);
+		defer free(exe_name);
+
+		ico_data := create_ico_file_from_bitmap_filename("../assets/icon.png");
+		defer free(ico_data);
+		set_icon_by_data(exe_name, ico_data);
+        write_entire_file("../assets/icon.ico", ico_data);
+
+		print("Icon     added: %\n", set_icon_by_filename(exe_name, "../assets/icon.ico"));
+
+		manifest_options: Manifest_Options;
+		print("Manifest added: %\n", add_manifest_to_executable(exe_name, manifest_options));
+
+		#import "Ico_File";
+		#import "Windows_Resources";
+	}
 }
 
 #run build();
@@ -85,3 +111,4 @@ build :: () {
 #import "Basic";
 #import "Compiler";
 #import "ctags";
+#import "File";

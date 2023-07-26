@@ -3,321 +3,358 @@
 // Alex Hartford
 // June 2023
 
-Color :: Vector4;
-Hex_Color :: u32;
-
-// 5 Color Palettes
-/**/
-// Byrne 5 Palette
-black_hex : Hex_Color : 0x02080b;
-white_hex : Hex_Color : 0xfcf3d9;
-red_hex   : Hex_Color : 0xd42a20;
-blue_hex  : Hex_Color : 0x0e638e;
-third_hex : Hex_Color : 0xfac22b;
-/**/
-
-/*
-// Origami Clouds Palette
-black_hex : Hex_Color : 0x4f7969;
-white_hex : Hex_Color : 0xdee3e2;
-red_hex   : Hex_Color : 0xd86969;
-blue_hex  : Hex_Color : 0x78b3d6;
-third_hex : Hex_Color : 0xfccbcb;
-*/
-
-// 4 Color Palettes
-/*
-// Rising Sun GB Palette
-black_hex : Hex_Color : 0x181322;
-white_hex : Hex_Color : 0xcdc1a7;
-red_hex   : Hex_Color : 0xa2423a;
-blue_hex  : Hex_Color : 0x4b372c;
-third_hex : Hex_Color : 0x000000;
-*/
-
-/*
-// Kankei 4 Palette
-white_hex : Hex_Color : 0xffffff;
-black_hex : Hex_Color : 0x060608;
-red_hex   : Hex_Color : 0xf42e1f;
-blue_hex  : Hex_Color : 0x2f256b;
-third_hex : Hex_Color : 0x000000;
-*/
-
-/*
-// CGA MIBEND4 Palette
-white_hex : Hex_Color : 0xf7ecb9;
-black_hex : Hex_Color : 0x291f23;
-red_hex   : Hex_Color : 0xbd502f;
-blue_hex  : Hex_Color : 0x34d1af;
-third_hex : Hex_Color : 0x000000;
-*/
-
-black :: #run color_from_hex(black_hex);
-white :: #run color_from_hex(white_hex);
-red   :: #run color_from_hex(red_hex);
-blue  :: #run color_from_hex(blue_hex);
-third :: #run color_from_hex(third_hex);
-
-color_from_hex :: ($h: u32) -> Color {
-    color : Color;
-    color.x = ((h >> 16) & 0xff) / 255.0;
-    color.y = ((h >> 8) & 0xff) / 255.0;
-    color.z = ((h >> 0) & 0xff) / 255.0;
-    color.w = 1.0;
-
-    return color;
-}
-
-team_color :: (team: Team) -> Color {
-    if #complete team == {
-        case .NONE;  return white;
-        case .BLUE;  return blue;
-        case .RED;   return red;
-    }
-}
-
-//
-//
-//
-
-render :: (map : Map)
+render :: (map : Map, transparency := 1.0)
 {
-    glViewport(0, 0, xx window_width, xx window_height);
-    glClearColor(black.x, black.y, black.z, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+    use_tile_shader(transparency);
 
     // Draw Game Board
     {
-        shader := rendering.shader;
-        use_shader(shader);
-        defer disable_shaders();
-
-        bind(rendering.spritesheet.texture, 0);
-
-        orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
-        set_mat4(shader, "projection", orthographic);
-
-        for column, x: map.tiles {
-            for tile, y: column {
+        for col: (viewport.corner.col)..(viewport.corner.col + VIEWPORT_WIDTH - 1) {
+            for tile, row: map.tiles[col] {
                 tile_index := tile.sprite_index;
-                draw_sprite(shader, rendering.spritesheet, tile_index, .{x, y});
+                draw_tile(tile_index, .{col, row} - viewport.corner);
             }
         }
 
         // Draw Overlays
-        draw_squares_overlay(shader, cursor.accessible);
-        draw_squares_overlay(shader, cursor.interactible, color = red);
+        overlay_color := color_4;
+        if cursor.selected {
+            targeting_ability := cursor.selected.primary;
+            if cursor.state == .TARGETING_SECONDARY {
+                targeting_ability = cursor.selected.secondary;
+            }
+
+            if targeting_ability.targeting == {
+                case .ALLY;     overlay_color = color_1;
+                case .ENEMY;    overlay_color = color_2;
+            }
+        }
+        draw_squares_overlay(cursor.interactible, color = overlay_color);
+        draw_squares_overlay(cursor.accessible);
 
         if cursor.path {
-            draw_path(shader, cursor.path, color = red);
+            draw_path(cursor.path, color = color_3);
         }
 
         // Draw Units
         for map.units {
-            draw_unit(it, shader);
+            draw_unit(it);
         }
 
         // Draw Cursor
-        if get_occupant(map, cursor.square) {
-            draw_sprite(shader, rendering.spritesheet, 49 * 12 + 35, cursor.square, white);
-        }
-        else {
-            if whose_turn() == .BLUE {
-                draw_sprite(shader, rendering.spritesheet, 49 * 12 + 35, cursor.square, blue);
-            }
-            else {
-                draw_sprite(shader, rendering.spritesheet, 49 * 12 + 35, cursor.square, red);
-            }
-        }
+        cursor_color := color_fg;
+        if whose_turn() == .YOU then cursor_color = color_1;
+        else cursor_color = color_2;
+
+        if get_occupant(map, cursor.square) then cursor_color = color_4;
+
+        draw_tile(49 * 12 + 35, cursor.square - viewport.corner, cursor_color);
 
         // Editor Cursor
         if program_mode == .EDITOR {
-            draw_sprite(shader, rendering.spritesheet, 49 * 12 + 37, editor.cursor, white);
+            draw_tile(49 * 12 + 37, editor.cursor, color_4);
         }
+    }
+}
 
-        // Debug draw
-        /*
-        if debug.active {
-            draw_numbers_on_map(shader);
+render_ui :: (map: Map, transparency := 1.0) {
+    draw_ability_ui :: (using ability : Ability, square: Square, num_square: Square, color := color_bg) {
+        draw_tile(sprite_index, square, color);
+
+        if damage > 0 {
+            draw_die_number(damage, num_square, color_2);
         }
-        */
+        else if damage < 0 {
+            draw_die_number(damage, num_square, color_4);
+        }
+    }
+
+    // Draw UI Elements
+    use_tile_shader(transparency);
+
+    for 0..VIEWPORT_WIDTH-1 {
+        draw_background(.{it, -1}, color_3);
+    }
+
+    if roll_time != 0.0 {
+        draw_die_number(roll_result, .{0, -1}, color_bg);
     }
 
     ui_unit := get_occupant(map, cursor.square);
-    if cursor.selected {
+    if ui_unit == null && cursor.selected
         ui_unit = cursor.selected;
-    }
+
     if ui_unit {
-        // Draw UI Elements
         {
-            shader := rendering.text_shader;
-            use_shader(shader);
-            defer disable_shaders();
-
-            orthographic := orthographic_projection_matrix(0, xx window_width, 0, xx window_height, -1, 1);
-            set_mat4(shader, "projection", orthographic);
-
-            draw_text(shader, font, ui_unit.name, 200, xx (window_height - font.height - 5), scale = 1.0, color = team_color(ui_unit.team));
-        }
-
-        {
-            shader := rendering.shader;
-            use_shader(shader);
-            defer disable_shaders();
-
-            bind(rendering.spritesheet.texture, 0);
-
-            orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
-            set_mat4(shader, "projection", orthographic);
-
-            color := third;
-            if ui_unit.exhausted {
-                color = white;
-            }
-            draw_ability_ui(ui_unit.ability, .{6, -1}, shader, color);
-
-            color = third;
-            if ui_unit.moved {
-                color = white;
-            }
-            draw_sprite(shader, rendering.spritesheet, 1048, .{5, -1}, color);
+            shader := use_text_shader(transparency);
+            draw_text(shader, main_font, ui_unit.name, .{11, 0}, color_bg);
         }
     }
+    use_tile_shader(transparency);
 
-    // Draw Text
-    {
-        shader := rendering.text_shader;
-        use_shader(shader);
-        defer disable_shaders();
-
-        orthographic := orthographic_projection_matrix(0, xx window_width, 0, xx window_height, -1, 1);
-        set_mat4(shader, "projection", orthographic);
-
-        if debug.active {
-            for debug.lines {
-                draw_text_centered(shader, font, it, 5 + cast(float)(it_index) * font.height, scale = 1.0, color = white);
+    if cursor.inspecting {
+        for col: 0..VIEWPORT_WIDTH / 2 - 1 {
+            for row: -1..VIEWPORT_HEIGHT {
+                draw_background(.{col, row}, color_3);
             }
         }
+
+        using cursor.inspecting;
+
+        // health
+        draw_tile(532, .{1, 0}, color_bg);
+        draw_number(health, .{2, 0}, color_1);
+
+        // armor
+        draw_tile(33, .{1, 1}, color_bg);
+        draw_number(armor, .{2, 1}, color_1);
+
+        // movement
+        if moved {
+            draw_tile(1048, .{1, 2}, color_fg);
+            draw_number(movement, .{2, 2}, color_1);
+        }
+        else {
+            draw_tile(1048, .{1, 2}, color_bg);
+            draw_number(movement, .{2, 2}, color_1);
+        }
+
+        // direction
+        if turned {
+            draw_direction(direction, .{1, 3}, color_fg);
+        }
+        else {
+            draw_direction(direction, .{1, 3}, color_bg);
+        }
+
+        color := color_bg;
+        if exhausted
+            color = color_fg;
+        if primary_active {
+            draw_ability_ui(primary, .{1, 5}, .{2, 5}, color);
+        }
+        if secondary_active {
+            draw_ability_ui(secondary, .{1, 6}, .{2, 6}, color);
+        }
+
+        {
+            shader := use_text_shader(transparency);
+
+            draw_text(shader, main_font, description, .{0, 0}, color_1);
+
+            draw_text(shader, main_font, "health", .{3, 1}, color_1);
+            draw_text(shader, main_font, "armor",  .{3, 2}, color_1);
+            draw_text(shader, main_font, "movement", .{3, 3}, color_1);
+            draw_text(shader, main_font, "facing", .{3, 4}, color_1);
+
+            if primary_active {
+                text_color := color_1; if primary.damage > 0 then text_color = color_2;
+
+                draw_text(shader, main_font, tprint("% - %", primary.min_range, primary.max_range), .{0, 6}, text_color);
+                draw_text(shader, main_font, "rng.", .{0, 6}, text_color, second=true);
+
+                draw_text(shader, main_font, primary.name, .{3, 6}, text_color);
+                draw_text(shader, main_font, summarize_ability(primary), .{3, 6}, color_bg, second=true);
+            }
+            if secondary_active {
+                text_color := color_1; if secondary.damage > 0 then text_color = color_2;
+
+                draw_text(shader, main_font, tprint("% - %", secondary.min_range, secondary.max_range), .{0, 7}, text_color);
+                draw_text(shader, main_font, "rng.", .{0, 7}, text_color, second=true);
+
+                draw_text(shader, main_font, secondary.name, .{3, 7}, text_color);
+                draw_text(shader, main_font, summarize_ability(secondary), .{3, 7}, color_bg, second=true);
+            }
+
+            draw_text(shader, main_font, summarize_unit_flags(flags), .{0, 8}, color_1);
+        }
     }
+    else if ui_unit {
+        using ui_unit;
+
+        // health
+        draw_tile(532, .{1, -1}, color_bg);
+        draw_number(health, .{1, -1}, color_1);
+
+        // armor
+        draw_tile(33, .{2, -1}, color_bg);
+        draw_number(armor, .{2, -1}, color_1);
+
+        // movement
+        if moved {
+            draw_tile(1048, .{3, -1}, color_fg);
+            draw_number(movement, .{3, -1}, color_1);
+        }
+        else {
+            draw_tile(1048, .{3, -1}, color_bg);
+            draw_number(movement, .{3, -1}, color_1);
+        }
+
+        if turned {
+            draw_direction(direction, .{4, -1}, color_fg);
+        }
+        else {
+            draw_direction(direction, .{4, -1}, color_bg);
+        }
+
+        color := color_bg;
+        if exhausted
+            color = color_fg;
+        if primary_active {
+            draw_ability_ui(primary, .{6, -1}, .{7, -1}, color);
+        }
+        if secondary_active {
+            draw_ability_ui(secondary, .{9, -1}, .{10, -1}, color);
+        }
+
+        ti := type_info(Unit_Flags);
+        for ti.values {
+
+        }
+
+        for effects {
+            if #complete it.kind == {
+                case .NONE;
+                case .DEFEND;   draw_number(armor, .{2, -1}, color_4);
+                case .PIERCE;   draw_number(armor, .{2, -1}, color_2);
+                case .QUICKEN;  draw_number(movement, .{3, -1}, color_4);
+                case .SLOW;     draw_number(movement, .{3, -1}, color_2);
+
+                case .EMPOWER;
+                    if primary.damage > 0   draw_die_number(primary.damage, .{6, -1}, color_4);
+                    if secondary.damage > 0 draw_die_number(primary.damage, .{9, -1}, color_4);
+                case .WEAKEN;
+                    if primary.damage > 0   draw_die_number(primary.damage, .{6, -1}, color_2);
+                    if secondary.damage > 0 draw_die_number(primary.damage, .{9, -1}, color_2);
+
+                case .PARALYZE;
+            }
+            // @TODO: DRAW EFFECT INDICATORS ON THE UI!!!
+        }
+    }
+}
+
+render_dialogue :: (transparency := 1.0) {
+    use_sprite_shader(transparency);
+    draw_sprite(rendering.uncle, right=true);
+}
+
+// Renders the given framebuffer as a texture on a screen-space quad.
+render_framebuffer_to_screen :: () {
+    shader := rendering.quad_shader;
+    use_shader(shader);
+    defer disable_shaders();
+
+    model := Matrix4_Identity;
+
+    translation_vector := Vector3.{-1, -1, 1};
+    translate(*model, translation_vector);
+
+    scale_vector := Vector3.{2, 2, 1};
+    scale(*model, scale_vector);
+
+    set_mat4(shader, "model", model);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, render_texture);
+    draw_quad(rendering.quad);
 }
 
 //
 //
 
-draw_ability_ui :: (using ability : Ability, square: Square, shader: Shader, color := white) {
-    sprite_index : int;
-    if #complete ability_kind == {
-        case .NONE;          sprite_index = 0;
-        case .ATTACK;        sprite_index = 474;
-        case .PUSH;          sprite_index = 90;
-        case .WARP;          sprite_index = 231;
-        case .SHIELD_BUFF;   sprite_index = 233;
-        case .SPEED_BUFF;    sprite_index = 278;
-        case .AUGMENT_BUFF;  sprite_index = 280;
-        case .DANCE;         sprite_index = 529;
-        case .PARALYZE;      sprite_index = 131;
-        case .MIND_CONTROL;  sprite_index = 230;
-        case .SWEEPING_EDGE; sprite_index = 430;
-        case .LINE;          sprite_index = 387;
-        case .FIREBALL;      sprite_index = 190;
-    }
-
-    draw_sprite(shader, rendering.spritesheet, sprite_index, square, color);
-}
-
-//
-//
-
-draw_unit :: (using unit : Unit, shader : Shader) {
+draw_unit :: (using unit : Unit) {
+    /*
     if whose_turn() == team {
         if !moved {
-            draw_sprite(shader, rendering.spritesheet, 1072, square, third);
+            draw_tile(1072, square - viewport.corner, color_3);
         }
         if !exhausted {
-            draw_sprite(shader, rendering.spritesheet, 1071, square, third);
+            draw_tile(1071, square - viewport.corner, color_3);
         }
     }
+    */
 
     color := team_color(team);
 
-    draw_sprite(shader, rendering.spritesheet, sprite_index, square, color);
+    draw_ship(sprite_index, direction, square - viewport.corner, color);
 
-    if cast(bool)(effects & .SHIELD) {
-        draw_sprite(shader, rendering.spritesheet, 1022, square, third);
+    /*
+    if cursor.state == .TARGETING_PRIMARY || cursor.state == .TARGETING_SECONDARY {
+        draw_number(health, square, color_3);
     }
-    if cast(bool)(effects & .SPEED) {
-        draw_sprite(shader, rendering.spritesheet, 1023, square, third);
-    }
-    if cast(bool)(effects & .PARALYZED) {
-        draw_sprite(shader, rendering.spritesheet, 1024, square, third);
-    }
-    if cast(bool)(effects & .AUGMENT) {
-        draw_sprite(shader, rendering.spritesheet, 1025, square, third);
-    }
+    */
 }
 
-draw_squares_overlay :: (shader : Shader, squares : [..] Square, color := white) {
+draw_squares_overlay :: (squares : [..] Square, color := color_fg) {
     for squares {
-        draw_square_overlay(shader, it, color);
+        draw_square_overlay(it, color);
     }
 }
 
-draw_square_overlay :: (shader : Shader, square : Square, color : Color) {
-    draw_sprite(shader, rendering.spritesheet, 49 * 13 + 41, square, color);
+draw_square_overlay :: (square : Square, color : Color) {
+    draw_tile(49 * 13 + 41, square - viewport.corner, color);
 }
 
-draw_path :: (shader : Shader, path: Path, color : Color) {
+draw_path :: (path: Path, color : Color) {
     for path {
-        draw_square_overlay(shader, it, color);
+        draw_square_overlay(it, color);
     }
+}
+
+draw_background :: (square: Square, color := color_fg) {
+    draw_tile(1076, square, color);
+}
+
+draw_number :: (number: int, square: Square, color := color_fg) {
+    get_number_sprite_index :: (i: int) -> int {
+        return abs(i) + 868;
+    }
+
+    draw_tile(get_number_sprite_index(number), square, color);
+}
+
+draw_die_number :: (number: int, square: Square, color := color_fg) {
+    get_die_number_sprite_index :: (i: int) -> int {
+        return abs(i) + 776;
+    }
+
+    draw_tile(get_die_number_sprite_index(number), square, color);
+}
+
+draw_direction :: (direction: Direction, square: Square, color := color_fg) {
+    get_direction_sprite_index :: (d: Direction) -> int {
+        if #complete d == {
+            case .NORTH; return 1057;
+            case .EAST;  return 1058;
+            case .SOUTH; return 1059;
+            case .WEST;  return 1060;
+        }
+    }
+
+    draw_tile(get_direction_sprite_index(direction), square, color);
 }
 
 //
 // Menu
 //
 
-render_menu :: (using menu: Menu) {
-    glViewport(0, 0, xx window_width, xx window_height);
-    glClearColor(black.x, black.y, black.z, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    draw_menu_element :: (shader: Shader, font: Font, using element: *Menu_Element, height : float, color := white) {
-        if kind == {
-            case .GO;
-                using cast(*Go_Element)element;
-                draw_text_centered(shader, font, name, height, scale = 1.0, color = color);
-
-            case .CHECKBOX;
-                using cast(*Checkbox_Element)element;
-                str := "Off";
-                if value
-                    str = "On";
-                draw_text_centered(shader, font, tprint("%: %", name, str), height, scale = 1.0, color = color);
-
-            case .SLIDER;
-                using cast(*Slider_Element)element;
-                draw_text_centered(shader, font, tprint("%: %", name, value.*), height, scale = 1.0, color = color);
-        }
-    }
-
+render_menu :: (using menu: Menu, transparency := 1.0) {
     {
-        shader := rendering.text_shader;
-        use_shader(shader);
-        defer disable_shaders();
+        use_tile_shader(transparency);
 
-        orthographic := orthographic_projection_matrix(0, xx window_width, 0, xx window_height, -1, 1);
-        set_mat4(shader, "projection", orthographic);
+        for col: 0..VIEWPORT_WIDTH / 2 - 1 {
+            for row: -1..VIEWPORT_HEIGHT {
+                draw_background(.{col, row}, color_3);
+            }
+        }
 
-        draw_text_centered(shader, font, name, font.height * 10.0, scale = 1.0, color = red);
-
-        base_height := font.height * 9.0;
         for elements {
-            draw_menu_element(shader, font, it, base_height - it_index * font.height);
+            draw_menu_element(it, it_index + 1, color_fg, color_bg);
         }
 
         // Draw selected element over it.
-        draw_menu_element(shader, font, elements[element_index], base_height - element_index * font.height, blue);
+        draw_menu_element(elements[element_index], element_index + 1, color_bg, color_fg);
     }
 }
 
@@ -325,21 +362,22 @@ render_menu :: (using menu: Menu) {
 // Game Over
 //
 
-render_game_over :: () {
-    glViewport(0, 0, xx window_width, xx window_height);
-    glClearColor(black.x, black.y, black.z, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+render_game_over :: (transparency := 1.0) {
+    {
+        use_tile_shader(transparency);
+
+        for col: VIEWPORT_WIDTH / 3..VIEWPORT_WIDTH - VIEWPORT_WIDTH / 3 - 1 {
+            for row: -1..VIEWPORT_HEIGHT {
+                draw_background(.{col, row}, color_3);
+            }
+        }
+    }
 
     {
-        shader := rendering.text_shader;
-        use_shader(shader);
-        defer disable_shaders();
+        shader := use_text_shader(transparency);
 
-        orthographic := orthographic_projection_matrix(0, xx window_width, 0, xx window_height, -1, 1);
-        set_mat4(shader, "projection", orthographic);
-
-        draw_text_centered(shader, font, "game over", xx (window_height / 2.0), scale = 1.0, color = red);
-        draw_text_centered(shader, font, "retry?", xx (window_height / 2.0 - font.height), scale = 0.8, color = blue);
+        draw_text_centered(shader, main_font, "game over", xx (PIXEL_HEIGHT / 2.0), color_bg);
+        draw_text_centered(shader, main_font, "retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height), color_1);
     }
 }
 
@@ -347,16 +385,55 @@ render_game_over :: () {
 // Debug Overlays
 //
 
-get_number_sprite_index :: (i: int) -> int {
-    return i + 868;
-}
-
-draw_numbers_on_map :: (shader: Shader) {
+draw_numbers_on_map :: () {
     using debug.traversed;
 
     for col: field {
         for col {
-            draw_sprite(shader, rendering.spritesheet, get_number_sprite_index(it.distance), it.square, third);
+            draw_number(it.distance, it.square, color_3);
         }
     }
+}
+
+//
+// Shader nonsense
+//
+
+use_tile_shader :: (transparency : float) -> Shader {
+    shader := rendering.shader;
+    use_shader(shader);
+
+    orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
+    set_mat4(shader, "projection", orthographic);
+
+    set_float(shader, "transparency", transparency);
+    set_vec4(shader, "background", color_bg);
+
+    return shader;
+}
+
+use_text_shader :: (transparency : float) -> Shader {
+    shader := rendering.text_shader;
+    use_shader(shader);
+
+    orthographic := orthographic_projection_matrix(0, xx PIXEL_WIDTH, 0, xx PIXEL_HEIGHT, -1, 1);
+    set_mat4(shader, "projection", orthographic);
+
+    set_float(shader, "transparency", transparency);
+    set_vec4(shader, "background", color_bg);
+
+    return shader;
+}
+
+use_sprite_shader :: (transparency : float) -> Shader {
+    shader := rendering.sprite_shader;
+    use_shader(shader);
+
+    orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
+    set_mat4(shader, "projection", orthographic);
+
+    set_float(shader, "transparency", transparency);
+    set_vec4(shader, "background", color_bg);
+
+    return shader;
 }

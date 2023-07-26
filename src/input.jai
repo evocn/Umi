@@ -3,34 +3,95 @@
 // Alex Hartford
 // June 2023
 
-input : struct {
-    up    := false;
-    left  := false;
-    down  := false;
-    right := false;
-
-    button_1 := false;
-    button_2 := false;
-    button_3 := false;
-    button_4 := false;
-
-    left_click  := false;
-    right_click := false;
-
-    /*
-    menu_button := false;
-    button_5 := false;
-    button_6 := false;
-    button_7 := false;
-    button_8 := false;
-    */
+Button :: struct {
+    pressed : bool;
+    held_for : float;
 }
 
-// @TODO: Decide where this ought to go.
+press_button :: (using button: *Button) {
+    pressed = true;
+    held_for = 0.0;
+}
+
+release_button :: (using button: *Button) {
+    pressed = false;
+    held_for = 0.0;
+}
+
+pressed :: (using button: *Button) -> bool {
+    if pressed {
+        pressed = false;
+        return true;
+    }
+
+    return false;
+}
+
+HOLD_REPEAT_TIME :: 0.15;
+
+update_input_hold_times :: (dt: float) {
+    using input;
+
+    maybe_increment_hold_time :: (button: *Button, dt: float) {
+        if button.held_for > HOLD_REPEAT_TIME {
+            press_button(button);
+        }
+
+        if button.pressed || button.held_for != 0.0 {
+            button.held_for += dt;
+        }
+    }
+
+    maybe_increment_hold_time(*up, dt);
+    maybe_increment_hold_time(*left, dt);
+    maybe_increment_hold_time(*down, dt);
+    maybe_increment_hold_time(*right, dt);
+    //maybe_increment_hold_time(*button_1, dt);
+    //maybe_increment_hold_time(*button_2, dt);
+    //maybe_increment_hold_time(*button_3, dt);
+    //maybe_increment_hold_time(*button_4, dt);
+    //maybe_increment_hold_time(*button_menu, dt);
+    //maybe_increment_hold_time(*button_select, dt);
+    //maybe_increment_hold_time(*button_info, dt);
+    //maybe_increment_hold_time(*button_5, dt);
+    //maybe_increment_hold_time(*button_6, dt);
+}
+
+//
+//
+
+input : struct {
+    up    : Button;
+    left  : Button;
+    down  : Button;
+    right : Button;
+
+    button_1 : Button;
+    button_2 : Button;
+    button_3 : Button;
+    button_4 : Button;
+
+    button_menu  : Button;
+    button_select : Button;
+    button_info   : Button;
+
+    button_5 : Button;
+    button_6 : Button;
+    button_7 : Button;
+    button_8 : Button;
+}
+
+//update_input :: 
+
 gamepad : *SDL_Joystick;
 JOYSTICK_DEAD_ZONE :: 8000;
 
+//
+//
+
 handle_events :: () {
+    using input;
+
     event : SDL_Event;
     while SDL_PollEvent(*event) {
         ImGui_ImplSdl_ProcessEvent(*event);
@@ -38,21 +99,51 @@ handle_events :: () {
             case SDL_QUIT;
                 running = false;
             case SDL_KEYUP;
-                if event.key.keysym.sym == SDLK_w       input.up    = false;
-                if event.key.keysym.sym == SDLK_a       input.left  = false;
-                if event.key.keysym.sym == SDLK_s       input.down  = false;
-                if event.key.keysym.sym == SDLK_d       input.right = false;
-                if event.key.keysym.sym == SDLK_SPACE   input.button_1 = false;
-                if event.key.keysym.sym == SDLK_z       input.button_2 = false;
-                if event.key.keysym.sym == SDLK_q       input.button_3 = false;
-                if event.key.keysym.sym == SDLK_e       input.button_4 = false;
+                if event.key.keysym.sym == SDLK_w       release_button(*up);
+                if event.key.keysym.sym == SDLK_a       release_button(*left);
+                if event.key.keysym.sym == SDLK_s       release_button(*down);
+                if event.key.keysym.sym == SDLK_d       release_button(*right);
+
+                if event.key.keysym.sym == SDLK_ESCAPE  release_button(*button_menu);
+                if event.key.keysym.sym == SDLK_RETURN  release_button(*button_select);
+                if event.key.keysym.sym == SDLK_TAB     release_button(*button_info);
+
+                if event.key.keysym.sym == SDLK_SPACE   release_button(*button_1);
+                if event.key.keysym.sym == SDLK_z       release_button(*button_2);
+                if event.key.keysym.sym == SDLK_x       release_button(*button_3);
+                if event.key.keysym.sym == SDLK_c       release_button(*button_4);
+
+                if event.key.keysym.sym == SDLK_q       release_button(*button_5);
+                if event.key.keysym.sym == SDLK_e       release_button(*button_6);
 
             case SDL_KEYDOWN;
                 if program_state.imgui_capturing_keyboard return;
 
+                // Main Program Inputs
+                {
+                    if event.key.repeat != 0 return;
+                    if event.key.keysym.sym == SDLK_w       press_button(*up);
+                    if event.key.keysym.sym == SDLK_a       press_button(*left);
+                    if event.key.keysym.sym == SDLK_s       press_button(*down);
+                    if event.key.keysym.sym == SDLK_d       press_button(*right);
+
+                    if event.key.keysym.sym == SDLK_ESCAPE  press_button(*button_menu);
+                    if event.key.keysym.sym == SDLK_RETURN  press_button(*button_select);
+                    if event.key.keysym.sym == SDLK_TAB     press_button(*button_info);
+
+                    if event.key.keysym.sym == SDLK_SPACE   press_button(*button_1);
+                    if event.key.keysym.sym == SDLK_z       press_button(*button_2);
+                    if event.key.keysym.sym == SDLK_x       press_button(*button_3);
+                    if event.key.keysym.sym == SDLK_c       press_button(*button_4);
+
+                    if event.key.keysym.sym == SDLK_q       press_button(*button_5);
+                    if event.key.keysym.sym == SDLK_e       press_button(*button_6);
+                }
+
                 if event.key.keysym.sym == SDLK_r {
                     if program_mode == {
-                        case .GAME;
+                        case .GAME; #through;
+                        case .GAME_OVER;
                         program_mode = .EDITOR;
                         activate_mouse();
 
@@ -62,9 +153,15 @@ handle_events :: () {
                     }
                 }
 
-                if event.key.keysym.sym == SDLK_k {
-                    program_mode = .GAME_OVER;
+                if event.key.keysym.sym == SDLK_t {
+                    restart(*animator);
                 }
+                if event.key.keysym.sym == SDLK_y {
+                    restart(*animator2);
+                }
+
+                if event.key.keysym.sym == SDLK_k
+                    program_mode = .GAME_OVER;
 
                 if event.key.keysym.sym == SDLK_0
                     program_paused = !program_paused;
@@ -72,34 +169,7 @@ handle_events :: () {
                 if event.key.keysym.sym == SDLK_g
                     debug.active = !debug.active;
 
-                if event.key.keysym.sym == SDLK_ESCAPE {
-                    if program_mode == .GAME {
-                        program_mode = .MENU;
-                        menu.element_index = 0;
-                    }
-                    else if program_mode == .MENU {
-                        program_mode = .GAME;
-                    }
-                    else if program_mode == .GAME_OVER {
-                        running = false;
-                    }
-                }
-
-                // Main Program Inputs
-                {
-                    if event.key.repeat != 0 return;
-                    if event.key.keysym.sym == SDLK_w       input.up    = true;
-                    if event.key.keysym.sym == SDLK_a       input.left  = true;
-                    if event.key.keysym.sym == SDLK_s       input.down  = true;
-                    if event.key.keysym.sym == SDLK_d       input.right = true;
-                    if event.key.keysym.sym == SDLK_SPACE   input.button_1 = true;
-                    if event.key.keysym.sym == SDLK_z       input.button_2 = true;
-                    if event.key.keysym.sym == SDLK_q       input.button_3 = true;
-                    if event.key.keysym.sym == SDLK_e       input.button_4 = true;
-                }
-
                 // Settings
-                /*
                 if event.key.keysym.sym == SDLK_l {
                     if settings.line_mode
                         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -107,15 +177,6 @@ handle_events :: () {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                     settings.line_mode = !settings.line_mode;
                 }
-                */
-
-            case SDL_MOUSEBUTTONDOWN;
-                if event.button.button == SDL_BUTTON_LEFT input.left_click = true;
-                if event.button.button == SDL_BUTTON_RIGHT input.right_click = true;
-
-            case SDL_MOUSEBUTTONUP;
-                if event.button.button == SDL_BUTTON_LEFT input.left_click = false;
-                if event.button.button == SDL_BUTTON_RIGHT input.right_click = false;
 
             case SDL_WINDOWEVENT;
                 if event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED {
@@ -127,58 +188,74 @@ handle_events :: () {
             case SDL_JOYAXISMOTION;
                 if event.jaxis.which == 0 {
                     if event.jaxis.axis == 0 {
-                        if event.jaxis.value < -JOYSTICK_DEAD_ZONE
-                            input.left = true;
+                        if event.jaxis.value < -JOYSTICK_DEAD_ZONE {
+                            press_button(*left);
+                        }
                         else if event.jaxis.value > JOYSTICK_DEAD_ZONE
-                            input.right = true;
+                            press_button(*right);
                         else {
-                            input.left = false;
-                            input.right = false;
+                            release_button(*left);
+                            release_button(*right);
                         }
                     }
                     else if event.jaxis.axis == 1 {
                         if event.jaxis.value < -JOYSTICK_DEAD_ZONE
-                            input.up = true;
+                            press_button(*up);
                         else if event.jaxis.value > JOYSTICK_DEAD_ZONE
-                            input.down = true;
+                            press_button(*down);
                         else {
-                            input.up = false;
-                            input.down = false;
+                            release_button(*up);
+                            release_button(*down);
                         }
                     }
                 }
 
             case SDL_JOYBUTTONDOWN;
-                if event.jbutton.button == 0 input.button_1 = true;
-                if event.jbutton.button == 1 input.button_2 = true;
-                if event.jbutton.button == 2 input.button_3 = true;
-                if event.jbutton.button == 3 input.button_4 = true;
-
+                // 0, 1, 2, 3 : face buttons
                 // 4, 5 : left bumper / right bumper
                 // 6, 7 : select / start
                 // 8, 9 : pressing in left stick / right stick
 
+                if event.jbutton.button == 0 press_button(*button_1);
+                if event.jbutton.button == 1 press_button(*button_2);
+                if event.jbutton.button == 2 press_button(*button_3);
+                if event.jbutton.button == 3 press_button(*button_4);
+
+                if event.jbutton.button == 4 press_button(*button_5);
+                if event.jbutton.button == 5 press_button(*button_6);
+
+                if event.jbutton.button == 6 press_button(*button_menu);
+                if event.jbutton.button == 7 press_button(*button_select);
+                if event.jbutton.button == 8 press_button(*button_info);
+
             case SDL_JOYBUTTONUP;
-                if event.jbutton.button == 0 input.button_1 = false;
-                if event.jbutton.button == 1 input.button_2 = false;
-                if event.jbutton.button == 2 input.button_3 = false;
-                if event.jbutton.button == 3 input.button_4 = false;
+                if event.jbutton.button == 0 release_button(*button_1);
+                if event.jbutton.button == 1 release_button(*button_2);
+                if event.jbutton.button == 2 release_button(*button_3);
+                if event.jbutton.button == 3 release_button(*button_4);
+
+                if event.jbutton.button == 4 release_button(*button_5);
+                if event.jbutton.button == 5 release_button(*button_6);
+
+                if event.jbutton.button == 6 release_button(*button_menu);
+                if event.jbutton.button == 7 release_button(*button_select);
+                if event.jbutton.button == 8 release_button(*button_info);
 
             case SDL_JOYHATMOTION;
                 hat_state : u8;
                 hat_state = event.jhat.value;
 
-                if hat_state & 1 input.up = true;
-                else input.up = false;
+                if hat_state & 1 then press_button(*up);
+                else release_button(*up);
 
-                if hat_state & 2 input.right = true;
-                else input.right = false;
+                if hat_state & 2 then press_button(*right);
+                else release_button(*right);
 
-                if hat_state & 4 input.down = true;
-                else input.down = false;
+                if hat_state & 4 then press_button(*down);
+                else release_button(*down);
 
-                if hat_state & 8 input.left = true;
-                else input.left = false;
+                if hat_state & 8 then press_button(*left);
+                else release_button(*left);
 
             case SDL_JOYDEVICEADDED;
                 log("Gamepad connected!");

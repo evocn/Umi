@@ -36,15 +36,13 @@ init_quad_rendering_objects :: (using quad : *Quad) {
 	glEnableVertexAttribArray(0);
 }
 
-draw_quad :: () {
-    using rendering.quad;
+draw_quad :: (using quad: Quad) {
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
 	glDrawElements(GL_TRIANGLES, cast(u32)indices.count, GL_UNSIGNED_INT, null);
 }
-
 
 // Lines
 //

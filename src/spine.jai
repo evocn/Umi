@@ -4,10 +4,16 @@
 // July 2023
 
 resolve_game_over :: (map: *Map, units: [..] *Unit) {
-    if input.button_1 {
+    using input;
+
+    if pressed(*button_1) {
         init_level(map, units, levels[current_level_index]);
         program_mode = .GAME;
-        input.button_1 = false;
+        play_sfx("choose");
+    }
+
+    if pressed(*button_menu) {
+        running = false;
     }
 }
 
@@ -26,5 +32,5 @@ init_level :: (map: *Map, units: [..] *Unit, level_name : string) {
     for map.units occupy(map, it.square, it);
 
     manager.turn_number = 0;
-    set_turn(.BLUE);
+    set_turn(.YOU);
 }

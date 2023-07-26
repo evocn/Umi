@@ -3,19 +3,12 @@
 // Alex Hartford
 // June 2023
 
-SCREEN_TILES_COLUMNS :: 16;
-SCREEN_TILES_ROWS    :: 9;
-
-TILE_SIZE :: 16;
-// in pixels
-
 Spritesheet :: struct {
     texture : Texture = ---;
     columns, rows : int;
 }
 
 make_spritesheet :: (using spritesheet : *Spritesheet, filename : string) -> success: bool {
-
     texture =, success := load_texture(filename);
     columns = texture.width  / TILE_SIZE;
     rows    = texture.height / TILE_SIZE;
@@ -23,7 +16,27 @@ make_spritesheet :: (using spritesheet : *Spritesheet, filename : string) -> suc
     return success;
 }
 
-draw_sprite :: (shader: Shader, using spritesheet : Spritesheet, index: int, square : Square, color := white) {
+draw_tile :: (index: int, square : Square, color := color_fg, horizontal_flip := false) {
+    draw_spritesheet(rendering.spritesheet, index, square, color_override=color, horizontal_flip=horizontal_flip);
+}
+
+draw_ship :: (index: int, direction: Direction, square : Square, color := color_fg) {
+    if #complete direction == {
+        case .NORTH;    
+            draw_spritesheet(rendering.ship_spritesheet, index * 4, square, color_override=color, horizontal_flip=false);
+        case .SOUTH;
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 1, square, color_override=color, horizontal_flip=false);
+        case .EAST;
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, color_override=color, horizontal_flip=false);
+        case .WEST;
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, color_override=color, horizontal_flip=true);
+    }
+}
+
+draw_spritesheet :: (using sheet : Spritesheet, index: int, square : Square, horizontal_flip := false, use_color_override := true, color_override := color_fg) {
+    bind(sheet.texture, 0);
+    shader := rendering.shader;
+
     assert(index >= 0 && index < columns * rows);
 
     col := index % columns;
@@ -36,12 +49,16 @@ draw_sprite :: (shader: Shader, using spritesheet : Spritesheet, index: int, squ
     set_vec2(shader, "relative_sheet_scale", relative_sheet_scale);
 
     model := Matrix4_Identity;
-    translate(*model, Vector3.{square.col * (1.0 / SCREEN_TILES_COLUMNS), (map_height - square.row - 1) * (1.0 / SCREEN_TILES_ROWS), 1});
-    scale(*model, Vector3.{1.0 / SCREEN_TILES_COLUMNS, 1.0 / SCREEN_TILES_ROWS, 1});
+    translation_vector := Vector3.{square.col * (1.0 / VIEWPORT_WIDTH), (VIEWPORT_HEIGHT - square.row - 1) * (1.0 / (VIEWPORT_HEIGHT + 1)), 1};
+    scale_vector := Vector3.{1.0 / VIEWPORT_WIDTH, 1.0 / (VIEWPORT_HEIGHT + 1), 1};
+
+    translate(*model, translation_vector);
+    scale(*model, scale_vector);
     set_mat4(shader, "model", model);
 
-    set_vec4(shader, "color_override", color);
+    set_vec4(shader, "color_override", color_override);
+    set_bool(shader, "horizontal_flip", horizontal_flip);
+    set_bool(shader, "use_color_override", use_color_override);
 
-    draw_quad();
+    draw_quad(rendering.quad);
 }
-

@@ -3,14 +3,129 @@
 // Alex Hartford
 // June 2023
 
+clear_path :: (first: Square, second: Square, map: Map) -> bool {
+    if first.col != second.col && first.row != second.row then return false;
+
+    if first.col == second.col {
+        a := first; b := second;
+        if a.row < b.row {
+            a = second;
+            b = first;
+        }
+
+        for (b.row + 1)..(a.row - 1) {
+            query_square := Square.{a.col, it};
+            if get_occupant(map, query_square) then return false;
+        }
+    }
+
+    if first.row == second.row {
+        a := first; b := second;
+        if a.col < b.col {
+            a = second;
+            b = first;
+        }
+
+        for (b.col + 1)..(a.col - 1) {
+            query_square := Square.{it, a.row};
+            if get_occupant(map, query_square) then return false;
+        }
+    }
+
+    return true;
+}
+
+filter_get_port_and_starboard :: (orthographic : *[..] Square, origin: Square, facing: Direction) {
+    if #complete facing == {
+        case .NORTH; #through;
+        case .SOUTH;
+            for orthographic.* if origin.row != it.row remove it;
+
+        case .EAST;  #through;
+        case .WEST;
+            for orthographic.* if origin.col != it.col remove it;
+    }
+}
+
+filter_get_port :: (orthographic : *[..] Square, origin: Square, facing: Direction) {
+    if #complete facing == {
+        case .NORTH;
+            for orthographic.* if origin.row != it.row || origin.col < it.col then remove it;
+        case .SOUTH;
+            for orthographic.* if origin.row != it.row || origin.col > it.col then remove it;
+
+        case .EAST;
+            for orthographic.* if origin.col != it.col || origin.row < it.row then remove it;
+        case .WEST;
+            for orthographic.* if origin.col != it.col || origin.row > it.row then remove it;
+    }
+}
+
+filter_get_starboard :: (orthographic : *[..] Square, origin: Square, facing: Direction) {
+    if #complete facing == {
+        case .NORTH;
+            for orthographic.* if origin.row != it.row || origin.col > it.col then remove it;
+        case .SOUTH;
+            for orthographic.* if origin.row != it.row || origin.col < it.col then remove it;
+
+        case .EAST;
+            for orthographic.* if origin.col != it.col || origin.row > it.row then remove it;
+        case .WEST;
+            for orthographic.* if origin.col != it.col || origin.row < it.row then remove it;
+    }
+}
+
+filter_get_fore :: (orthographic : *[..] Square, origin: Square, facing: Direction) {
+    if #complete facing == {
+        case .NORTH;
+            for orthographic.* if origin.col != it.col || origin.row < it.row then remove it;
+        case .SOUTH;
+            for orthographic.* if origin.col != it.col || origin.row > it.row then remove it;
+
+        case .EAST;
+            for orthographic.* if origin.row != it.row || origin.col > it.col then remove it;
+        case .WEST;
+            for orthographic.* if origin.row != it.row || origin.col < it.col then remove it;
+    }
+}
+
+filter_get_aft :: (orthographic : *[..] Square, origin: Square, facing: Direction) {
+    if #complete facing == {
+        case .NORTH;
+            for orthographic.* if origin.col != it.col || origin.row > it.row then remove it;
+        case .SOUTH;
+            for orthographic.* if origin.col != it.col || origin.row < it.row then remove it;
+
+        case .EAST;
+            for orthographic.* if origin.row != it.row || origin.col < it.col then remove it;
+        case .WEST;
+            for orthographic.* if origin.row != it.row || origin.col > it.col then remove it;
+    }
+}
+
+get_orthographic_squares_from_position :: (using map : Map, ability: Ability, unit : Unit, origin: Square) -> [..] Square {
+    interactible : [..] Square;
+
+    traversed := traverse(map, origin, unit.team, pass=true, swift=true);
+    debug.traversed = traversed;
+    for traversed.squares {
+        within_range := it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range;
+        orthographic := it.square.col == origin.col || it.square.row == origin.row;
+        path_is_clear:= clear_path(origin, it.square, map);
+        if within_range && orthographic && path_is_clear
+            array_add(*interactible, it.square);
+    }
+
+    return interactible;
+}
+
 get_squares_you_could_use_an_ability_from :: (using map : Map, ability: Ability, attacker : Unit, target : Unit) -> [..] Square {
     squares_to_attack_from : [..] Square;
     squares_to_attack_from.allocator = temp;
 
     traversed := traverse(map, target.square, attacker.team,
-                          flying=cast(bool)(attacker.flags & .FLYING), 
                           pass=cast(bool)(attacker.flags & .PASS), 
-                          land_stride=cast(bool)(attacker.flags & .LAND_STRIDE)
+                          swift=cast(bool)(attacker.flags & .SWIFT)
                          );
 
     debug.traversed = traversed;
@@ -32,9 +147,8 @@ get_squares_right_next_to_unit :: (using map: Map, source: Unit, target: Unit) -
     squares_right_next_to_unit.allocator = temp;
 
     traversed := traverse(map, target.square, source.team,
-                          flying=cast(bool)(source.flags & .FLYING), 
                           pass=cast(bool)(source.flags & .PASS), 
-                          land_stride=cast(bool)(source.flags & .LAND_STRIDE)
+                          swift=cast(bool)(source.flags & .SWIFT)
                          );
 
     debug.traversed = traversed;
@@ -51,18 +165,18 @@ get_squares_right_next_to_unit :: (using map: Map, source: Unit, target: Unit) -
     return squares_right_next_to_unit;
 }
 
-get_ability_squares_from_position :: (using map : Map, ability: Ability, unit : Unit) -> [..] Square {
+get_ability_squares_from_position :: (using map : Map, ability: Ability, unit : Unit, square: Square) -> [..] Square {
     interactible : [..] Square;
 
-    maximum_range := ability.max_range;
-    if cast(bool)(unit.effects & .AUGMENT) {
-        maximum_range += 1;
+    if ability.targeting == .SELF {
+        array_add(*interactible, square);
+        return interactible;
     }
 
-    traversed := traverse(map, unit.square, unit.team, flying=true, pass=true, land_stride=true);
+    traversed := traverse(map, square, unit.team, pass=true, swift=true);
     debug.traversed = traversed;
     for traversed.squares {
-        if it.distance_by_air <= maximum_range && it.distance_by_air >= ability.min_range
+        if it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range
             array_add(*interactible, it.square);
     }
     return interactible;
@@ -72,19 +186,13 @@ get_accessible_squares_from_position :: (using map : Map, unit : Unit) -> [..] S
     accessible : [..] Square;
 
     traversed := traverse(map, unit.square, unit.team, 
-                          flying=cast(bool)(unit.flags & .FLYING), 
                           pass=cast(bool)(unit.flags & .PASS), 
-                          land_stride=cast(bool)(unit.flags & .LAND_STRIDE)
+                          swift=cast(bool)(unit.flags & .SWIFT)
                          );
     debug.traversed = traversed;
 
-    maximum_distance := unit.movement;
-    if cast(bool)(unit.effects & .SPEED) {
-        maximum_distance += 3;
-    }
-
     for traversed.squares {
-        square_within_range := it.distance <= maximum_distance;
+        square_within_range := it.distance <= unit.movement;
         occupant := get_occupant(map, it.square);
         square_can_be_occupied := occupant == null || occupant.id == unit.id;
         if square_within_range && square_can_be_occupied {
@@ -104,7 +212,6 @@ get_accessible_squares_from_position :: (using map : Map, unit : Unit) -> [..] S
 // @NOTE: Paths are backwards in this engine. There are some good reasons for this.
 Path :: [..] Square;
 
-
 move_down_path :: (map: Map, path: *Path, unit: Unit) -> Square {
     distance := min(unit.movement, path.count);
     i : int = 0;
@@ -120,16 +227,14 @@ move_down_path :: (map: Map, path: *Path, unit: Unit) -> Square {
     furthest_index := max(path.count - distance, 1);
 
     occupant := get_occupant(map, path.*[furthest_index - 1]);
-    if occupant {
-        print("% %\n", occupant.id, unit.id);
-    }
     square_can_be_occupied := occupant == null || occupant.id == unit.id;
-    while !square_can_be_occupied {
-        print("%\n", furthest_index);
+    square_is_deadly := is_deadly(get_tile(map, path.*[furthest_index - 1]), unit);
+    while !square_can_be_occupied || square_is_deadly {
         furthest_index += 1;
 
         occupant = get_occupant(map, path.*[furthest_index - 1]);
         square_can_be_occupied = occupant == null || occupant.id == unit.id;
+        square_is_deadly = is_deadly(get_tile(map, path.*[furthest_index - 1]), unit);
     }
 
     path.count = furthest_index;
@@ -168,7 +273,7 @@ get_shortest_path :: (using map : Map, unit: Unit, destination: Square) -> Path,
 
     // @TODO: This is funky. We determine walkable squares in a different way than we determine shortest paths.
     // I'd like to not have to special case these qualifiers.
-    traversed := traverse(map, unit.square, unit.team, flying=cast(bool)(unit.flags & .FLYING), pass=cast(bool)(unit.flags & .PASS));
+    traversed := traverse(map, unit.square, unit.team, pass=cast(bool)(unit.flags & .PASS));
 
     destination_is_reachable := traversed.field[destination.col][destination.row].reachable;
     //destination_is_occupied  := traversed.field[destination.col][destination.row].occupied;
@@ -178,7 +283,7 @@ get_shortest_path :: (using map : Map, unit: Unit, destination: Square) -> Path,
     cols :: int.[ 0,  1,  0, -1];
 
     if !destination_is_reachable {
-        print("Destination is unreachable!\n");
+        //log("Destination is unreachable!\n");
         return path, false;
     }
     if destination_is_origin {
@@ -195,7 +300,7 @@ get_shortest_path :: (using map : Map, unit: Unit, destination: Square) -> Path,
         shortest_square : Square;
         for i : 0..3 {
             using new_square := Square.{next.col + cols[i], next.row + rows[i]};
-            if !on_grid(new_square) then continue;
+            if !on_grid(new_square, map) then continue;
 
             if traversed.field[col][row].distance < shortest_distance_of_the_directions {
                 shortest_square = new_square;
@@ -219,14 +324,14 @@ Traversal_Result :: struct {
         occupied : bool;
     }
 
-    field : [map_width][map_height] Data_Point;
+    field : [MAX_MAP_WIDTH][MAX_MAP_HEIGHT] Data_Point;
     #place field;
-    squares : [map_width * map_height] Data_Point;
+    squares : [MAX_MAP_WIDTH * MAX_MAP_HEIGHT] Data_Point;
 }
 
 #scope_file
 // @TODO: It would be nice if we didn't end up with a proliferation of flags.
-traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := false, pass := false, land_stride := false) -> Traversal_Result {
+traverse :: (using map : Map, origin : Square, team := Team.YOU, pass := false, swift := false) -> Traversal_Result {
     rows :: int.[-1,  0,  1,  0];
     cols :: int.[ 0,  1,  0, -1];
 
@@ -251,7 +356,7 @@ traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := fals
 
         for i : 0..3 {
             using new_square := Square.{from_square.col + cols[i], from_square.row + rows[i]};
-            if !on_grid(new_square) then continue;
+            if !on_grid(new_square, map) then continue;
 
             new_square_occupant := map.occupancy[new_square.col][new_square.row];
             field[col][row].occupied = new_square_occupant != null;
@@ -259,7 +364,7 @@ traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := fals
             cannot_traverse_due_to_enemy_unit := (new_square_occupant != null && new_square_occupant.team != team) && !pass;
             if cannot_traverse_due_to_enemy_unit then continue;
 
-            cannot_traverse_due_to_impassible_tile := is_impassible(map.tiles[new_square.col][new_square.row]) && !flying;
+            cannot_traverse_due_to_impassible_tile := is_impassible(map.tiles[new_square.col][new_square.row]);
             if cannot_traverse_due_to_impassible_tile then continue;
 
             field[from_square.col][from_square.row].reachable = true;
@@ -274,7 +379,7 @@ traverse :: (using map : Map, origin : Square, team := Team.BLUE, flying := fals
             //
 
             traversal_cost := 1;
-            if get_tile(map, new_square).kind == .SLOW && !land_stride
+            if get_tile(map, new_square).kind == .SLOW && !swift
                 traversal_cost = 2;
 
             new_distance := field[from_square.col][from_square.row].distance + traversal_cost;

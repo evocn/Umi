@@ -4,10 +4,15 @@
 // July 2023
 
 load_audio_file :: (name : string) -> *Mixer_Sound_Data {
+
+    a: Allocator;
+    a.proc = flat_pool_allocator_proc;
+    a.data = *audio_pool;
+
     data : *Mixer_Sound_Data = null;
 
-    file_data, success := File.read_entire_file(name);
-    if !success return data;
+    file_data, success := read_entire_file(name);
+    if !success return null;
 
     has_extension :: (name: string, extension: string) -> bool {
         if name.count < extension.count  return false;
@@ -17,53 +22,76 @@ load_audio_file :: (name : string) -> *Mixer_Sound_Data {
     }
 
     if has_extension(name, "wav") {
-        data = New(Mixer_Sound_Data);
-        data.name = copy_string(name);
-        data.buffer = file_data;
+        data = New(Mixer_Sound_Data, allocator=a);
+        data.name = copy_string(name, allocator=a);
+        data.buffer = copy_string(file_data, allocator=a);
+        free(file_data.data);
 
-        format, samples, success2, extra := Wav_File.get_wav_header(data.buffer);
-        if !success2 {
-            log("Unable to parse '%' as wav.\n", data.full_path);
+        format, samples, success=, extra := get_wav_header(data.buffer);
+        if !success {
+            log_error("Unable to parse '%' as wav.\n", data.full_path);
             return data;
         }
 
-        if format.wFormatTag == Wav_File.WAVE_FORMAT_PCM {
-            data.type = Mixer_Sound_Data.Type.LINEAR_SAMPLE_ARRAY;
-            data.nchannels = cast(u16) format.nChannels;
+        if format.wFormatTag == WAVE_FORMAT_PCM {
+            data.type                     = .LINEAR_SAMPLE_ARRAY;
+            data.nchannels                = cast(u16) format.nChannels;
             data.nsamples_times_nchannels = samples.count/2;
-        } else if format.wFormatTag == Wav_File.WAVE_FORMAT_DVI_ADPCM {
-            data.type = Mixer_Sound_Data.Type.ADPCM_COMPRESSED;
+        } else if format.wFormatTag == WAVE_FORMAT_DVI_ADPCM {
+            data.type             = .ADPCM_COMPRESSED;
             data.wSamplesPerBlock = extra.wSamplesPerBlock;
-            data.nBlockAlign = format.nBlockAlign;
+            data.nBlockAlign      = format.nBlockAlign;
 
             data.nchannels = cast(u16) format.nChannels;
+            // The value in the FACT chunk is number of samples by time.
             data.nsamples_times_nchannels = extra.wSamplesAccordingToFactChunk * data.nchannels;
         } else {
             assert(false);
         }
 
-        data.samples = cast(*s16) samples.data;
+        data.samples       = cast(*s16) samples.data;
         data.sampling_rate = cast(u32) format.nSamplesPerSec;
     } else if has_extension(name, "ogg") {
-        data = New(Mixer_Sound_Data);
-        data.name = copy_string(name);
-        data.buffer = file_data;
-        data.type = Mixer_Sound_Data.Type.OGG_COMPRESSED;
-    }
-    else {
-        assert(false, "Unsupported audio format.\n");
+        data = New(Mixer_Sound_Data, allocator=a);
+        data.name   = copy_string(name, allocator=a);
+        data.buffer = copy_string(file_data, allocator=a);
+        free(file_data.data);
+        data.type   = .OGG_COMPRESSED;
+    } else {
+        // Unsupported format.
     }
 
     return data;
 }
 
-play_sound :: (name : string) {
-    pointer, ok := table_find(*sounds, name);
-    if !ok {
-        log_error("Trying to play sound % which is not loaded in the sounds table.\n", name);
+play_sound :: (data: *Mixer_Sound_Data, perturb: bool = true) -> *Sound_Stream {
+    stream := make_stream(sound_player, data);
+
+    if stream {
+        stream.sound_data = data;
+    }
+
+    if perturb && stream {
+        stream.user_volume_scale = random_get_within_range(0.7, 1.0);
+        stream.desired_rate = random_get_within_range(0.7, 1.22);
+    }
+
+    stream.repeat_end_position = (data.nsamples_times_nchannels / data.nchannels);
+
+    return stream;
+}
+
+play_sfx :: (name : string) {
+    sound, success := table_find(*sfx, name);
+    if !success {
+        log_error("Unable to find sfx in our table: %.\n", name);
         return;
     }
-    play_sound(pointer);
+
+    stream := play_sound(sound);
+    if stream {
+        stream.category = .PROPS;
+    }
 }
 
 play_music :: (name : string) {
@@ -81,31 +109,14 @@ play_music :: (name : string) {
     if stream {
         stream.flags   |= .REPEATING;
         stream.category = .MUSIC;
-        stream.user_volume_scale *= 0.2;
+        //stream.user_volume_scale *= 1.0;
     }
 }
 
-play_sound :: (data: *Mixer_Sound_Data, perturb: bool = true) -> *Sound_Stream {
-    stream := make_stream(sound_player, data);
-
-    if stream {
-        stream.sound_data = data;
-    }
-
-    if perturb && stream {
-        stream.user_volume_scale = Random.random_get_within_range(0.7, 1.0);
-        stream.desired_rate = Random.random_get_within_range(0.7, 1.22);
-    }
-
-    stream.repeat_end_position = cast(int)(data.sampling_rate * 234.475);  // @Temporary @Hack! We do not get the duration by default from an ogg file...
-  
-    return stream;
-}
-
+// Move sound streams forward by dt.
 update_sound_player :: (dt: float) {
-    // Move sound streams forward by dt.
-    Thread.lock(*sound_player.sound_mutex);
-    defer Thread.unlock(*sound_player.sound_mutex);
+    lock(*sound_player.sound_mutex);
+    defer unlock(*sound_player.sound_mutex);
 
     pre_entity_update(sound_player);
 
@@ -116,3 +127,4 @@ update_sound_player :: (dt: float) {
 
     post_entity_update(sound_player, dt);
 }
+

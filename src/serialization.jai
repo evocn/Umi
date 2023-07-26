@@ -35,7 +35,7 @@ save_units :: (units : [..] *Unit, filename : string) -> success : bool {
         if !success return false;
     }
 
-    File.write_entire_file(tprint("%/%", units_path, filename), *builder);
+    write_entire_file(tprint("%/%", units_path, filename), *builder);
     log("Saved units to \"%\".\n", filename, flags=.VERBOSE_ONLY);
 
     return true;
@@ -114,6 +114,12 @@ serialize  :: (to_serialize: int, name : string, builder: *String_Builder) -> su
     append(builder, "\n");
     return true; 
 }
+serialize  :: (to_serialize: s32, name : string, builder: *String_Builder) -> success: bool { 
+    print_to_builder(builder, "%", to_serialize);
+    if name print_to_builder(builder, "\t# %", name);
+    append(builder, "\n");
+    return true; 
+}
 serialize  :: (to_serialize: u64, name : string, builder: *String_Builder) -> success: bool { 
     print_to_builder(builder, "%", to_serialize);
     if name print_to_builder(builder, "\t# %", name);
@@ -171,17 +177,34 @@ serialize  :: (to_serialize: Unit_Flags, name : string, builder: *String_Builder
     return true;
 }
 serialize  :: (to_serialize: Ability, name : string, builder: *String_Builder) -> success: bool {
-    if name print_to_builder(builder, "# %\n", name);
+    print_to_builder(builder, "# ---\n");
     success := serialize_structure(to_serialize, builder, false);
     return success;
 }
-serialize  :: (to_serialize: Ability_Kind, name : string, builder: *String_Builder) -> success: bool {
+serialize  :: (to_serialize: Effect, name : string, builder: *String_Builder) -> success: bool {
+    print_to_builder(builder, "# ---\n");
+    success := serialize_structure(to_serialize, builder, false);
+    return success;
+}
+serialize  :: (to_serialize: Ability_Targeting_Mode, name : string, builder: *String_Builder) -> success: bool {
     print_to_builder(builder, "%", cast(int)to_serialize);
     if name print_to_builder(builder, "\t# %", name);
     append(builder, "\n");
     return true;
 }
 serialize  :: (to_serialize: Ability_Orientation, name : string, builder: *String_Builder) -> success: bool {
+    print_to_builder(builder, "%", cast(int)to_serialize);
+    if name print_to_builder(builder, "\t# %", name);
+    append(builder, "\n");
+    return true;
+}
+serialize  :: (to_serialize: Ability_Special, name : string, builder: *String_Builder) -> success: bool {
+    print_to_builder(builder, "%", cast(int)to_serialize);
+    if name print_to_builder(builder, "\t# %", name);
+    append(builder, "\n");
+    return true;
+}
+serialize  :: (to_serialize: Effect_Kind, name : string, builder: *String_Builder) -> success: bool {
     print_to_builder(builder, "%", cast(int)to_serialize);
     if name print_to_builder(builder, "\t# %", name);
     append(builder, "\n");
@@ -212,6 +235,11 @@ unserialize_structure :: (s: *$T, handler: *Text_File_Handler, $per_level : bool
 unserialize  :: (to_unserialize: *int, handler : *Text_File_Handler) -> success: bool { 
     success : bool;
     <<to_unserialize, success = parse_int(handler);
+    return success;
+}
+unserialize  :: (to_unserialize: *s32, handler : *Text_File_Handler) -> success: bool { 
+    success : bool;
+    <<to_unserialize, success = parse_int(handler, s32);
     return success;
 }
 unserialize  :: (to_unserialize: *u64, handler : *Text_File_Handler) -> success: bool { 
@@ -267,14 +295,29 @@ unserialize  :: (to_unserialize: *Ability, handler : *Text_File_Handler) -> succ
     success = unserialize_structure(to_unserialize, handler, false);
     return success;
 }
-unserialize  :: (to_unserialize: *Ability_Kind, handler: *Text_File_Handler) -> success: bool {
+unserialize  :: (to_unserialize: *Effect, handler : *Text_File_Handler) -> success: bool { 
+    success : bool;
+    success = unserialize_structure(to_unserialize, handler, false);
+    return success;
+}
+unserialize  :: (to_unserialize: *Ability_Targeting_Mode, handler: *Text_File_Handler) -> success: bool {
     i, success := parse_int(handler);
-    <<to_unserialize = cast(Ability_Kind)i;
+    <<to_unserialize = cast(Ability_Targeting_Mode)i;
     return success;
 }
 unserialize  :: (to_unserialize: *Ability_Orientation, handler: *Text_File_Handler) -> success: bool {
     i, success := parse_int(handler);
     <<to_unserialize = cast(Ability_Orientation)i;
+    return success;
+}
+unserialize  :: (to_unserialize: *Ability_Special, handler: *Text_File_Handler) -> success: bool {
+    i, success := parse_int(handler);
+    <<to_unserialize = cast(Ability_Special)i;
+    return success;
+}
+unserialize  :: (to_unserialize: *Effect_Kind, handler: *Text_File_Handler) -> success: bool {
+    i, success := parse_int(handler);
+    <<to_unserialize = cast(Effect_Kind)i;
     return success;
 }
 unserialize  :: (to_unserialize: *AI_Behavior, handler: *Text_File_Handler) -> success: bool {
@@ -289,28 +332,30 @@ unserialize  :: (to_unserialize: *AI_Behavior, handler: *Text_File_Handler) -> s
 //
 #scope_module
 
-save_level :: (using map : Map, filename : string) -> bool {
+save_level :: (map : Map, filename : string) -> bool {
     builder: String_Builder;
     defer free_buffers(*builder);
 
     init_string_builder(*builder);
     print_to_builder(*builder, "[%]\t# Version Number\n\n", VERSION);
-    print_to_builder(*builder, "%\t# Width\n", map_width);
-    print_to_builder(*builder, "%\t# Height\n\n", map_height);
+
+    // Tiles
+    print_to_builder(*builder, "%\t# Width\n", map.width);
+    print_to_builder(*builder, "%\t# Height\n\n", map.height);
 
     print_to_builder(*builder, "# Tiles:\n");
-    print_tiles_to_builder(*builder, tiles);
+    print_tiles_to_builder(*builder, map);
     print_to_builder(*builder, "---\n");
 
-    for units {
+    for map.units {
         print_to_builder(*builder, "\n");
         success := serialize_structure(it.*, *builder, per_level=true);
         if !success return false;
     }
 
-    success := File.write_entire_file(tprint("%/%", levels_path, filename), builder_to_string(*builder, allocator=temp));
+    success := write_entire_file(tprint("%/%", levels_path, filename), builder_to_string(*builder, allocator=temp));
 
-    log("Saved tiles to \"%\"\n", filename, flags=.VERBOSE_ONLY);
+    log("Saved level to \"%\"\n", filename, flags=.VERBOSE_ONLY);
     return success;
 }
 
@@ -333,10 +378,13 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
         line, found = consume_next_line(*handler);
         file_says_map_height := string_to_int(line);
 
-        assert(file_says_map_width == map_width);
-        assert(file_says_map_height == map_height);
+        assert(file_says_map_width <= MAX_MAP_WIDTH);
+        assert(file_says_map_height <= MAX_MAP_HEIGHT);
 
-        for row : 0..map_height-1 {
+        map.width = file_says_map_width;
+        map.height = file_says_map_height;
+
+        for row : 0..map.height-1 {
             line, found = consume_next_line(*handler);
 
             for col : 0..line.count-1 {
@@ -378,6 +426,7 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
         a.proc = flat_pool_allocator_proc;
         a.data = *level_pool;
 
+        map.units.allocator=a;
         while handler.file_data {
             new_unit := New(Unit, allocator=a);
 
@@ -391,6 +440,8 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
                     new_unit.team = unit_copy.team;
                     new_unit.ai = unit_copy.ai;
                     new_unit.square = unit_copy.square;
+                    new_unit.health = new_unit.max_health;
+                    new_unit.armor  = new_unit.base_armor;
                     break;
                 }
             }
@@ -408,7 +459,7 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
 }
 
 #scope_file
-print_tiles_to_builder :: (builder : *String_Builder, tiles : [map_width][map_height] Tile) {
+print_tiles_to_builder :: (builder : *String_Builder, using map: Map) {
     exceptions: [..] Square;
     defer array_reset(*exceptions);
 
@@ -418,9 +469,8 @@ print_tiles_to_builder :: (builder : *String_Builder, tiles : [map_width][map_he
         format_int := *context.print_style.default_format_int;
         format_int.base = 16;
 
-
-        for row : 0..map_height-1 {
-            for col : 0..map_width-1 {
+        for row : 0..height-1 {
+            for col : 0..width-1 {
                 kind := tiles[col][row].kind;
                 if tiles[col][row].sprite_index != default_tile_sprite_index(kind)
                     array_add(*exceptions, .{col, row});

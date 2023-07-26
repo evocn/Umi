@@ -4,7 +4,7 @@
 // June 2023
 
 editor : struct {
-    cursor : Square = .{map_width / 2, map_height / 2};
+    cursor : Square;
     selected_unit : *Unit;
 
     moving_unit : *Unit;
@@ -43,6 +43,8 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
             if !success {
                 log_error("Error saving level.\n");
             }
+
+            init_levels();
         }
 
         save_load(map, units);
@@ -55,7 +57,7 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
     }
 
     if moving_unit {
-        unit_editor(moving_unit, map);
+        unit_editor(moving_unit, map, units.*);
     }
 
     level_editor(map);
@@ -91,12 +93,12 @@ save_load :: (map: *Map, units: *[..] *Unit) {
         if(ImGui.Button("Load")) {
             load_units(units, "all.units");
             init_level(map, units.*, levels[program_state.current_level_index]);
-            editor.selected_unit = null;
             editor.moving_unit = null;
         }
 
         ImGui.SameLine();
         if(ImGui.Button("New")) {
+            clear(map);
             success := save_level(map, "new.level");
             if !success {
                 log_error("Error making new level.\n");
@@ -104,12 +106,13 @@ save_load :: (map: *Map, units: *[..] *Unit) {
             init_levels();
             _, program_state.current_level_index = array_find(levels, "new");
             init_level(map, units.*, levels[program_state.current_level_index]);
-            //
+            map.width = 16;
+            map.height = 8;
         }
 
         ImGui.SameLine();
         if(ImGui.Button("Delete")) {
-            success := File.file_delete(tprint("%/%.level", levels_path, levels[program_state.current_level_index]));
+            success := file_delete(tprint("%/%.level", levels_path, levels[program_state.current_level_index]));
             assert(success);
             init_levels();
             program_state.current_level_index = 0;
@@ -122,7 +125,6 @@ save_load :: (map: *Map, units: *[..] *Unit) {
                     program_state.current_level_index = it_index;
 
                     init_level(map, units.*, levels[it_index]);
-                    editor.selected_unit = null;
                     editor.moving_unit = null;
                 }
             }
@@ -134,6 +136,7 @@ save_load :: (map: *Map, units: *[..] *Unit) {
 
 ability_buffer : [64] u8;
 name_buffer    : [64] u8;
+description_buffer : [64] u8;
 level_buffer   : [64] u8;
 
 last_moving_unit := -1;
@@ -151,11 +154,14 @@ level_editor :: (using map: *Map) {
         ImGui.SameLine();
         ImGui.Text("%", levels[program_state.current_level_index]);
 
+        ImGui.SliderInt("width", xx *map.width, 16, 64);
+        ImGui.SliderInt("height", xx *map.height, 8, 64);
+
         if ImGui.Button("Add") {
             if editor.selected_unit {
                 new_unit_square : Square;
-                if !get_occupant(map, editor.cursor) {
-                    new_unit_square = editor.cursor;
+                if !get_occupant(map, editor.cursor + viewport.corner) {
+                    new_unit_square = editor.cursor + viewport.corner;
                 }
                 else
                 {
@@ -181,6 +187,9 @@ level_editor :: (using map: *Map) {
 
                 new_unit.square = new_unit_square;
                 occupy(map, new_unit.square, new_unit);
+
+                last_moving_unit = units.count-1;
+                editor.moving_unit = units[units.count-1];
             }
             else {
                 log_error("You don't have a unit template selected to add to the level!\n");
@@ -229,18 +238,36 @@ level_editor :: (using map: *Map) {
     ImGui.End();
 }
 
-unit_editor :: (using unit: *Unit, map: *Map) {
-    ImGui.SetNextWindowPos(.{50, 400}, ImGui.Cond.Once);
-    ImGui.SetNextWindowSize(.{200, 100}, ImGui.Cond.Once);
-  
+find_template :: (templates: [..] *Unit, name: string) -> bool, int {
+    for templates {
+        if name == it.name then return true, it_index;
+    }
+    return false, -1;
+}
+
+unit_editor :: (using unit: *Unit, map: *Map, templates: [..] *Unit) {
     ImGui.Begin("Unit");
     {
         ImGui.Text("% | %", name, id);
+        ImGui.SameLine();
+        if ImGui.Button("Edit template") {
+            found, template_index := find_template(templates, name);
+            if found {
+                editor.selected_unit = templates[template_index];
+            }
+            else {
+                log_error("You somehow have a unit that doesn't have a corresponding template.\n");
+            }
+        }
+
         ti := type_info(Team);
         ImGui.SliderInt("Team", xx *team, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx team]));
 
         ti = type_info(AI_Behavior);
         ImGui.SliderInt("AI", xx *ai, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ai]));
+
+        ti = type_info(Direction);
+        ImGui.SliderInt("Direction", xx *direction, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx direction]));
     }
     ImGui.End();
 }
@@ -248,9 +275,6 @@ unit_editor :: (using unit: *Unit, map: *Map) {
 template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
     using editor;
 
-    ImGui.SetNextWindowPos(.{1000, 400}, ImGui.Cond.Once);
-    ImGui.SetNextWindowSize(.{250, 250}, ImGui.Cond.Once);
-  
     ImGui.Begin("Template");
     {
         if ImGui.BeginTabBar("Unit Tabs")
@@ -268,11 +292,27 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 ImGui.SameLine();
                 ImGui.Text("%", name);
 
+                if ImGui.InputText("### 9998", description_buffer.data, description_buffer.count) {
+                    a: Allocator;
+                    a.proc = flat_pool_allocator_proc;
+                    a.data = *pool;
+
+                    description = copy_string(to_string(description_buffer.data), allocator=a);
+                    memset(description_buffer.data, 0, description_buffer.count);
+                }
+                ImGui.SameLine();
+                ImGui.Text("%", description);
+
                 {
                     using selected_unit;
-                    ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
+                    ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 8, "%d", .ImGuiSliderFlags_AlwaysClamp);
 
-                    ImGui.InputInt("Movement",  xx *movement);
+                    ImGui.SliderInt("Movement", xx *movement, 0, 9);
+                    ImGui.SliderInt("Health", xx *max_health, 1, 9);
+                    ImGui.SliderInt("Armor",  xx *base_armor, 0, 9);
+
+                    ImGui.Checkbox("Primary", xx *primary_active);
+                    ImGui.Checkbox("Secondary", xx *secondary_active);
                 }
 
                 ImGui.EndTabItem();
@@ -282,31 +322,17 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 imgui_flags_editor(*(selected_unit.flags));
                 ImGui.EndTabItem();
             }
-            if (ImGui.BeginTabItem("Active"))
-            {
-                if ImGui.InputText("### 4444", ability_buffer.data, ability_buffer.count) {
-                    a: Allocator;
-                    a.proc = flat_pool_allocator_proc;
-                    a.data = *pool;
-
-                    ability_name = copy_string(to_string(ability_buffer.data), allocator=a);
-                    memset(ability_buffer.data, 0, ability_buffer.count);
+            if primary_active {
+                if (ImGui.BeginTabItem("Primary"))
+                {
+                    ability_editor(*primary);
                 }
-                ImGui.SameLine();
-                ImGui.Text("%", ability_name);
-
-                ti := type_info(Ability_Kind);
-                ImGui.SliderInt("Kind", xx *ability_kind, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability_kind]));
-
-                ImGui.InputInt("Min",  xx *min_range);
-                ImGui.InputInt("Max",  xx *max_range);
-
-                ImGui.InputInt("Amount",  xx *amount);
-
-                ti = type_info(Ability_Orientation);
-                ImGui.SliderInt("Orient.", xx *orientation, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx orientation]));
-
-                ImGui.EndTabItem();
+            }
+            if secondary_active {
+                if (ImGui.BeginTabItem("Secondary"))
+                {
+                    ability_editor(*secondary);
+                }
             }
             ImGui.EndTabBar();
         }
@@ -324,8 +350,55 @@ percolate_changes_to_map_units :: (map: *Map, unit: *Unit) {
             it.ai = unit_copy.ai;
             it.id = unit_copy.id;
             it.square = unit_copy.square;
+            it.direction = unit_copy.direction;
+            it.health = it.max_health;
+            it.armor  = it.base_armor;
         }
     }
+}
+
+ability_editor :: (ability: *Ability) {
+    if ImGui.InputText("### 4444", ability_buffer.data, ability_buffer.count) {
+        a: Allocator;
+        a.proc = flat_pool_allocator_proc;
+        a.data = *pool;
+
+        ability.name = copy_string(to_string(ability_buffer.data), allocator=a);
+        memset(ability_buffer.data, 0, ability_buffer.count);
+    }
+    ImGui.SameLine();
+    ImGui.Text("%", ability.name);
+
+    ImGui.DragInt("### 531", xx *ability.sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
+    ImGui.SameLine();
+    if ImGui.Button("Sprite")
+        ability.sprite_index = 474;
+
+    ti := type_info(Ability_Targeting_Mode);
+    ImGui.SliderInt("Targeting", xx *ability.targeting, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability.targeting]));
+
+    if ability.targeting != .SELF {
+        ImGui.SliderInt("Min", xx *ability.min_range, 1, 9);
+        ImGui.SliderInt("Max", xx *ability.max_range, 1, 9);
+    }
+
+    ImGui.SliderInt("Damage", *ability.damage, -6, 6);
+    ImGui.SliderInt("Bonus Damage", *ability.bonus_damage, -3, 3);
+
+    ti = type_info(Effect_Kind);
+    ImGui.SliderInt("Effect", xx *ability.effect.kind, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability.effect.kind]));
+    if ability.effect.kind != .NONE {
+        ImGui.SliderInt("Strength", xx *ability.effect.strength, 1, 9);
+        ImGui.SliderInt("Duration", xx *ability.effect.duration, 1, 9);
+    }
+
+    ti = type_info(Ability_Orientation);
+    ImGui.SliderInt("Push", xx *ability.push_orientation, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability.push_orientation]));
+
+    ti = type_info(Ability_Special);
+    ImGui.SliderInt("Special", xx *ability.special, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability.special]));
+
+    ImGui.EndTabItem();
 }
 
 last_selected_unit: int = -1;
@@ -337,7 +410,7 @@ units_editor :: (units : *[..] *Unit) {
             editor.selected_unit = null;
         }
         ImGui.SameLine();
-        if(ImGui.Button("New")) {
+        if ImGui.Button("New") {
             a: Allocator;
             a.proc = flat_pool_allocator_proc;
             a.data = *pool;
@@ -345,16 +418,20 @@ units_editor :: (units : *[..] *Unit) {
             new_unit := New(Unit, allocator=a);
 
             new_unit.sprite_index = 677;
-            new_unit.square = editor.cursor;
+            new_unit.square = editor.cursor + viewport.corner;
+
+            new_unit.name = "unit";
 
             array_add(units, new_unit);
+            quick_sort(units.*, compare_units);
+
             editor.selected_unit = new_unit;
         }
 
         if editor.selected_unit == null then last_selected_unit = -1;
         if ImGui.BeginListBox("###420", Vector2.{-FLOAT32_MIN, -FLOAT32_MIN}) {
             for units.* {
-                if ImGui.Selectable(temp_c_string(tprint("% | %", it_index, it.name)), last_selected_unit == it_index) {
+                if ImGui.Selectable(temp_c_string(tprint("%", it.name)), last_selected_unit == it_index) {
                     editor.selected_unit = units.*[it_index];
                     last_selected_unit = it_index;
                 }
@@ -365,6 +442,10 @@ units_editor :: (units : *[..] *Unit) {
     ImGui.End();
 }
 
+compare_units :: (a: *Unit, b: *Unit) -> s64 {
+    return compare_strings(a.name, b.name);
+}
+
 //
 //
 
@@ -373,11 +454,12 @@ tile_editor :: (using map: *Map) {
 
     ImGui.Begin("Cursor");
     {
-        tile := *tiles[cursor.col][cursor.row];
-        ImGui.Text("The cursor is over %.", cursor);
+        square := cursor + viewport.corner;
+        tile := get_tile(map.*, square);
+        ImGui.Text("The cursor is over %.", square);
         ImGui.Text("That tile is: %", tile.*);
 
-        occupant := occupancy[cursor.col][cursor.row];
+        occupant := get_occupant(map.*, square);
         if occupant 
             ImGui.Text("Its occupant is %", occupant.name);
         else
@@ -419,58 +501,59 @@ settings_editor :: () {
     ImGui.End();
 }
 
+// @TODO:
+animation_editor :: () {
+}
+
 //
 // Cursor Things
 //
 
 update_editor_cursor :: (map: *Map) {
     using editor;
+    using input;
 
-    maybe_move_editor_cursor();
+    maybe_move_editor_cursor(map.*);
 
-    if input.button_1 {
-        if moving_unit && get_occupant(map, cursor) == null {
+    if pressed(*button_1) {
+        if moving_unit && get_occupant(map, cursor + viewport.corner) == null {
             remove_occupant(map, moving_unit.square);
-            occupy(map, cursor, moving_unit);
-            moving_unit.square = cursor;
+            occupy(map, cursor + viewport.corner, moving_unit);
+            moving_unit.square = cursor + viewport.corner;
         }
         else {
             editor_begin_moving_unit(map);
         }
-        input.button_1 = false;
     }
 
-    if input.button_2 {
+    if pressed(*button_2) {
         if moving_unit {
             editor_stop_moving_unit(map);
         }
         else {
             maybe_remove_unit_under_cursor(map);
         }
-        input.button_2 = false;
     }
 }
 
-maybe_move_editor_cursor :: () {
-    if input.up {
-        move_editor_cursor(.NORTH);
-        input.up = false;
+maybe_move_editor_cursor :: (map: Map) {
+    using input;
+
+    if pressed(*up) {
+        move_editor_cursor(.NORTH, map);
     }
-    if input.left {
-        move_editor_cursor(.WEST);
-        input.left = false;
+    if pressed(*left) {
+        move_editor_cursor(.WEST, map);
     }
-    if input.down {
-        move_editor_cursor(.SOUTH);
-        input.down = false;
+    if pressed(*down) {
+        move_editor_cursor(.SOUTH, map);
     }
-    if input.right {
-        move_editor_cursor(.EAST);
-        input.right = false;
+    if pressed(*right) {
+        move_editor_cursor(.EAST, map);
     }
 }
 
-move_editor_cursor :: (direction : Direction) {
+move_editor_cursor :: (direction : Direction, map: Map) {
     using editor.cursor; 
 
     new_square : Square;
@@ -481,13 +564,14 @@ move_editor_cursor :: (direction : Direction) {
         case .EAST;  new_square = Square.{col+1, row};
     }
 
-    if on_grid(new_square)
+    if on_grid(new_square, map)
         editor.cursor = new_square;
 }
 
 editor_begin_moving_unit :: (using map: *Map) {
     using editor;
-    occupant := occupancy[cursor.col][cursor.row];
+    square := cursor + viewport.corner;
+    occupant := get_occupant(map.*, square);
     if occupant {
         moving_unit = occupant;
     }
@@ -499,7 +583,8 @@ editor_stop_moving_unit :: (using map: *Map) {
 
 maybe_remove_unit_under_cursor :: (using map: *Map) {
     using editor;
-    occupant := occupancy[cursor.col][cursor.row];
+    square := cursor + viewport.corner;
+    occupant := get_occupant(map.*, square);
     if occupant {
         remove_occupant(map, occupant.square);
         array_ordered_remove_by_value(*map.units, occupant);

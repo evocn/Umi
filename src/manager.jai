@@ -5,14 +5,14 @@
 
 manager : struct {
     turn_number := 0;
-    teams := Team.[.BLUE, .RED];
+    teams := Team.[.YOU, .THEM];
     current_turn_team_index : int;
 }
 
 Team :: enum {
     NONE;
-    BLUE;
-    RED;
+    YOU;
+    THEM;
 }
 
 //
@@ -38,21 +38,19 @@ next_turn :: (using map: *Map) -> Team {
 
     turn := whose_turn();
 
-    if turn == .BLUE then turn_number += 1;
-
     for units {
         if it.team == turn {
-            if cast(bool)(it.effects & .PARALYZED) {
-                it.moved = true;
-                it.exhausted = true;
-                it.effects = 0;
-                continue;
-            }
-
             it.moved = false;
+            it.turned = false;
             it.exhausted = false;
-            it.effects = 0;
+            increment_effects(it);
         }
+    }
+
+    if turn == .YOU then turn_number += 1;
+
+    if turn == .THEM {
+        ai.to_check = array_copy(query_units(map.units, (x) => (x.team == .THEM && !x.moved)));
     }
 
     return whose_turn();

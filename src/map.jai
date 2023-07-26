@@ -3,19 +3,26 @@
 // Alex Hartford
 // July 2023
 
-map_width  :: 16;
-map_height :: 8;
+MAX_MAP_WIDTH  :: 64;
+MAX_MAP_HEIGHT :: 64;
 
 Map :: struct {
-    tiles : [map_width][map_height] Tile;
-    occupancy : [map_width][map_height] *Unit;
+    tiles : [MAX_MAP_WIDTH][MAX_MAP_HEIGHT] Tile;
+    occupancy : [MAX_MAP_WIDTH][MAX_MAP_HEIGHT] *Unit;
+
+    width, height : int;
 
     next_id : int;
     units : [..] *Unit;
 }
 
-get_tile :: (using map: Map, using square: Square) -> Tile {
-    return tiles[col][row];
+clear :: (using map: *Map) {
+    reset(*level_pool, overwrite_memory=true);
+    map.* = Map.{};
+}
+
+get_tile :: (using map: Map, using square: Square) -> *Tile {
+    return *tiles[col][row];
 }
 
 get_occupant :: (using map: Map, using square: Square) -> *Unit {
@@ -78,12 +85,19 @@ is_impassible :: (using tile: Tile) -> bool {
     return false;
 }
 
+is_deadly :: (using tile: Tile, unit: Unit) -> bool {
+    if kind == .KILL return true;
+    if kind == .MINE return true;
+    if kind == .HOLE return true;
+
+    return false;
+}
+
 filter_out_impassible :: (squares : *[..] Square, using map: Map) {
     for <<squares {
         tile := get_tile(map, it);
         if is_impassible(tile) remove it;
     }
-
 }
 
 filter_out_occupied :: (squares : *[..] Square, using map: Map) {
@@ -92,20 +106,28 @@ filter_out_occupied :: (squares : *[..] Square, using map: Map) {
     }
 }
 
+filter_out_death :: (squares : *[..] Square, using map: Map, unit: Unit) {
+    for <<squares {
+        tile := get_tile(map, it);
+        if is_deadly(tile, unit) remove it;
+    }
+
+}
+
 //
 //
 
 default_tile_sprite_index :: (kind : Tile_Kind) -> int {
     if #complete kind == {
         case .NONE;         return 0;
-        case .WALL;         return 101;
+        case .WALL;         return 643;
         case .REWARD;       return 302;
         case .SPENT_REWARD; return 303;
         case .OBJECTIVE;    return 360;
         case .KILL;         return 49 * 12 + 34;
         case .MINE;         return 486;
         case .HOLE;         return 301;
-        case .SLOW;         return 737;
+        case .SLOW;         return 101;
         case .COVER;        return 148;
         case .HALF_COVER;   return 147;
     }
@@ -124,7 +146,6 @@ resolve_landing_effects :: (map: *Map, unit: *Unit) {
             kill(unit);
 
         case .HOLE;
-        if !cast(bool)(unit.flags & .FLYING)
             kill(unit);
 
         case .MINE;
