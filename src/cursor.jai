@@ -9,13 +9,15 @@ cursor : struct {
     state : enum {
         NEUTRAL;
         MOVING;
-        TARGETING_PRIMARY;
-        TARGETING_SECONDARY;
+        TARGETING;
         INSPECTING;
     }
 
     selected : *Unit;
     selected_initial_square : Square = .{-1, -1};
+    selected_initial_direction : Direction;
+
+    targeting_with : *Ability;
 
     accessible : [..] Square;
 
@@ -32,7 +34,7 @@ resolve_cursor_inputs :: (using map : *Map) {
     using input;
 
     if pressed(*button_menu) {
-        program_mode = .MENU;
+        switch_mode(.MENU);
         menu.element_index = 0;
         play_sfx("selection");
     }
@@ -59,19 +61,19 @@ resolve_cursor_inputs :: (using map : *Map) {
             }
 
             if pressed(*button_3) {
-                begin_targeting(map, use_secondary=false);
+                begin_targeting(map, which_ability=0);
             }
 
             if pressed(*button_4) {
-                begin_targeting(map, use_secondary=true);
+                begin_targeting(map, which_ability=1);
             }
 
             if pressed(*button_5) {
-                turn_vessel(map, left=true);
+                begin_targeting(map, which_ability=2);
             }
 
             if pressed(*button_6) {
-                turn_vessel(map);
+                begin_targeting(map, which_ability=3);
             }
 
             if pressed(*button_select) {
@@ -101,20 +103,28 @@ resolve_cursor_inputs :: (using map : *Map) {
             }
 
             if pressed(*button_3) {
-                begin_targeting(map, use_secondary=false);
+                begin_targeting(map, which_ability=0);
             }
 
             if pressed(*button_4) {
-                begin_targeting(map, use_secondary=true);
+                begin_targeting(map, which_ability=1);
+            }
+
+            if pressed(*button_5) {
+                begin_targeting(map, which_ability=2);
+            }
+
+            if pressed(*button_6) {
+                begin_targeting(map, which_ability=3);
             }
         }
 
-        case .TARGETING_PRIMARY;
+        case .TARGETING;
         {
             maybe_move_cursor(map.*);
 
             if pressed(*button_1) {
-                use_ability(map, *selected.primary);
+                use_ability(map, cursor.targeting_with);
             }
 
             if pressed(*button_2) {
@@ -122,32 +132,39 @@ resolve_cursor_inputs :: (using map : *Map) {
             }
 
             if pressed(*button_3) {
-                use_ability(map, *selected.primary);
+                if cursor.targeting_with == *selected.primary {
+                    use_ability(map, cursor.targeting_with);
+                }
+                else {
+                    begin_targeting(map, which_ability=0);
+                }
             }
 
             if pressed(*button_4) {
-                begin_targeting(map, use_secondary=true);
-            }
-        }
-
-        case .TARGETING_SECONDARY;
-        {
-            maybe_move_cursor(map.*);
-
-            if pressed(*button_1) {
-                use_ability(map, *selected.secondary);
+                if cursor.targeting_with == *selected.secondary {
+                    use_ability(map, cursor.targeting_with);
+                }
+                else {
+                    begin_targeting(map, which_ability=1);
+                }
             }
 
-            if pressed(*button_2) {
-                deselect_unit(map.*, reset_cursor=true);
+            if pressed(*button_5) {
+                if cursor.targeting_with == *selected.repair {
+                    use_ability(map, cursor.targeting_with);
+                }
+                else {
+                    begin_targeting(map, which_ability=2);
+                }
             }
 
-            if pressed(*button_3) {
-                begin_targeting(map, use_secondary=false);
-            }
-
-            if pressed(*button_4) {
-                use_ability(map, *selected.secondary);
+            if pressed(*button_6) {
+                if cursor.targeting_with == *selected.board {
+                    use_ability(map, cursor.targeting_with);
+                }
+                else {
+                    begin_targeting(map, which_ability=3);
+                }
             }
         }
 
@@ -206,11 +223,12 @@ show_unit_range :: (map : *Map) {
     array_add(*command_queue, cast(*Command)command);
 }
 
-begin_targeting :: (map : *Map, use_secondary : bool) {
+begin_targeting :: (map : *Map, which_ability : int) {
     command := New(Begin_Targeting_Command);
     command.map = map;
     command.team = .YOU;
-    command.use_secondary = use_secondary;
+    assert(which_ability >= 0 && which_ability <= 3);
+    command.which_ability = which_ability;
     array_add(*command_queue, cast(*Command)command);
 }
 
@@ -259,27 +277,4 @@ stop_inspecting :: () {
     inspecting = null;
     state = .NEUTRAL;
     play_sfx("place");
-}
-
-turn_vessel :: (map: *Map, left := false) {
-    using cursor;
-
-    array_reset(*interactible);
-    array_reset(*accessible);
-
-    vessel := get_occupant(map.*, square);
-
-    if !vessel then return;
-
-    if !vessel.turned {
-        turn(vessel, left);
-        vessel.turned = true;
-        return;
-    }
-
-    if vessel.turned && !vessel.moved {
-        turn(vessel, left);
-        vessel.moved = true;
-        return;
-    }
 }

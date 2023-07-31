@@ -83,8 +83,43 @@ init :: () -> bool {
         success = make_spritesheet(*ship_spritesheet, "ships.png");
         assert(success);
 
-        success = make_sprite(*uncle, "uncle.png");
-        assert(success);
+        {
+            register_sprite :: (name: string) {
+                new_sprite : Sprite;
+                success := make_sprite(*new_sprite, tprint("%.png", name));
+                assert(success);
+                table_add(*rendering.sprites, name, new_sprite);
+            }
+
+            register_sprite("ojii");
+            register_sprite("young takeda");
+            register_sprite("motonari");
+
+            register_sprite("ui");
+        }
+
+        {
+            register_mural :: (name: string) {
+                new_mural : Sprite;
+                success := make_sprite(*new_mural, tprint("%.png", name));
+                assert(success);
+                table_add(*rendering.murals, name, new_mural);
+            }
+
+            register_mural("title");
+            register_mural("wave");
+        }
+
+        {
+            register_slice :: (name: string) {
+                new_slice : Sprite;
+                success := make_sprite(*new_slice, tprint("%.png", name));
+                assert(success);
+                table_add(*rendering.slices, name, new_slice);
+            }
+
+            register_slice("slice");
+        }
 
         init_framebuffer();
     }
@@ -105,7 +140,7 @@ init :: () -> bool {
     }
 
     //toggle_fullscreen();
-    sound_player.mix_all = 0.0;
+    sound_player.mix_all = 0.5;
 
     return true;
 }
@@ -114,7 +149,8 @@ init_fonts :: () {
     initialize_freetype();
 
     deinit(*main_font.characters);
-    initialize_font(*main_font, "mkd.ttf", 16);
+    //initialize_font(*main_font, "mkd.ttf", 16);
+    initialize_font(*main_font, "venice/VeniceClassic.ttf", 19);
 }
         
 init_audio :: () {
@@ -206,6 +242,35 @@ init_menus :: () {
         sfx.sprite_index = 822;
         sfx.sprite_index_two = 821;
         array_add(*elements, cast(*Menu_Element)sfx);
+
+        quit := New(Go_Element, allocator=a);
+        quit.name = "quit";
+        quit.callback = quit_game;
+        quit.sprite_index = 120;
+        array_add(*elements, cast(*Menu_Element)quit);
+    }
+
+    {
+        using start_menu;
+        name = "start";
+
+        a: Allocator;
+        a.proc = flat_pool_allocator_proc;
+        a.data = *pool;
+
+        resume := New(Go_Element, allocator=a);
+        resume.name = "start";
+        resume.callback = start_game;
+        resume.sprite_index = 22;
+        array_add(*elements, cast(*Menu_Element)resume);
+
+        fullscreen := New(Checkbox_Element, allocator=a);
+        fullscreen.name = "fullscreen";
+        fullscreen.callback = toggle_fullscreen;
+        fullscreen.value = *settings.fullscreen;
+        fullscreen.sprite_index = 831;
+        fullscreen.sprite_index_two = 830;
+        array_add(*elements, cast(*Menu_Element)fullscreen);
 
         quit := New(Go_Element, allocator=a);
         quit.name = "quit";

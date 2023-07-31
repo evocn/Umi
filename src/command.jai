@@ -110,14 +110,18 @@ Begin_Targeting_Command :: struct {
     kind = .BEGIN_TARGETING;
     map: *Map;
     team: Team;
-    use_secondary : bool;
+    which_ability : int = 0;
 }
 
 execute :: (using command: *Begin_Targeting_Command) {
     using cursor;
 
     if selected { // Switching from move mode
-        if use_secondary && !selected.secondary_active {
+        if which_ability == 0 && !selected.primary.active 
+        || which_ability == 1 && !selected.secondary.active 
+        || which_ability == 2 && !selected.repair.active 
+        || which_ability == 3 && !selected.board.active 
+        {
             return;
         }
 
@@ -132,12 +136,16 @@ execute :: (using command: *Begin_Targeting_Command) {
         selected = map.occupancy[square.col][square.row];
         if !selected return;
 
-        if use_secondary && !selected.secondary_active {
+        if selected.team != team {
             selected = null;
             return;
         }
 
-        if selected.team != team {
+        if which_ability == 0 && !selected.primary.active 
+        || which_ability == 1 && !selected.secondary.active 
+        || which_ability == 2 && !selected.repair.active 
+        || which_ability == 3 && !selected.board.active 
+        {
             selected = null;
             return;
         }
@@ -150,53 +158,31 @@ execute :: (using command: *Begin_Targeting_Command) {
 
     array_reset(*interactible);
     array_reset(*accessible);
+    state = .TARGETING;
 
-    ability: *Ability;
-    if use_secondary {
-        ability = *selected.secondary;
-        state = .TARGETING_SECONDARY;
-    }
-    else {
-        ability = *selected.primary;
-        state = .TARGETING_PRIMARY;
+    if which_ability == {
+        case 0; targeting_with = *selected.primary;
+        case 1; targeting_with = *selected.secondary;
+        case 2; targeting_with = *selected.repair;
+        case 3; targeting_with = *selected.board;
     }
 
     selected_initial_square = square;
-    if ability.targeting == {
+    if targeting_with.targeting == {
         case .ORTHOGRAPHIC;
-            interactible = get_orthographic_squares_from_position(map, ability.*, selected, selected.square);
-
-        case .PORT;
-            interactible = get_orthographic_squares_from_position(map, ability.*, selected, selected.square);
-            filter_get_port(*interactible, selected.square, selected.direction);
-
-        case .STARBOARD;
-            interactible = get_orthographic_squares_from_position(map, ability.*, selected, selected.square);
-            filter_get_starboard(*interactible, selected.square, selected.direction);
-
-        case .PORT_AND_STARBOARD;
-            interactible = get_orthographic_squares_from_position(map, ability.*, selected, selected.square);
-            filter_get_port_and_starboard(*interactible, selected.square, selected.direction);
-
-        case .FORE;
-            interactible = get_orthographic_squares_from_position(map, ability.*, selected, selected.square);
-            filter_get_fore(*interactible, selected.square, selected.direction);
-
-        case .AFT;
-            interactible = get_orthographic_squares_from_position(map, ability.*, selected, selected.square);
-            filter_get_aft(*interactible, selected.square, selected.direction);
+            interactible = get_orthographic_squares_from_position(map, targeting_with.*, selected, selected.square);
 
         case;
-            interactible = get_ability_squares_from_position(map, ability.*, selected, selected.square);
+            interactible = get_ability_squares_from_position(map, targeting_with.*, selected, selected.square);
     }
 
     // Filter ability use squares based on the type of the ability.
-    if ability.targeting == {
+    if targeting_with.targeting == {
         case .EMPTY_SQUARE;
         filter_out_impassible(*interactible, map);
         filter_out_occupied(*interactible, map);
 
-        // @TODO: This is where things go now
+        // @NOTE: This is where things go now
     }
 
     play_sfx("selection");
@@ -236,6 +222,13 @@ execute :: (using command: *Place_Unit_Command) {
 
     resolve_landing_effects(map, selected);
 
+    if path.count > 1 {
+        selected.direction = get_best_path_direction(path[0], path[1]);
+    }
+    if whose_turn() == .THEM {
+        selected.direction = get_best_path_direction(square, selected_initial_square);
+    }
+
     deselect_unit(map.*);
 }
 
@@ -252,12 +245,14 @@ execute :: (using command: *Use_Ability_Command) {
 
     if !array_find(interactible, square) return;
 
+    result : Resolution;
     if has_target(ability.*) {
         target := map.occupancy[square.col][square.row];
         if !target return;
 
         // Filter on what units you should be able to use the ability for.
         if ability.targeting == {
+            case .ORTHOGRAPHIC; #through;
             case .ENEMY;
             if target.team == selected.team return;
 
@@ -268,10 +263,11 @@ execute :: (using command: *Use_Ability_Command) {
             case .ANY;
         }
 
-        resolve_ability(map, ability, selected, target, square);
+        result = resolve_ability(map, ability, selected, target, square);
+        print("%\n", result);
     }
     else {
-        resolve_ability(map, ability, selected, null, square);
+        result = resolve_ability(map, ability, selected, null, square);
     }
 
     selected.exhausted = true;
@@ -280,6 +276,20 @@ execute :: (using command: *Use_Ability_Command) {
     if ability.special == .WARP {
         reset_cursor = false;
     }
+
+    if ability.targeting == .ORTHOGRAPHIC {
+        if ability.special == .RAM {
+            selected.direction = get_best_path_direction(square, selected.square);
+        }
+        else {
+            ideal_direction := perpendicular(get_best_path_direction(selected.square, square));
+            if is_perpendicular(selected.direction, ideal_direction) {
+                selected.direction = ideal_direction;
+            }
+        }
+    }
+
+    slice_start(result, length = 3.0);
 
     deselect_unit(map.*, reset_cursor=reset_cursor);
 }

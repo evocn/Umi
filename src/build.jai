@@ -1,17 +1,17 @@
-// Tactics
+// Umi
 // Build
 // Alex Hartford
 // May 2023
 
 build :: () {
-    w := compiler_create_workspace("Tactics Workspace");
+    w := compiler_create_workspace("Umi Workspace");
     if !w {
         print("Workspace creation failed.\n");
         return;
     }
 
     options := get_build_options(w);
-    options.output_executable_name = "tactics";
+    options.output_executable_name = "umi";
 
     // Add ext/ to the import path.
     import_path: [..] string;
@@ -42,6 +42,7 @@ build :: () {
     add_build_file(tprint("%/menu.jai", #filepath), w);
     add_build_file(tprint("%/serialization.jai", #filepath), w);
 
+    add_build_file(tprint("%/simulate.jai", #filepath), w);
     add_build_file(tprint("%/spine.jai", #filepath), w);
     add_build_file(tprint("%/manager.jai", #filepath), w);
     add_build_file(tprint("%/cursor.jai", #filepath), w);
@@ -51,8 +52,13 @@ build :: () {
     add_build_file(tprint("%/map.jai", #filepath), w);
     add_build_file(tprint("%/path.jai", #filepath), w);
     add_build_file(tprint("%/unit.jai", #filepath), w);
+    add_build_file(tprint("%/captain.jai", #filepath), w);
     add_build_file(tprint("%/ability.jai", #filepath), w);
-    add_build_file(tprint("%/effect.jai", #filepath), w);
+    add_build_file(tprint("%/status.jai", #filepath), w);
+
+    add_build_file(tprint("%/dialogue.jai", #filepath), w);
+    add_build_file(tprint("%/fade.jai", #filepath), w);
+    add_build_file(tprint("%/slice.jai", #filepath), w);
 
     add_build_file(tprint("%/viewport.jai", #filepath), w);
 

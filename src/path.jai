@@ -107,7 +107,6 @@ get_orthographic_squares_from_position :: (using map : Map, ability: Ability, un
     interactible : [..] Square;
 
     traversed := traverse(map, origin, unit.team, pass=true, swift=true);
-    debug.traversed = traversed;
     for traversed.squares {
         within_range := it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range;
         orthographic := it.square.col == origin.col || it.square.row == origin.row;
@@ -128,16 +127,32 @@ get_squares_you_could_use_an_ability_from :: (using map : Map, ability: Ability,
                           swift=cast(bool)(attacker.flags & .SWIFT)
                          );
 
-    debug.traversed = traversed;
-    for traversed.squares {
-        square_within_range := it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range;
-        occupant := get_occupant(map, it.square);
-        square_can_be_occupied := occupant == null || occupant.id == attacker.id;
-        square_is_reachable := it.reachable;
-        if square_within_range && square_can_be_occupied && square_is_reachable {
-            array_add(*squares_to_attack_from, it.square);
-        }
+    if ability.targeting == {
+        case .ORTHOGRAPHIC;
+            for traversed.squares {
+                square_within_range := it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range;
+                orthographic := it.square.col == target.square.col || it.square.row == target.square.row;
+                path_is_clear:= clear_path(target.square, it.square, map);
+                occupant := get_occupant(map, it.square);
+                square_can_be_occupied := occupant == null || occupant.id == attacker.id;
+                square_is_reachable := it.reachable;
+                if square_within_range && square_can_be_occupied && square_is_reachable && orthographic && path_is_clear {
+                    array_add(*squares_to_attack_from, it.square);
+                }
+            }
+
+        case;
+            for traversed.squares {
+                square_within_range := it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range;
+                occupant := get_occupant(map, it.square);
+                square_can_be_occupied := occupant == null || occupant.id == attacker.id;
+                square_is_reachable := it.reachable;
+                if square_within_range && square_can_be_occupied && square_is_reachable {
+                    array_add(*squares_to_attack_from, it.square);
+                }
+            }
     }
+
 
     return squares_to_attack_from;
 }
@@ -151,7 +166,6 @@ get_squares_right_next_to_unit :: (using map: Map, source: Unit, target: Unit) -
                           swift=cast(bool)(source.flags & .SWIFT)
                          );
 
-    debug.traversed = traversed;
     for traversed.squares {
         square_within_range := it.distance_by_air == 1;
         occupant := get_occupant(map, it.square);
@@ -174,7 +188,6 @@ get_ability_squares_from_position :: (using map : Map, ability: Ability, unit : 
     }
 
     traversed := traverse(map, square, unit.team, pass=true, swift=true);
-    debug.traversed = traversed;
     for traversed.squares {
         if it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range
             array_add(*interactible, it.square);
@@ -189,16 +202,18 @@ get_accessible_squares_from_position :: (using map : Map, unit : Unit) -> [..] S
                           pass=cast(bool)(unit.flags & .PASS), 
                           swift=cast(bool)(unit.flags & .SWIFT)
                          );
-    debug.traversed = traversed;
 
     for traversed.squares {
-        square_within_range := it.distance <= unit.movement;
+        movement := unit.movement;
+        if unit.status & .ADRIFT then movement = 0;
+        square_within_range := it.distance <= movement;
         occupant := get_occupant(map, it.square);
         square_can_be_occupied := occupant == null || occupant.id == unit.id;
         if square_within_range && square_can_be_occupied {
             array_add(*accessible, it.square);
         }
     }
+
     return accessible;
 }
 
@@ -330,7 +345,7 @@ Traversal_Result :: struct {
 }
 
 #scope_file
-// @TODO: It would be nice if we didn't end up with a proliferation of flags.
+// @Cleanup: It would be nice if we didn't end up with a proliferation of flags.
 traverse :: (using map : Map, origin : Square, team := Team.YOU, pass := false, swift := false) -> Traversal_Result {
     rows :: int.[-1,  0,  1,  0];
     cols :: int.[ 0,  1,  0, -1];

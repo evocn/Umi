@@ -43,7 +43,7 @@ next_turn :: (using map: *Map) -> Team {
             it.moved = false;
             it.turned = false;
             it.exhausted = false;
-            increment_effects(it);
+            apply_status_effects(it);
         }
     }
 

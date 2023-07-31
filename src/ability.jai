@@ -3,14 +3,6 @@
 // Alex Hartford
 // July 2023
 
-/*
-sword: 474
-gloves: 90
-warp: 231
-heart: 529
-shield: 233
-*/
-
 Ability :: struct {
     name : string;
     sprite_index : int = 474;
@@ -22,28 +14,20 @@ Ability :: struct {
     damage : s32;
     bonus_damage : s32;
 
-    effect : Effect;
+    status : Status;
     push_orientation : Ability_Orientation = .NONE;
     special: Ability_Special = .NONE;
 
-    flags : Ability_Flags; @NoSerialize
-    used : bool;           @NoSerialize
-}
+    active : bool = true;
 
-Ability_Flags :: enum {
-    EMPOWERED;
-    WEAKENED;
+    used : bool;           @NoSerialize
 }
 
 Ability_Targeting_Mode :: enum {
     ENEMY;
     ALLY;
     ANY;
-    PORT;
-    STARBOARD;
-    PORT_AND_STARBOARD;
-    FORE;
-    AFT;
+    BOARDING;
     ORTHOGRAPHIC;
     AOE;
     EMPTY_SQUARE;
@@ -55,12 +39,8 @@ has_target :: (using ability: Ability) -> bool {
         case .SELF;     #through;
         case .ENEMY;    #through;
         case .ALLY;     #through;
-        case .PORT;     #through;
-        case .STARBOARD;#through;
-        case .PORT_AND_STARBOARD;#through;
-        case .FORE;     #through;
-        case .AFT;      #through;
         case .ORTHOGRAPHIC; #through;
+        case .BOARDING; #through;
         case .ANY;      return true;
 
         case .AOE;      #through;
@@ -80,6 +60,7 @@ Ability_Special :: enum {
     NONE;
     WARP;
     DANCE;
+    RAM;
 }
 
 //
@@ -89,22 +70,27 @@ summarize_ability :: (using ability: Ability) -> string {
     builder: String_Builder;
     init_string_builder(*builder);
 
-    if damage > 0 {
-        print_to_builder(*builder, "%-% ", 1 + bonus_damage, damage + bonus_damage);
+    if targeting == .BOARDING {
+        return "board enemy ship.";
     }
-    else if damage < 0 {
-        print_to_builder(*builder, "%-% ", -1 * (bonus_damage + -1), -1 * (damage + bonus_damage));
+    else {
+        if damage > 0 {
+            print_to_builder(*builder, "%-% ", 1 + bonus_damage, damage + bonus_damage);
+        }
+        else if damage < 0 {
+            print_to_builder(*builder, "%-% ", -1 * (bonus_damage + -1), -1 * (damage + bonus_damage));
+        }
+
+        if damage > 0 || (damage == 0 && bonus_damage > 0) {
+            append(*builder, "damage. ");
+        }
+        else if damage < 0 || (damage == 0 && bonus_damage < 0) {
+            append(*builder, "healing. ");
+        }
     }
 
-    if damage > 0 || (damage == 0 && bonus_damage > 0) {
-        append(*builder, "damage. ");
-    }
-    else if damage < 0 || (damage == 0 && bonus_damage < 0) {
-        append(*builder, "healing. ");
-    }
-
-    if effect.kind != .NONE {
-        append(*builder, to_lower_copy(tprint("% %. ", effect.kind, effect.strength)));
+    if status != 0 {
+        append(*builder, to_lower_copy(tprint("%. ", status)));
     }
 
     if special != .NONE {
@@ -118,46 +104,105 @@ summarize_ability :: (using ability: Ability) -> string {
     return builder_to_string(*builder);
 }
 
-resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *Unit, square: Square) {
+Resolution :: struct {
+    ability: *Ability;
+    user: *Unit;
+    victim: *Unit;
+
+    user_died : bool;
+    user_initial_hull: int;
+    user_hull_damage : int;
+    user_initial_crew: int;
+    user_crew_damage : int;
+    user_status : Status;
+
+    victim_died : bool;
+    victim_initial_hull: int;
+    victim_hull_damage : int;
+    victim_initial_crew: int;
+    victim_crew_damage : int;
+    victim_status : Status;
+}
+
+resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *Unit, square: Square) -> Resolution {
     assert(user != null);
     assert(ability != null);
 
+    result: Resolution;
+    result.ability = ability;
+    result.user = user;
+    result.user_initial_hull = user.health;
+    result.user_initial_crew = user.crew;
+
     if has_target(ability.*) {
+        result.victim = victim;
+        result.victim_initial_hull = victim.health;
+        result.victim_initial_crew = victim.crew;
+
         assert(victim != null);
 
         //log("% used the % ability on %.\n", user.name, name, victim.name);
         //log("% damage, applying the % effect for % turns at % strength, with % special effect.\n", damage, effect.kind, effect.duration, effect.strength, special);
 
         // damage
-        if damage > 0 || (damage == 0 && bonus_damage > 0) {
+        if targeting == .BOARDING {
+            play_sfx("attack");
+
+            {
+                damage_to_victim := 2 + roll_die(user.crew) + bonus_damage;
+                if user.captain == .WARLORD {
+                    damage_to_victim += 3;
+                }
+                if victim.flags & .TURTLE {
+                    damage_to_victim -= 3;
+                }
+                damage_to_victim = clamp(damage_to_victim, 0, 9);
+                result.victim_crew_damage = damage_to_victim;
+                crew_damage(victim, damage_to_victim);
+                if victim.dead result.victim_died = true;
+            }
+
+            {
+                damage_to_assailant := roll_die(victim.crew) + bonus_damage;
+                if victim.captain == .WARLORD {
+                    damage_to_assailant += 3;
+                }
+                if user.flags & .TURTLE {
+                    damage_to_assailant -= 3;
+                }
+                damage_to_assailant = clamp(damage_to_assailant, 0, 9);
+                result.user_crew_damage = damage_to_assailant;
+                crew_damage(user, damage_to_assailant);
+                if user.dead result.user_died = true;
+            }
+        }
+        else if damage > 0 || (damage == 0 && bonus_damage > 0) {
             play_sfx("attack");
 
             tile := get_tile(map.*, victim.square);
-            if tile.kind == .COVER return;
+            if tile.kind == .COVER return result;
             else if tile.kind == .HALF_COVER {
                 map.tiles[victim.square.col][victim.square.row].kind = .NONE;
                 map.tiles[victim.square.col][victim.square.row].sprite_index = default_tile_sprite_index(.NONE);
-                return;
+                return result;
             }
 
             attack_damage := clamp(roll_die(damage) + bonus_damage, 0, 9);
-
-            attack(victim, attack_damage);
+            result.victim_hull_damage = attack_damage;
+            hull_damage(victim, attack_damage);
+            if victim.dead result.victim_died = true;
         }
         else if damage < 0 || (damage == 0 && bonus_damage < 0) {
             play_sfx("buff");
 
-            heal_damage := -1 * clamp(roll_die(damage) + bonus_damage, 0, 9);
-
-            heal(victim, heal_damage);
+            heal_amount := clamp(abs(roll_die(damage)) + bonus_damage, 0, 9);
+            result.victim_hull_damage = -1 * heal_amount;
+            crew_damage(victim, -1 * heal_amount);
+            if victim.dead result.victim_died = true; // unlikely...
         }
 
         // push
-        if push_orientation != .NONE {
-
-            if victim.flags & .IMMOVABLE
-                return;
-
+        if push_orientation != .NONE && !(victim.flags & .IMMOVABLE) {
             direction_of_push : Direction;
             {
                 direction_to_target := get_best_unit_direction(user.square, victim.square);
@@ -181,20 +226,22 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             }
 
             target_square := move(victim.square, direction_of_push);
-            if !on_grid(target_square, map.*) return;
-            if is_impassible(get_tile(map, target_square)) return;
-            if get_occupant(map, target_square) return;
+            if on_grid(target_square, map.*) 
+            && !is_impassible(get_tile(map, target_square))
+            && !get_occupant(map, target_square)
+            {
+                play_sfx("arrow");
 
-            play_sfx("arrow");
-
-            remove_occupant(map, victim.square);
-            occupy(map, target_square, victim);
-            victim.square = target_square;
-            resolve_landing_effects(map, victim);
+                remove_occupant(map, victim.square);
+                occupy(map, target_square, victim);
+                victim.square = target_square;
+                resolve_landing_effects(map, victim);
+            }
         }
 
-        // apply effect
-        apply_effect(victim, effect);
+        // apply status effect
+        victim.status |= status;
+        result.victim_status = status;
 
         // special
         if special == {
@@ -203,13 +250,18 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
                 victim.exhausted = false;
                 play_sfx("buff");
 
+            case .RAM;
+                remove_occupant(map, user.square);
+                ram_destination := move(square, get_best_unit_direction(square, user.square));
+
+                occupy(map, ram_destination, user);
+                user.square = ram_destination;
+                resolve_landing_effects(map, user);
+
+                // @TODO: Damage in return for ramming?
+
             case;
         }
-
-        /*
-        // @TODO!
-        case .FIREBALL;
-        */
     }
 
     else {
@@ -227,4 +279,6 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             case;
         }
     }
+
+    return result;
 }

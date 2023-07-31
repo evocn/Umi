@@ -48,7 +48,7 @@ draw_quad :: (using quad: Quad) {
 //
 
 // @NOTE: These lines cannot add more members after being initialized.
-// @TODO: Create a more robust solution.
+// We should create a more robust solution.
 Line :: struct {
     points: [..] Vector3;
     vao, vbo : GLuint;

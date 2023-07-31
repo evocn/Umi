@@ -1,86 +1,46 @@
-
 Tactics
 Log
 Alex Hartford
 July 2023
 
-Directionality? Movement limitations?
-Some notion of speed?
-Some notion of ramming?
-
-Boarding Strength/Crew Health
-
-Commanders
-  Special passive abilities
-* Two-handed fighter
-* Two-weapon master
-* Double Move
-* etc
-
-  Activated special abilities
-* Move all units
-* Double dice for the turn
-* etc
-
-New AI constructs
-
 TODO
 ====
-Goal: A Fun 30 Minute Demo
-
-Choice.
-Uncertainty.
-Risk.
-16 color palette. 4-bit charm.
-Biwa Music + Synth Compression.
-Stark.
-Light-touch fiction.
-
-Week 1
-------
-Redo the system for boats
-
-Reinforcements
-
-Tighter UI for attacks.
-
-4 Fun levels.
-
 Week 2
 ------
+Tighter UI for attacks.
+  We want just dice, or some other simple system.
+  Really show the result happening.
+
+Flame Visual.
+Thunder Tile.
+
 4 Fun levels.
 
-Pool of gathered heroes
-* Choosing units per level
-* Adding to the pool per battle.
-* Recruiting new units.
-* Rewards.
-* Upgrades? Maybe it just happens at some point in the game?
-* Maybe we do some basic experience points stuff?
+Mid-Battle Events
+  Basic Dialogue events
+  Change stage
+  Reinforcements
+  Both on specific turns and after defeating specific units
 
-Spine
-* Levels
-* Campaigns (levels go into eachother)
-* Events
-* Dialogue boxes
-* Cutscenes / Dialogue.
+Talk to units ("Parley" ability)
+Recruiting new units?
+
+Unmanned ships can be claimed
+Sunk ships can have their men rescued.
 
 Week 3
 ------
 Art Week
 
-* Flanking
-* Support-style system.
-* Combination attacks
+Save/Load Game
+New Icon
 
-* Canto Unit
+Animation for the menu, UI, character movement, etc.
+
+4 Fun levels.
 
 Week 4
 ------
-Animation for the menu, UI, character movement, etc.
-Start Screen.
-Credits.
-
 Reduce draw calls (screen culling)
 undo for gameplay
 Better Cursor
@@ -88,13 +48,36 @@ Soft Viewport
 
 Week 5
 ------
+Polish.
+  Start Screen ssssshing!
+  Fades.
+  Volume fades.
+  Full-on Audio pass.
+  Visual flourishes. Flashes of lightning, etc.
+
 Finish.
+  QA Pass
+  Bug fixes galore.
+
+Release.
+  Itch Page.
+  Release Build.
+  Run it on every machine I can think of.
 
 Vision
 ======
+Goal: A Fun 30 Minute Demo
+
+Choice.
+Uncertainty.
+Risk.
+Stark 16 color palette. 4-bit charm.
+Biwa Music + Synth Compression.
+Give the feeling of the Sengoku period. Show the recklessness, and the consequence.
+
 A lot like hero tactics
 Finished in one month and ten days
-Ten levels
+Eight levels
 Some dialogue and strategy layer
 No stats, only hit points and abilities.
 Vary few abilities. Maybe only attack, heal, defend, freeze, and warp.
@@ -140,3 +123,11 @@ long game is what I want to go with.
 It will just be far easier to get the behavior I'm looking for.
 
 
+# 7/31/2023
+Went through a hard week this last week. I nailed down what the project was
+going to look like, and set a goal, and things went south fast.
+
+I'm going to push through it. I don't want to back down from something this
+powerful. We are going straight through the blockade of resistance.
+
+I will not evaluate until I am done.

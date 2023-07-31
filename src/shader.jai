@@ -3,6 +3,49 @@
 // Alex Hartford
 // June 2023
 
+use_tile_shader :: (transparency : float) -> Shader {
+    shader := rendering.shader;
+    use_shader(shader);
+
+    orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
+    set_mat4(shader, "projection", orthographic);
+
+    set_float(shader, "transparency", transparency);
+    set_vec4(shader, "background", color_bg);
+
+    return shader;
+}
+
+use_text_shader :: (transparency : float) -> Shader {
+    shader := rendering.text_shader;
+    use_shader(shader);
+
+    orthographic := orthographic_projection_matrix(0, xx PIXEL_WIDTH, 0, xx PIXEL_HEIGHT, -1, 1);
+    set_mat4(shader, "projection", orthographic);
+
+    set_float(shader, "transparency", transparency);
+    set_vec4(shader, "background", color_bg);
+
+    return shader;
+}
+
+use_sprite_shader :: (transparency : float) -> Shader {
+    shader := rendering.sprite_shader;
+    use_shader(shader);
+
+    orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
+    set_mat4(shader, "projection", orthographic);
+
+    set_float(shader, "transparency", transparency);
+    set_vec4(shader, "background", color_bg);
+
+    return shader;
+}
+
+//
+//
+//
+
 shaders_path :: "shaders";
 
 Shader :: GLuint;

@@ -4,49 +4,39 @@ atakebune	# name
 large warship. armed and armored.	# description
 0	# sprite_index
 8	# max_health
-1	# base_armor
 2	# movement
 0	# flags
-1	# primary_active
-1	# secondary_active
 # ---
 artillery	# name
 562	# sprite_index
-3	# targeting
+4	# targeting
 1	# min_range
 4	# max_range
-6	# damage
-1	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+1	# damage
+0	# bonus_damage
+2	# status
 0	# push_orientation
 0	# special
+1	# active
 # ---
-board	# name
-474	# sprite_index
+greek fire	# name
+504	# sprite_index
 0	# targeting
 1	# min_range
 1	# max_range
-5	# damage
+0	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+1	# status
 0	# push_orientation
 0	# special
+1	# active
 
 carrack	# name
 portugese sailing ship.	# description
 0	# sprite_index
 0	# max_health
-0	# base_armor
 0	# movement
 0	# flags
-0	# primary_active
-0	# secondary_active
 # ---
 !	# name
 474	# sprite_index
@@ -55,12 +45,10 @@ portugese sailing ship.	# description
 1	# max_range
 0	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 # ---
 !	# name
 474	# sprite_index
@@ -69,98 +57,79 @@ portugese sailing ship.	# description
 1	# max_range
 0	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 
 geobukseon	# name
 korean turtle ship.	# description
 0	# sprite_index
 2	# max_health
-5	# base_armor
 2	# movement
-0	# flags
-0	# primary_active
-0	# secondary_active
+8	# flags
 # ---
-!	# name
-474	# sprite_index
-0	# targeting
+seacrash	# name
+563	# sprite_index
+4	# targeting
 1	# min_range
-1	# max_range
-0	# damage
+2	# max_range
+2	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
-0	# special
+3	# special
+1	# active
 # ---
-!	# name
-474	# sprite_index
-0	# targeting
+pike	# name
+431	# sprite_index
+3	# targeting
 1	# min_range
-1	# max_range
-0	# damage
+2	# max_range
+2	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
-0	# special
+3	# special
+0	# active
 
 gyosen	# name
 a tiny fishing boat.	# description
 0	# sprite_index
-0	# max_health
-0	# base_armor
-0	# movement
-0	# flags
-0	# primary_active
-0	# secondary_active
+2	# max_health
+2	# movement
+1	# flags
 # ---
-!	# name
-474	# sprite_index
-0	# targeting
+repair	# name
+456	# sprite_index
+6	# targeting
 1	# min_range
 1	# max_range
-0	# damage
+-1	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 # ---
-!	# name
+seppuku	# name
 474	# sprite_index
-0	# targeting
+6	# targeting
 1	# min_range
 1	# max_range
-0	# damage
+1	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 
 kobaya	# name
 A small ship. designed for stealth.	# description
 0	# sprite_index
 4	# max_health
-0	# base_armor
 4	# movement
-8	# flags
-1	# primary_active
-1	# secondary_active
+0	# flags
 # ---
 arrow	# name
 331	# sprite_index
@@ -169,12 +138,10 @@ arrow	# name
 2	# max_range
 3	# damage
 0	# bonus_damage
-# ---
-6	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 # ---
 board	# name
 473	# sprite_index
@@ -183,36 +150,29 @@ board	# name
 1	# max_range
 3	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 
 sekibune	# name
 mid-sized warship.	# description
 0	# sprite_index
 6	# max_health
-0	# base_armor
 3	# movement
-0	# flags
-1	# primary_active
-1	# secondary_active
+2	# flags
 # ---
 arquebus	# name
 480	# sprite_index
-8	# targeting
+4	# targeting
 1	# min_range
 3	# max_range
-5	# damage
-1	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+3	# damage
+0	# bonus_damage
+0	# status
 0	# push_orientation
 0	# special
+1	# active
 # ---
 board	# name
 474	# sprite_index
@@ -221,22 +181,17 @@ board	# name
 1	# max_range
 0	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 
 tekkosen	# name
 a floating fortress.	# description
 0	# sprite_index
 9	# max_health
-3	# base_armor
 1	# movement
 18	# flags
-1	# primary_active
-1	# secondary_active
 # ---
 !	# name
 474	# sprite_index
@@ -245,12 +200,10 @@ a floating fortress.	# description
 1	# max_range
 0	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 # ---
 !	# name
 474	# sprite_index
@@ -259,22 +212,17 @@ a floating fortress.	# description
 1	# max_range
 0	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active
 
 commander	# name
 !	# description
 677	# sprite_index
 0	# max_health
-0	# base_armor
 0	# movement
 0	# flags
-1	# primary_active
-0	# secondary_active
 # ---
 command	# name
 474	# sprite_index
@@ -283,12 +231,10 @@ command	# name
 1	# max_range
 0	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 2	# special
+0	# active
 # ---
 !	# name
 474	# sprite_index
@@ -297,9 +243,7 @@ command	# name
 1	# max_range
 0	# damage
 0	# bonus_damage
-# ---
-0	# kind
-1	# strength
-1	# duration
+0	# status
 0	# push_orientation
 0	# special
+0	# active

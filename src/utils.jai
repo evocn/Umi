@@ -56,6 +56,37 @@ flip :: (direction : Direction) -> Direction {
     }
 }
 
+is_perpendicular :: (direction : Direction, to: Direction) -> bool {
+    if #complete direction == {
+        case .SOUTH; #through;
+        case .NORTH;
+            if #complete to == {
+                case .NORTH;    return false;
+                case .SOUTH;    return false;
+                case .WEST;     return true;
+                case .EAST;     return true;
+            }
+
+        case .EAST; #through;
+        case .WEST;
+            if #complete to == {
+                case .NORTH;    return true;
+                case .SOUTH;    return true;
+                case .WEST;     return false;
+                case .EAST;     return false;
+            }
+    }
+}
+
+perpendicular :: (direction : Direction) -> Direction {
+    if #complete direction == {
+        case .NORTH; return .EAST;
+        case .SOUTH; return .WEST;
+        case .WEST;  return .NORTH;
+        case .EAST;  return .SOUTH;
+    }
+}
+
 move :: (start : Square, direction: Direction) -> Square {
     if #complete direction == {
         case .NORTH; return start + Square.{0, -1};
@@ -67,6 +98,21 @@ move :: (start : Square, direction: Direction) -> Square {
 
 //
 //
+
+// @TODO: Investigate why these two are subtly different in their respective cases.
+get_best_path_direction :: (from: Square, to: Square) -> Direction {
+    assert(from != to);
+    using full_direction := to - from;
+
+    if abs(col) > abs(row) {
+        if col > 0 return .WEST;
+        return .EAST;
+    }
+    else {
+        if row > 0 return .NORTH;
+        return .SOUTH;
+    }
+}
 
 get_best_unit_direction :: (from: Square, to: Square) -> Direction {
     assert(from != to);

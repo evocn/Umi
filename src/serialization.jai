@@ -10,9 +10,9 @@ fonts_path      :: "assets/fonts";
 music_path      :: "assets/audio/music";
 sfx_path        :: "assets/audio/sfx";
 
+data_path       :: "data";
 levels_path     :: "data/levels";
-units_path      :: "data";
-abilities_path  :: "data";
+dialogues_path  :: "data/dialogues";
 
 next_id_value := 0;
 next_id :: () -> int {
@@ -35,7 +35,7 @@ save_units :: (units : [..] *Unit, filename : string) -> success : bool {
         if !success return false;
     }
 
-    write_entire_file(tprint("%/%", units_path, filename), *builder);
+    write_entire_file(tprint("%/%", data_path, filename), *builder);
     log("Saved units to \"%\".\n", filename, flags=.VERBOSE_ONLY);
 
     return true;
@@ -45,7 +45,7 @@ load_units :: (units : *[..] *Unit, filename : string) -> success : bool {
     handler : Text_File_Handler;
     defer deinit(*handler);
 
-    start_file(*handler, filename, tprint("%/%", units_path, filename), optional = false);
+    start_file(*handler, filename, tprint("%/%", data_path, filename), optional = false);
     if handler.failed return false;
 
     if handler.version != VERSION
@@ -176,12 +176,13 @@ serialize  :: (to_serialize: Unit_Flags, name : string, builder: *String_Builder
     append(builder, "\n");
     return true;
 }
-serialize  :: (to_serialize: Ability, name : string, builder: *String_Builder) -> success: bool {
-    print_to_builder(builder, "# ---\n");
-    success := serialize_structure(to_serialize, builder, false);
-    return success;
+serialize  :: (to_serialize: Status, name : string, builder: *String_Builder) -> success: bool {
+    print_to_builder(builder, "%", cast(int)to_serialize);
+    if name print_to_builder(builder, "\t# %", name);
+    append(builder, "\n");
+    return true;
 }
-serialize  :: (to_serialize: Effect, name : string, builder: *String_Builder) -> success: bool {
+serialize  :: (to_serialize: Ability, name : string, builder: *String_Builder) -> success: bool {
     print_to_builder(builder, "# ---\n");
     success := serialize_structure(to_serialize, builder, false);
     return success;
@@ -204,13 +205,13 @@ serialize  :: (to_serialize: Ability_Special, name : string, builder: *String_Bu
     append(builder, "\n");
     return true;
 }
-serialize  :: (to_serialize: Effect_Kind, name : string, builder: *String_Builder) -> success: bool {
+serialize  :: (to_serialize: AI_Behavior, name : string, builder: *String_Builder) -> success: bool {
     print_to_builder(builder, "%", cast(int)to_serialize);
     if name print_to_builder(builder, "\t# %", name);
     append(builder, "\n");
     return true;
 }
-serialize  :: (to_serialize: AI_Behavior, name : string, builder: *String_Builder) -> success: bool {
+serialize  :: (to_serialize: Captain, name : string, builder: *String_Builder) -> success: bool {
     print_to_builder(builder, "%", cast(int)to_serialize);
     if name print_to_builder(builder, "\t# %", name);
     append(builder, "\n");
@@ -290,12 +291,12 @@ unserialize  :: (to_unserialize: *Unit_Flags, handler: *Text_File_Handler) -> su
     <<to_unserialize = cast(Unit_Flags)i;
     return success;
 }
-unserialize  :: (to_unserialize: *Ability, handler : *Text_File_Handler) -> success: bool { 
-    success : bool;
-    success = unserialize_structure(to_unserialize, handler, false);
+unserialize  :: (to_unserialize: *Status, handler: *Text_File_Handler) -> success: bool {
+    i, success := parse_int(handler);
+    <<to_unserialize = cast(Status)i;
     return success;
 }
-unserialize  :: (to_unserialize: *Effect, handler : *Text_File_Handler) -> success: bool { 
+unserialize  :: (to_unserialize: *Ability, handler : *Text_File_Handler) -> success: bool { 
     success : bool;
     success = unserialize_structure(to_unserialize, handler, false);
     return success;
@@ -315,14 +316,14 @@ unserialize  :: (to_unserialize: *Ability_Special, handler: *Text_File_Handler) 
     <<to_unserialize = cast(Ability_Special)i;
     return success;
 }
-unserialize  :: (to_unserialize: *Effect_Kind, handler: *Text_File_Handler) -> success: bool {
-    i, success := parse_int(handler);
-    <<to_unserialize = cast(Effect_Kind)i;
-    return success;
-}
 unserialize  :: (to_unserialize: *AI_Behavior, handler: *Text_File_Handler) -> success: bool {
     i, success := parse_int(handler);
     <<to_unserialize = cast(AI_Behavior)i;
+    return success;
+}
+unserialize  :: (to_unserialize: *Captain, handler: *Text_File_Handler) -> success: bool {
+    i, success := parse_int(handler);
+    <<to_unserialize = cast(Captain)i;
     return success;
 }
 
@@ -437,11 +438,15 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
                     unit_copy := New(Unit, allocator=temp);
                     memcpy(unit_copy, new_unit, size_of(Unit));
                     memcpy(new_unit, it, size_of(Unit));
+
                     new_unit.team = unit_copy.team;
                     new_unit.ai = unit_copy.ai;
+                    new_unit.captain = unit_copy.captain;
+                    new_unit.crew = unit_copy.crew;
                     new_unit.square = unit_copy.square;
+                    new_unit.direction = unit_copy.direction;
+
                     new_unit.health = new_unit.max_health;
-                    new_unit.armor  = new_unit.base_armor;
                     break;
                 }
             }

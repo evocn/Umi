@@ -142,16 +142,14 @@ resolve_landing_effects :: (map: *Map, unit: *Unit) {
 
     if kind == {
         case .KILL;
-        if !cast(bool)(unit.flags & .IMMORTAL)
             kill(unit);
 
         case .HOLE;
             kill(unit);
 
         case .MINE;
-        if !cast(bool)(unit.flags & .IMMORTAL) {
             kill(unit);
-        }
+
         kind = .NONE;
         sprite_index = default_tile_sprite_index(.NONE);
 

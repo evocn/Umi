@@ -15,7 +15,7 @@ draw_text :: (shader: Shader, font: Font, text: string,
               square: Square, color := color_fg, second := false)
 {
     set_vec4(shader, "color", color);
-    x := cast(float)square.col * TILE_SIZE + 2;
+    x := cast(float)square.col * TILE_SIZE;
     y := (TILE_SIZE / 2) * cast(int)!second + (PIXEL_HEIGHT - TILE_SIZE - cast(float)square.row * TILE_SIZE);
     render_text(font, text, x, y, centered = false);
 }
@@ -70,9 +70,9 @@ render_text :: (font : Font, text : string, x : float, y : float, $centered := t
 
         xpos : float;
         #if centered
-            xpos = x + ((PIXEL_WIDTH - total_width) / 2.0) + glyph.bearing.x;
+            xpos = floor(x + 1 + ((PIXEL_WIDTH - total_width) / 2.0) + glyph.bearing.x);
         else
-            xpos = x + glyph.bearing.x;
+            xpos = x + 1 + glyph.bearing.x;
         ypos := y - (glyph.size.y - glyph.bearing.y);
 
         w := glyph.size.x;

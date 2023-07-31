@@ -140,43 +140,32 @@ handle_events :: () {
                     if event.key.keysym.sym == SDLK_e       press_button(*button_6);
                 }
 
-                if event.key.keysym.sym == SDLK_r {
-                    if program_mode == {
-                        case .GAME; #through;
-                        case .GAME_OVER;
-                        program_mode = .EDITOR;
-                        activate_mouse();
+                // Development keybinds
+                {
+                    if event.key.keysym.sym == SDLK_r {
+                        if program_mode == {
+                            case .GAME; #through;
+                            case .GAME_OVER;
+                            switch_mode(.EDITOR);
+                            activate_mouse();
 
-                        case .EDITOR;
-                        program_mode = .GAME;
-                        deactivate_mouse();
+                            case .EDITOR;
+                            switch_mode(.GAME);
+                            deactivate_mouse();
+                        }
                     }
+
+                    if event.key.keysym.sym == SDLK_n {
+                        spine.ready_for_next_section = true;
+                    }
+
+                    if event.key.keysym.sym == SDLK_k
+                        switch_mode(.GAME_OVER);
+
+                    if event.key.keysym.sym == SDLK_0
+                        program_paused = !program_paused;
                 }
 
-                if event.key.keysym.sym == SDLK_t {
-                    restart(*animator);
-                }
-                if event.key.keysym.sym == SDLK_y {
-                    restart(*animator2);
-                }
-
-                if event.key.keysym.sym == SDLK_k
-                    program_mode = .GAME_OVER;
-
-                if event.key.keysym.sym == SDLK_0
-                    program_paused = !program_paused;
-
-                if event.key.keysym.sym == SDLK_g
-                    debug.active = !debug.active;
-
-                // Settings
-                if event.key.keysym.sym == SDLK_l {
-                    if settings.line_mode
-                        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                    else
-                        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                    settings.line_mode = !settings.line_mode;
-                }
 
             case SDL_WINDOWEVENT;
                 if event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED {
@@ -186,6 +175,7 @@ handle_events :: () {
                 }
 
             case SDL_JOYAXISMOTION;
+            // @TODO: Fix this! Too fast!
                 if event.jaxis.which == 0 {
                     if event.jaxis.axis == 0 {
                         if event.jaxis.value < -JOYSTICK_DEAD_ZONE {

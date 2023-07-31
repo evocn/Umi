@@ -6,8 +6,6 @@
 
 Sprite :: struct {
     texture : Texture = ---;
-
-    offset : int = 200;
 }
 
 make_sprite :: (using sprite : *Sprite, filename : string, tiled := true) -> success: bool {
@@ -15,18 +13,18 @@ make_sprite :: (using sprite : *Sprite, filename : string, tiled := true) -> suc
     return success;
 }
 
-draw_sprite :: (using sprite : Sprite, right := false, use_color_override := true, color_override := color_fg) {
+draw_sprite :: (using sprite : Sprite, x_offset := 0, y_offset := 0, right := false, use_color_override := true, color_override := color_fg) {
     bind(sprite.texture, 0);
     shader := rendering.sprite_shader;
 
     model := Matrix4_Identity;
 
     if right {
-        translation_vector := Vector3.{cast(float)(PIXEL_WIDTH - texture.width) / PIXEL_WIDTH + cast(float)offset / PIXEL_WIDTH, 0, 0};
+        translation_vector := Vector3.{cast(float)(PIXEL_WIDTH - texture.width) / PIXEL_WIDTH + cast(float)x_offset / PIXEL_WIDTH, cast(float)(y_offset) / PIXEL_HEIGHT, 0};
         translate(*model, translation_vector);
     }
     else {
-        translation_vector := Vector3.{-cast(float)offset / PIXEL_WIDTH, 0, 0};
+        translation_vector := Vector3.{-cast(float)x_offset / PIXEL_WIDTH, cast(float)(y_offset) / PIXEL_HEIGHT, 0};
         translate(*model, translation_vector);
     }
 

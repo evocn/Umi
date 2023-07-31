@@ -7,10 +7,10 @@ Color :: Vector4;
 Hex_Color :: u32;
 
 // Byrne 5 Palette
-black_hex : Hex_Color : 0x100706;
-white_hex : Hex_Color : 0xf6eef6;
-bg_hex : Hex_Color : 0x1f3348;
-fg_hex : Hex_Color : 0xe8d8b3;
+black_hex   : Hex_Color : 0x100706;
+white_hex   : Hex_Color : 0xf6eef6;
+bg_hex      : Hex_Color : 0xe8d8b3;
+fg_hex      : Hex_Color : 0x1f3348;
 color_1_hex : Hex_Color : 0x37532d;
 color_2_hex : Hex_Color : 0x9a5246;
 color_3_hex : Hex_Color : 0xcbaf5d;
@@ -27,6 +27,9 @@ color_3  :: #run color_from_hex(color_3_hex);
 color_4  :: #run color_from_hex(color_4_hex);
 color_5  :: #run color_from_hex(color_5_hex);
 color_6  :: #run color_from_hex(color_6_hex);
+
+color_white :: #run color_from_hex(white_hex);
+color_black :: #run color_from_hex(black_hex);
 
 color_from_hex :: ($h: u32) -> Color {
     color : Color;

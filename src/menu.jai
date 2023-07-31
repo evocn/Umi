@@ -56,7 +56,7 @@ resolve_menu_inputs :: (using menu: *Menu) {
     using input;
 
     if pressed(*button_menu) {
-        program_mode = .GAME;
+        return_to_prior_mode();
         play_sfx("place");
     }
 
@@ -139,11 +139,11 @@ nudge_menu_element :: (using element: *Menu_Element, left := false) {
 //
 
 start_game :: () {
-    program_mode = .GAME;
+    spine.ready_for_next_section = true;
 }
 
 resume_game :: () {
-    program_mode = .GAME;
+    return_to_prior_mode();
 }
 
 quit_game :: () {
@@ -175,40 +175,37 @@ toggle_fullscreen :: () {
     }
 
     SDL_GetWindowDisplayMode(window, *display_mode);
-
-    // @TODO: When fonts are figured out at last...
-    //init_fonts();
 }
 
-draw_menu_element :: (using element: *Menu_Element, index: int, color := color_fg, second_color := color_3) {
+draw_menu_element :: (using element: *Menu_Element, square: Square, color := color_fg, second_color := color_3) {
     if kind == {
         case .GO;
             using cast(*Go_Element)element;
-            draw_tile(sprite_index, .{3, index}, color);
+            draw_tile(sprite_index, square, color);
 
         case .CHECKBOX;
             using cast(*Checkbox_Element)element;
             if value.* {
-                draw_tile(sprite_index, .{3, index}, color);
+                draw_tile(sprite_index, square, color);
             }
             else {
-                draw_tile(sprite_index_two, .{3, index}, color);
+                draw_tile(sprite_index_two, square, color);
             }
 
         case .SLIDER;
             using cast(*Slider_Element)element;
-            draw_tile(754, .{1, index}, second_color);
-            draw_tile(755, .{2, index}, second_color);
-            draw_tile(755, .{3, index}, second_color);
-            draw_tile(755, .{4, index}, second_color);
-            draw_tile(754, .{5, index}, second_color, horizontal_flip=true);
+            draw_tile(754, square - .{2, 0}, second_color);
+            draw_tile(755, square - .{1, 0}, second_color);
+            draw_tile(755, square, second_color);
+            draw_tile(755, square + .{1, 0}, second_color);
+            draw_tile(754, square + .{2, 0}, second_color, horizontal_flip=true);
 
-            value_index := cast(int)(value.* * 4) + 1;
-            if value_index == 1 {
-                draw_tile(sprite_index_two, .{value_index, index}, color);
+            value_index := cast(int)(value.* * 4) - 2;
+            if value_index == -2 {
+                draw_tile(sprite_index_two, square + .{value_index, 0}, color);
             }
             else {
-                draw_tile(sprite_index, .{value_index, index}, color);
+                draw_tile(sprite_index, square + .{value_index, 0}, color);
             }
     }
 }
@@ -217,7 +214,6 @@ draw_menu_element :: (using element: *Menu_Element, index: int, color := color_f
 // deprecated for this project, maybe useful later.
 //
 
-/*
 draw_menu_element_text :: (shader: Shader, font: Font, using element: *Menu_Element, height : float, color := color_fg) {
     if kind == {
         case .GO;
@@ -236,4 +232,3 @@ draw_menu_element_text :: (shader: Shader, font: Font, using element: *Menu_Elem
             draw_text_centered(shader, font, tprint("% - %", name, value.*), height, color);
     }
 }
-*/

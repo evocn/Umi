@@ -53,7 +53,6 @@ update :: (using animator : *Animator, dt: float) {
     if !running return;
 
     time += dt;
-    print("%\n", time);
 
     if time > end {
         if looping {

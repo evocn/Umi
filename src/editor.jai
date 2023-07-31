@@ -266,6 +266,11 @@ unit_editor :: (using unit: *Unit, map: *Map, templates: [..] *Unit) {
         ti = type_info(AI_Behavior);
         ImGui.SliderInt("AI", xx *ai, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ai]));
 
+        ti = type_info(Captain);
+        ImGui.SliderInt("Captain", xx *captain, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx captain]));
+
+        ImGui.SliderInt("Crew", xx *crew, 1, 9);
+
         ti = type_info(Direction);
         ImGui.SliderInt("Direction", xx *direction, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx direction]));
     }
@@ -304,15 +309,18 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 ImGui.Text("%", description);
 
                 {
+                    ti := type_info(Captain);
+                    ImGui.SliderInt("Captain", xx *captain, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx captain]));
+
                     using selected_unit;
                     ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 8, "%d", .ImGuiSliderFlags_AlwaysClamp);
 
                     ImGui.SliderInt("Movement", xx *movement, 0, 9);
-                    ImGui.SliderInt("Health", xx *max_health, 1, 9);
-                    ImGui.SliderInt("Armor",  xx *base_armor, 0, 9);
 
-                    ImGui.Checkbox("Primary", xx *primary_active);
-                    ImGui.Checkbox("Secondary", xx *secondary_active);
+                    ImGui.SliderInt("Health", xx *max_health, 1, 9);
+
+                    ImGui.Checkbox("Primary", xx *primary.active);
+                    ImGui.Checkbox("Secondary", xx *secondary.active);
                 }
 
                 ImGui.EndTabItem();
@@ -322,13 +330,13 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 imgui_flags_editor(*(selected_unit.flags));
                 ImGui.EndTabItem();
             }
-            if primary_active {
+            if primary.active {
                 if (ImGui.BeginTabItem("Primary"))
                 {
                     ability_editor(*primary);
                 }
             }
-            if secondary_active {
+            if secondary.active {
                 if (ImGui.BeginTabItem("Secondary"))
                 {
                     ability_editor(*secondary);
@@ -346,13 +354,17 @@ percolate_changes_to_map_units :: (map: *Map, unit: *Unit) {
             unit_copy := New(Unit, allocator=temp);
             memcpy(unit_copy, it, size_of(Unit));
             memcpy(it, unit, size_of(Unit));
+
+            it.id = unit_copy.id;
+
             it.team = unit_copy.team;
             it.ai = unit_copy.ai;
-            it.id = unit_copy.id;
+            it.captain = unit_copy.captain;
+            it.crew = unit_copy.crew;
             it.square = unit_copy.square;
             it.direction = unit_copy.direction;
+
             it.health = it.max_health;
-            it.armor  = it.base_armor;
         }
     }
 }
@@ -385,12 +397,7 @@ ability_editor :: (ability: *Ability) {
     ImGui.SliderInt("Damage", *ability.damage, -6, 6);
     ImGui.SliderInt("Bonus Damage", *ability.bonus_damage, -3, 3);
 
-    ti = type_info(Effect_Kind);
-    ImGui.SliderInt("Effect", xx *ability.effect.kind, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability.effect.kind]));
-    if ability.effect.kind != .NONE {
-        ImGui.SliderInt("Strength", xx *ability.effect.strength, 1, 9);
-        ImGui.SliderInt("Duration", xx *ability.effect.duration, 1, 9);
-    }
+    imgui_flags_editor(*ability.status);
 
     ti = type_info(Ability_Orientation);
     ImGui.SliderInt("Push", xx *ability.push_orientation, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx ability.push_orientation]));
@@ -489,14 +496,6 @@ settings_editor :: () {
                    formatFloat(1000.0 / program_state.framerate, trailing_width=2), 
                    formatFloat(program_state.framerate, trailing_width=2)
                   );
-
-
-        if ImGui.Checkbox("Line Mode", *settings.line_mode) {
-            if settings.line_mode
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            else
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
     }
     ImGui.End();
 }

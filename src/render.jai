@@ -3,7 +3,111 @@
 // Alex Hartford
 // June 2023
 
-render :: (map : Map, transparency := 1.0)
+render :: (map: Map, dialogue: Dialogue) {
+    {
+        // Render all this to the framebuffer.
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glViewport(0, 0, PIXEL_WIDTH, PIXEL_HEIGHT);
+        glClearColor(color_bg.x, color_bg.y, color_bg.z, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        if #complete program_mode == {
+            case .GAME;
+                render_map(map);
+                render_ui(map);
+
+            case .START;
+                render_start_screen();
+                render_start_menu(start_menu);
+
+            case .EDITOR;
+                render_map(map);
+                render_ui(map);
+
+            case .CUTSCENE;
+                render_cutscene(dialogue);
+
+            case .DIALOGUE;
+                render_map(map, transparency = 0.3);
+                render_dialogue(dialogue);
+
+            case .MENU;
+                if prior_program_mode == {
+                    case .GAME;
+                        render_map(map, transparency = 0.3);
+                        render_ui(map, transparency = 0.3);
+
+                    case .DIALOGUE;
+                        render_map(map, transparency = 0.3);
+                        render_ui(map, transparency = 0.3);
+                        render_dialogue(dialogue, transparency = 0.3);
+
+                    case .CUTSCENE;
+                        render_cutscene(dialogue, transparency = 0.3);
+                }
+                render_menu(menu);
+
+            case .GAME_OVER;
+                render_map(map, transparency = 0.3);
+                render_ui(map, transparency = 0.3);
+                render_game_over();
+        }
+
+        render_slice();
+        render_fade();
+    }
+
+    {
+        // Render the framebuffer to the screen.
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, xx window_width, xx window_height);
+        glClearColor(1.0, 1.0, 1.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        render_framebuffer_to_screen();
+    }
+}
+
+//
+//
+//
+
+render_slice :: (transparency := 1.0) {
+    if !screen_slice.active then return;
+
+    use_tile_shader(transparency);
+    for col: 0..VIEWPORT_WIDTH {
+        for row: -1..VIEWPORT_HEIGHT {
+            draw_background(.{col, row}, color_2);
+        }
+    }
+
+    picture_name := get_slice_picture_name();
+
+    picture := table_find_pointer(*rendering.slices, picture_name);
+    if !picture {
+        log_error("Unable to find this slice picture: %\n", picture_name);
+        return;
+    }
+
+    use_sprite_shader(transparency);
+
+    draw_sprite(picture.*, y_offset = PIXEL_HEIGHT / 4);
+
+    {
+        using screen_slice.result;
+
+        
+    }
+}
+
+render_fade :: () {
+    if !fade.active then return;
+
+    
+}
+
+render_map :: (map : Map, transparency := 1.0)
 {
     use_tile_shader(transparency);
 
@@ -19,14 +123,13 @@ render :: (map : Map, transparency := 1.0)
         // Draw Overlays
         overlay_color := color_4;
         if cursor.selected {
-            targeting_ability := cursor.selected.primary;
-            if cursor.state == .TARGETING_SECONDARY {
-                targeting_ability = cursor.selected.secondary;
-            }
-
-            if targeting_ability.targeting == {
-                case .ALLY;     overlay_color = color_1;
-                case .ENEMY;    overlay_color = color_2;
+            if cursor.targeting_with {
+                if cursor.targeting_with.targeting == {
+                    case .ALLY;     overlay_color = color_1;
+                    case .ENEMY;    overlay_color = color_2;
+                    case .ORTHOGRAPHIC;     overlay_color = color_2;
+                    case .BOARDING;     overlay_color = color_2;
+                }
             }
         }
         draw_squares_overlay(cursor.interactible, color = overlay_color);
@@ -58,15 +161,10 @@ render :: (map : Map, transparency := 1.0)
 }
 
 render_ui :: (map: Map, transparency := 1.0) {
-    draw_ability_ui :: (using ability : Ability, square: Square, num_square: Square, color := color_bg) {
+    draw_ability_ui :: (using ability : Ability, square: Square, num_square: Square, button_index := 0, color := color_bg) {
         draw_tile(sprite_index, square, color);
 
-        if damage > 0 {
-            draw_die_number(damage, num_square, color_2);
-        }
-        else if damage < 0 {
-            draw_die_number(damage, num_square, color_4);
-        }
+        draw_tile(803 + button_index, num_square, color);
     }
 
     // Draw UI Elements
@@ -85,10 +183,8 @@ render_ui :: (map: Map, transparency := 1.0) {
         ui_unit = cursor.selected;
 
     if ui_unit {
-        {
-            shader := use_text_shader(transparency);
-            draw_text(shader, main_font, ui_unit.name, .{11, 0}, color_bg);
-        }
+        shader := use_text_shader(transparency);
+        draw_text(shader, main_font, ui_unit.name, .{11, 0}, color_black);
     }
     use_tile_shader(transparency);
 
@@ -102,71 +198,95 @@ render_ui :: (map: Map, transparency := 1.0) {
         using cursor.inspecting;
 
         // health
-        draw_tile(532, .{1, 0}, color_bg);
-        draw_number(health, .{2, 0}, color_1);
+        draw_tile(942, .{1, 0}, color_black);
+        draw_number(health, .{2, 0}, color_black);
 
-        // armor
-        draw_tile(33, .{1, 1}, color_bg);
-        draw_number(armor, .{2, 1}, color_1);
+        draw_tile(519, .{1, 1}, color_black);
+        draw_number(crew, .{2, 1}, color_black);
 
         // movement
         if moved {
-            draw_tile(1048, .{1, 2}, color_fg);
-            draw_number(movement, .{2, 2}, color_1);
+            draw_tile(1048, .{1, 2}, color_white);
+            draw_number(movement, .{2, 2}, color_white);
         }
         else {
-            draw_tile(1048, .{1, 2}, color_bg);
-            draw_number(movement, .{2, 2}, color_1);
+            draw_tile(1048, .{1, 2}, color_black);
+            draw_number(movement, .{2, 2}, color_black);
         }
 
-        // direction
-        if turned {
-            draw_direction(direction, .{1, 3}, color_fg);
+        if status & .AFLAME {
+            draw_tile(504, .{1, 3}, color_2);
         }
-        else {
-            draw_direction(direction, .{1, 3}, color_bg);
+        if status & .ADRIFT {
+            draw_tile(48, .{2, 3}, color_2);
         }
 
-        color := color_bg;
+        color := color_black;
         if exhausted
-            color = color_fg;
-        if primary_active {
-            draw_ability_ui(primary, .{1, 5}, .{2, 5}, color);
+            color = color_white;
+        if primary.active {
+            draw_ability_ui(primary, .{1, 4}, .{2, 4}, 0, color);
         }
-        if secondary_active {
-            draw_ability_ui(secondary, .{1, 6}, .{2, 6}, color);
+        if secondary.active {
+            draw_ability_ui(secondary, .{1, 5}, .{2, 5}, 1, color);
         }
+
+        draw_ability_ui(repair, .{0, 7}, .{1, 7}, 2, color_black);
+        draw_ability_ui(board,  .{4, 7}, .{5, 7}, 3, color_black);
 
         {
             shader := use_text_shader(transparency);
 
-            draw_text(shader, main_font, description, .{0, 0}, color_1);
+            draw_text(shader, main_font, description, .{0, 0}, color_black);
 
-            draw_text(shader, main_font, "health", .{3, 1}, color_1);
-            draw_text(shader, main_font, "armor",  .{3, 2}, color_1);
-            draw_text(shader, main_font, "movement", .{3, 3}, color_1);
-            draw_text(shader, main_font, "facing", .{3, 4}, color_1);
+            draw_text(shader, main_font, summarize_unit_flags(flags), .{0, 0}, color_black, second=true);
 
-            if primary_active {
+            draw_text(shader, main_font, "hull", .{3, 1}, color_black);
+            draw_text(shader, main_font, "crew", .{3, 2}, color_black);
+            draw_text(shader, main_font, "movement", .{3, 3}, color_black);
+
+            if primary.active {
+                draw_text(shader, main_font, tprint("%-%", primary.min_range, primary.max_range), .{0, 5}, color_black);
+                draw_text(shader, main_font, "rng.", .{0, 5}, color_black, second=true);
+
+                draw_text(shader, main_font, primary.name, .{3, 5}, color_black);
+
                 text_color := color_1; if primary.damage > 0 then text_color = color_2;
-
-                draw_text(shader, main_font, tprint("% - %", primary.min_range, primary.max_range), .{0, 6}, text_color);
-                draw_text(shader, main_font, "rng.", .{0, 6}, text_color, second=true);
-
-                draw_text(shader, main_font, primary.name, .{3, 6}, text_color);
-                draw_text(shader, main_font, summarize_ability(primary), .{3, 6}, color_bg, second=true);
+                draw_text(shader, main_font, summarize_ability(primary), .{3, 5}, text_color, second=true);
             }
-            if secondary_active {
+            if secondary.active {
+                draw_text(shader, main_font, tprint("%-%", secondary.min_range, secondary.max_range), .{0, 6}, color_black);
+                draw_text(shader, main_font, "rng.", .{0, 6}, color_black, second=true);
+
+                draw_text(shader, main_font, secondary.name, .{3, 6}, color_black);
+
                 text_color := color_1; if secondary.damage > 0 then text_color = color_2;
-
-                draw_text(shader, main_font, tprint("% - %", secondary.min_range, secondary.max_range), .{0, 7}, text_color);
-                draw_text(shader, main_font, "rng.", .{0, 7}, text_color, second=true);
-
-                draw_text(shader, main_font, secondary.name, .{3, 7}, text_color);
-                draw_text(shader, main_font, summarize_ability(secondary), .{3, 7}, color_bg, second=true);
+                draw_text(shader, main_font, summarize_ability(secondary), .{3, 6}, text_color, second=true);
             }
 
-            draw_text(shader, main_font, summarize_unit_flags(flags), .{0, 8}, color_1);
+            {
+                text_color := color_1;
+
+                draw_text(shader, main_font, "Repair", .{2, 8}, text_color);
+            }
+            {
+                text_color := color_2;
+
+                draw_text(shader, main_font, "Board", .{6, 8}, text_color);
+            }
+        }
+
+        if captain != .NONE {
+            render_captain(captain, transparency);
+
+            use_tile_shader(transparency);
+            draw_background(.{12, 7}, color_3);
+            draw_background(.{13, 7}, color_3);
+            draw_background(.{14, 7}, color_3);
+            draw_background(.{15, 7}, color_3);
+
+            shader := use_text_shader(transparency);
+            draw_text(shader, main_font, get_captain_name(captain), .{12, 8}, color_bg);
         }
     }
     else if ui_unit {
@@ -174,69 +294,140 @@ render_ui :: (map: Map, transparency := 1.0) {
 
         // health
         draw_tile(532, .{1, -1}, color_bg);
-        draw_number(health, .{1, -1}, color_1);
+        draw_number(health, .{1, -1}, color_fg);
 
-        // armor
-        draw_tile(33, .{2, -1}, color_bg);
-        draw_number(armor, .{2, -1}, color_1);
+        draw_tile(519, .{2, -1}, color_bg);
+        draw_number(crew, .{2, -1}, color_fg);
 
         // movement
         if moved {
             draw_tile(1048, .{3, -1}, color_fg);
-            draw_number(movement, .{3, -1}, color_1);
+            draw_number(movement, .{3, -1}, color_bg);
         }
         else {
             draw_tile(1048, .{3, -1}, color_bg);
-            draw_number(movement, .{3, -1}, color_1);
+            draw_number(movement, .{3, -1}, color_fg);
         }
 
-        if turned {
-            draw_direction(direction, .{4, -1}, color_fg);
+        if status & .AFLAME {
+            draw_tile(504, .{4, -1}, color_2);
         }
-        else {
-            draw_direction(direction, .{4, -1}, color_bg);
+        if status & .ADRIFT {
+            draw_tile(48, .{4, -1}, color_2);
         }
 
-        color := color_bg;
+        color := color_black;
         if exhausted
-            color = color_fg;
-        if primary_active {
-            draw_ability_ui(primary, .{6, -1}, .{7, -1}, color);
+            color = color_white;
+        if primary.active {
+            draw_ability_ui(primary, .{5, -1}, .{6, -1}, 0, color);
         }
-        if secondary_active {
-            draw_ability_ui(secondary, .{9, -1}, .{10, -1}, color);
+        if secondary.active {
+            draw_ability_ui(secondary, .{8, -1}, .{9, -1}, 1, color);
         }
 
         ti := type_info(Unit_Flags);
         for ti.values {
 
         }
-
-        for effects {
-            if #complete it.kind == {
-                case .NONE;
-                case .DEFEND;   draw_number(armor, .{2, -1}, color_4);
-                case .PIERCE;   draw_number(armor, .{2, -1}, color_2);
-                case .QUICKEN;  draw_number(movement, .{3, -1}, color_4);
-                case .SLOW;     draw_number(movement, .{3, -1}, color_2);
-
-                case .EMPOWER;
-                    if primary.damage > 0   draw_die_number(primary.damage, .{6, -1}, color_4);
-                    if secondary.damage > 0 draw_die_number(primary.damage, .{9, -1}, color_4);
-                case .WEAKEN;
-                    if primary.damage > 0   draw_die_number(primary.damage, .{6, -1}, color_2);
-                    if secondary.damage > 0 draw_die_number(primary.damage, .{9, -1}, color_2);
-
-                case .PARALYZE;
-            }
-            // @TODO: DRAW EFFECT INDICATORS ON THE UI!!!
-        }
     }
 }
 
-render_dialogue :: (transparency := 1.0) {
+render_captain :: (captain: Captain, transparency := 1.0) {
+    name := get_captain_name(captain);
+    if name {
+        sprite := table_find_pointer(*rendering.sprites, name);
+        if !sprite {
+            log_error("Unable to find sprite % in the sprites catalogue.\n", name);
+            return;
+        }
+
+        use_sprite_shader(transparency);
+        draw_sprite(sprite, right=true);
+    }
+}
+
+render_start_screen :: (transparency := 1.0) {
     use_sprite_shader(transparency);
-    draw_sprite(rendering.uncle, right=true);
+    mural, found := table_find(*rendering.murals, "title");
+    if found {
+        draw_sprite(mural);
+    }
+
+    shader := use_text_shader(transparency);
+    draw_text(shader, main_font, "game by alex hartford.", xx (TILE_SIZE / 2), xx (TILE_SIZE / 2), color_1);
+    draw_text(shader, main_font, "art by emelia hartford.", xx (TILE_SIZE / 2), 2, color_1);
+}
+
+render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
+    use_sprite_shader(transparency);
+
+    mural_name : string;
+    if dialogue.mural_name_index != -1 {
+        mural_name = dialogue.lines[dialogue.mural_name_index].mural_name;
+    }
+
+    if mural_name {
+        mural, found := table_find(*rendering.murals, mural_name);
+        if !found {
+            log_error("Unable to find mural %.\n", mural_name);
+            return;
+        }
+
+        draw_sprite(mural);
+    }
+
+    render_dialogue(dialogue, transparency);
+}
+
+render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
+    use_sprite_shader(transparency);
+
+    name := to_lower_copy(dialogue.speakers[0]);
+    if name {
+        sprite := table_find_pointer(*rendering.sprites, name);
+        if !sprite {
+            log_error("Unable to find sprite % in the sprites catalogue.\n", name);
+            return;
+        }
+
+        draw_sprite(sprite, x_offset=dialogue.left_sprite_offset, y_offset=TILE_SIZE);
+    }
+
+    name = to_lower_copy(dialogue.speakers[1]);
+    if name {
+        sprite := table_find_pointer(*rendering.sprites, name);
+        if !sprite {
+            log_error("Unable to find sprite % in the sprites catalogue.\n", name);
+            return;
+        }
+
+        draw_sprite(sprite, x_offset=dialogue.right_sprite_offset, y_offset=TILE_SIZE, right=true);
+    }
+
+    use_tile_shader(transparency);
+    for col: 0..VIEWPORT_WIDTH {
+        for row: VIEWPORT_HEIGHT - 1 .. VIEWPORT_HEIGHT {
+            draw_background(.{col, row}, color_3);
+        }
+    }
+
+    shader := use_text_shader(transparency);
+
+    {
+        current_speaker_name := dialogue.lines[dialogue.line_index].name;
+
+        if dialogue.speakers[0] == current_speaker_name {
+            draw_text(shader, main_font, current_speaker_name, xx (TILE_SIZE / 2), xx (TILE_SIZE / 2), color_1);
+        }
+
+        else if dialogue.speakers[1] == current_speaker_name {
+            draw_text(shader, main_font, current_speaker_name, xx (PIXEL_WIDTH - TILE_SIZE * 5), xx (TILE_SIZE / 2), color_1);
+        }
+    }
+
+    line := to_lower_copy(dialogue.lines[dialogue.line_index].text);
+    draw_text_centered(shader, main_font, line, 5, color_black);
 }
 
 // Renders the given framebuffer as a texture on a screen-space quad.
@@ -350,11 +541,31 @@ render_menu :: (using menu: Menu, transparency := 1.0) {
         }
 
         for elements {
-            draw_menu_element(it, it_index + 1, color_fg, color_bg);
+            draw_menu_element(it, .{3, it_index + 1}, color_white, color_black);
         }
 
-        // Draw selected element over it.
-        draw_menu_element(elements[element_index], element_index + 1, color_bg, color_fg);
+        if elements.count {
+            // Draw selected element over it.
+            draw_menu_element(elements[element_index], .{3, element_index + 1}, color_bg, color_fg);
+        }
+    }
+
+    use_sprite_shader(transparency);
+    draw_sprite(rendering.controls, x_offset=0, y_offset=0);
+}
+
+render_start_menu :: (using menu: Menu, transparency := 1.0) {
+    {
+        use_tile_shader(transparency);
+
+        for elements {
+            draw_menu_element(it, .{15, it_index + 5}, color_white, color_black);
+        }
+
+        if elements.count {
+            // Draw selected element over it.
+            draw_menu_element(elements[element_index], .{15, element_index + 5}, color_3, color_fg);
+        }
     }
 }
 
@@ -379,61 +590,4 @@ render_game_over :: (transparency := 1.0) {
         draw_text_centered(shader, main_font, "game over", xx (PIXEL_HEIGHT / 2.0), color_bg);
         draw_text_centered(shader, main_font, "retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height), color_1);
     }
-}
-
-//
-// Debug Overlays
-//
-
-draw_numbers_on_map :: () {
-    using debug.traversed;
-
-    for col: field {
-        for col {
-            draw_number(it.distance, it.square, color_3);
-        }
-    }
-}
-
-//
-// Shader nonsense
-//
-
-use_tile_shader :: (transparency : float) -> Shader {
-    shader := rendering.shader;
-    use_shader(shader);
-
-    orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
-    set_mat4(shader, "projection", orthographic);
-
-    set_float(shader, "transparency", transparency);
-    set_vec4(shader, "background", color_bg);
-
-    return shader;
-}
-
-use_text_shader :: (transparency : float) -> Shader {
-    shader := rendering.text_shader;
-    use_shader(shader);
-
-    orthographic := orthographic_projection_matrix(0, xx PIXEL_WIDTH, 0, xx PIXEL_HEIGHT, -1, 1);
-    set_mat4(shader, "projection", orthographic);
-
-    set_float(shader, "transparency", transparency);
-    set_vec4(shader, "background", color_bg);
-
-    return shader;
-}
-
-use_sprite_shader :: (transparency : float) -> Shader {
-    shader := rendering.sprite_shader;
-    use_shader(shader);
-
-    orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
-    set_mat4(shader, "projection", orthographic);
-
-    set_float(shader, "transparency", transparency);
-    set_vec4(shader, "background", color_bg);
-
-    return shader;
 }
