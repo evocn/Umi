@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Ability
 // Alex Hartford
 // July 2023
@@ -110,19 +110,25 @@ Resolution :: struct {
     victim: *Unit;
 
     user_died : bool;
+    user_die_result: int;
+    user_die_bonus : int;
     user_initial_hull: int;
-    user_hull_damage : int;
+    user_final_hull: int;
     user_initial_crew: int;
-    user_crew_damage : int;
+    user_final_crew: int;
     user_status : Status;
 
     victim_died : bool;
+    victim_die_result: int;
+    victim_die_bonus : int;
     victim_initial_hull: int;
-    victim_hull_damage : int;
+    victim_final_hull: int;
     victim_initial_crew: int;
-    victim_crew_damage : int;
+    victim_final_crew: int;
     victim_status : Status;
 }
+
+BOARD_AGGRESSOR_BONUS :: 1;
 
 resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *Unit, square: Square) -> Resolution {
     assert(user != null);
@@ -146,39 +152,41 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
 
         // damage
         if targeting == .BOARDING {
-            play_sfx("attack");
-
             {
-                damage_to_victim := 2 + roll_die(user.crew) + bonus_damage;
+                die_result := roll_die(user.crew);
+                damage_to_victim := die_result + BOARD_AGGRESSOR_BONUS + bonus_damage;
+                result.user_die_result = die_result;
                 if user.captain == .WARLORD {
-                    damage_to_victim += 3;
+                    damage_to_victim += 2;
                 }
                 if victim.flags & .TURTLE {
-                    damage_to_victim -= 3;
+                    damage_to_victim -= 2;
                 }
+                result.user_die_bonus = damage_to_victim - die_result;
+
                 damage_to_victim = clamp(damage_to_victim, 0, 9);
-                result.victim_crew_damage = damage_to_victim;
                 crew_damage(victim, damage_to_victim);
                 if victim.dead result.victim_died = true;
             }
 
             {
-                damage_to_assailant := roll_die(victim.crew) + bonus_damage;
+                die_result := roll_die(user.crew);
+                damage_to_assailant := die_result + bonus_damage;
+                result.victim_die_result = die_result;
                 if victim.captain == .WARLORD {
-                    damage_to_assailant += 3;
+                    damage_to_assailant += 2;
                 }
                 if user.flags & .TURTLE {
-                    damage_to_assailant -= 3;
+                    damage_to_assailant -= 2;
                 }
+                result.victim_die_bonus = damage_to_assailant - die_result;
+
                 damage_to_assailant = clamp(damage_to_assailant, 0, 9);
-                result.user_crew_damage = damage_to_assailant;
                 crew_damage(user, damage_to_assailant);
                 if user.dead result.user_died = true;
             }
         }
         else if damage > 0 || (damage == 0 && bonus_damage > 0) {
-            play_sfx("attack");
-
             tile := get_tile(map.*, victim.square);
             if tile.kind == .COVER return result;
             else if tile.kind == .HALF_COVER {
@@ -187,16 +195,23 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
                 return result;
             }
 
-            attack_damage := clamp(roll_die(damage) + bonus_damage, 0, 9);
-            result.victim_hull_damage = attack_damage;
+            die_result := roll_die(damage);
+            attack_damage := die_result + bonus_damage;
+            result.user_die_result = die_result;
+            result.user_die_bonus = attack_damage - die_result;
+
+            attack_damage = clamp(attack_damage, 0, 9);
             hull_damage(victim, attack_damage);
             if victim.dead result.victim_died = true;
         }
         else if damage < 0 || (damage == 0 && bonus_damage < 0) {
-            play_sfx("buff");
+            die_result := roll_die(damage);
+            heal_amount := die_result + abs(bonus_damage);
 
-            heal_amount := clamp(abs(roll_die(damage)) + bonus_damage, 0, 9);
-            result.victim_hull_damage = -1 * heal_amount;
+            result.user_die_result = die_result;
+            result.user_die_bonus = heal_amount - die_result;
+
+            heal_amount = clamp(heal_amount, 0, 9);
             crew_damage(victim, -1 * heal_amount);
             if victim.dead result.victim_died = true; // unlikely...
         }
@@ -230,8 +245,6 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             && !is_impassible(get_tile(map, target_square))
             && !get_occupant(map, target_square)
             {
-                play_sfx("arrow");
-
                 remove_occupant(map, victim.square);
                 occupy(map, target_square, victim);
                 victim.square = target_square;
@@ -248,8 +261,6 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             case .DANCE;
                 victim.moved = false;
                 victim.exhausted = false;
-                play_sfx("buff");
-
             case .RAM;
                 remove_occupant(map, user.square);
                 ram_destination := move(square, get_best_unit_direction(square, user.square));
@@ -274,10 +285,16 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
                 user.square = square;
                 resolve_landing_effects(map, user);
 
-                play_sfx("warp");
-
             case;
         }
+    }
+
+    result.user_final_crew = user.crew;
+    result.user_final_hull = user.health;
+
+    if victim {
+        result.victim_final_crew = victim.crew;
+        result.victim_final_hull = victim.health;
     }
 
     return result;

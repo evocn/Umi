@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Tile
 // Alex Hartford
 // July 2023
@@ -51,19 +51,19 @@ get_unoccupied :: (using map: *Map) -> [] Square, bool {
 }
 
 Tile_Kind :: enum u8 #specified {
-    NONE            :: 0x0;
-    WALL            :: 0x1;
-    REWARD          :: 0x2;
-    SPENT_REWARD    :: 0x3;
-    OBJECTIVE       :: 0x4;
-    KILL            :: 0x5;
-    MINE            :: 0x6;
-    HOLE            :: 0x7;
-    SLOW            :: 0x8;
-    COVER           :: 0x9;
-    HALF_COVER      :: 0xa;
-    // :: 11;
-    // :: 12;
+    NONE        :: 0x0;
+    WALL        :: 0x1;
+    REWARD      :: 0x2;
+    SPENT_REWARD:: 0x3;
+    OBJECTIVE   :: 0x4;
+    KILL        :: 0x5;
+    MINE        :: 0x6;
+    HOLE        :: 0x7;
+    SLOW        :: 0x8;
+    COVER       :: 0x9;
+    HALF_COVER  :: 0xa;
+    FIRE        :: 0xb;
+    THUNDER     :: 0xc;
     // :: 13;
     // :: 14;
     // :: 15;
@@ -130,6 +130,8 @@ default_tile_sprite_index :: (kind : Tile_Kind) -> int {
         case .SLOW;         return 101;
         case .COVER;        return 148;
         case .HALF_COVER;   return 147;
+        case .FIRE;         return 504;
+        case .THUNDER;      return 49 * 13 + 35;
     }
 }
 

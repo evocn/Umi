@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Utils
 // Alex Hartford
 // June 2023
@@ -137,14 +137,8 @@ random_choice :: (array: [] $T) -> T {
     return array[index];
 }
 
-roll_onscreen_time :: 5.0;
-roll_result : int;
-roll_time : float;
-
 roll_die :: (faces: int) -> int {
     result := 1 + cast(int)(random_get_zero_to_one() * faces);
-    roll_result = result;
-    roll_time = roll_onscreen_time;
     return result;
 }
 

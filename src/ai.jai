@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // AI
 // Alex Hartford
 // July 2023
@@ -95,12 +95,17 @@ ai_plan :: (using map: *Map) {
 
     if !target_in_range then return;
 
+    which_ability := 0;
+    if action.ability.targeting == .SELF {
+        which_ability = 2;
+    }
+
     // If there is a target you can attack...
     {
         command := New(Begin_Targeting_Command);
         command.map = map;
         command.team = .THEM;
-        command.which_ability = 0;
+        command.which_ability = which_ability;
         array_insert_at(*command_queue, cast(*Command)command, 0);
     }
 

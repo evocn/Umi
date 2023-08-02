@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Render
 // Alex Hartford
 // June 2023
@@ -91,20 +91,65 @@ render_slice :: (transparency := 1.0) {
     }
 
     use_sprite_shader(transparency);
-
     draw_sprite(picture.*, y_offset = PIXEL_HEIGHT / 4);
 
     {
         using screen_slice.result;
+        using screen_slice.display;
 
-        
+        if user {
+            use_sprite_shader(transparency);
+            if user.captain != .NONE
+                render_captain(user.captain, right=false);
+
+            use_text_shader(transparency);
+            draw_text(user.name, .{0, 0});
+
+            use_tile_shader(transparency);
+            draw_ship(user.sprite_index, .EAST, .{1, 0}, color=color_black);
+
+            draw_tile(942, .{3, 0}, color_black);
+            draw_number(user_hull, .{3, -1}, color_black);
+
+            draw_tile(519, .{4, 0}, color_black);
+            draw_number(user_crew, .{4, -1}, color_black);
+
+            if user_die_result != 0 {
+                percent := (screen_slice.progress) / (USER_DICE_ROLLED_AT) * 3;
+                percent = clamp(percent, 0.0, 1.0);
+                draw_die_number(user_die_result, .{4, 9}, offset=.{0, percent * 4 * TILE_SIZE}, color_black);
+            }
+        }
+
+        if victim {
+            use_sprite_shader(transparency);
+            if victim.captain != .NONE
+                render_captain(victim.captain, right=true);
+
+            use_text_shader(transparency);
+            draw_text(victim.name, .{13, 0});
+
+            use_tile_shader(transparency);
+            draw_ship(victim.sprite_index, .WEST, .{14, 0}, color=color_black);
+
+            draw_tile(942, .{12, 0}, color_black, horizontal_flip=true);
+            draw_number(victim_hull, .{12, -1}, color_black);
+
+            draw_tile(519, .{11, 0}, color_black);
+            draw_number(victim_crew, .{11, -1}, color_black);
+
+            if victim_die_result != 0 {
+                percent := (screen_slice.progress) / (VICTIM_DICE_ROLLED_AT) * 3;
+                percent = clamp(percent, 0.0, 1.0);
+                draw_die_number(victim_die_result, .{10, 9}, offset=.{0, percent * 4 * TILE_SIZE}, color_black);
+            }
+        }
     }
 }
 
 render_fade :: () {
-    if !fade.active then return;
+    if !fade.active then return; 
 
-    
 }
 
 render_map :: (map : Map, transparency := 1.0)
@@ -174,17 +219,13 @@ render_ui :: (map: Map, transparency := 1.0) {
         draw_background(.{it, -1}, color_3);
     }
 
-    if roll_time != 0.0 {
-        draw_die_number(roll_result, .{0, -1}, color_bg);
-    }
-
     ui_unit := get_occupant(map, cursor.square);
     if ui_unit == null && cursor.selected
         ui_unit = cursor.selected;
 
     if ui_unit {
-        shader := use_text_shader(transparency);
-        draw_text(shader, main_font, ui_unit.name, .{11, 0}, color_black);
+        use_text_shader(transparency);
+        draw_text(ui_unit.name, .{11, 0});
     }
     use_tile_shader(transparency);
 
@@ -235,49 +276,50 @@ render_ui :: (map: Map, transparency := 1.0) {
         draw_ability_ui(board,  .{4, 7}, .{5, 7}, 3, color_black);
 
         {
-            shader := use_text_shader(transparency);
+            use_text_shader(transparency);
 
-            draw_text(shader, main_font, description, .{0, 0}, color_black);
+            draw_text(description, .{0, 0});
 
-            draw_text(shader, main_font, summarize_unit_flags(flags), .{0, 0}, color_black, second=true);
+            draw_text(summarize_unit_flags(flags), .{0, 0}, second=true);
 
-            draw_text(shader, main_font, "hull", .{3, 1}, color_black);
-            draw_text(shader, main_font, "crew", .{3, 2}, color_black);
-            draw_text(shader, main_font, "movement", .{3, 3}, color_black);
+            draw_text("hull", .{3, 1});
+            draw_text("crew", .{3, 2});
+            draw_text("movement", .{3, 3});
 
             if primary.active {
-                draw_text(shader, main_font, tprint("%-%", primary.min_range, primary.max_range), .{0, 5}, color_black);
-                draw_text(shader, main_font, "rng.", .{0, 5}, color_black, second=true);
+                draw_text(tprint("%-%", primary.min_range, primary.max_range), .{0, 5});
+                draw_text("rng.", .{0, 5}, second=true);
 
-                draw_text(shader, main_font, primary.name, .{3, 5}, color_black);
+                draw_text(primary.name, .{3, 5});
 
                 text_color := color_1; if primary.damage > 0 then text_color = color_2;
-                draw_text(shader, main_font, summarize_ability(primary), .{3, 5}, text_color, second=true);
+                draw_text(summarize_ability(primary), .{3, 5}, text_color, second=true);
             }
             if secondary.active {
-                draw_text(shader, main_font, tprint("%-%", secondary.min_range, secondary.max_range), .{0, 6}, color_black);
-                draw_text(shader, main_font, "rng.", .{0, 6}, color_black, second=true);
+                draw_text(tprint("%-%", secondary.min_range, secondary.max_range), .{0, 6});
+                draw_text("rng.", .{0, 6}, second=true);
 
-                draw_text(shader, main_font, secondary.name, .{3, 6}, color_black);
+                draw_text(secondary.name, .{3, 6});
 
                 text_color := color_1; if secondary.damage > 0 then text_color = color_2;
-                draw_text(shader, main_font, summarize_ability(secondary), .{3, 6}, text_color, second=true);
+                draw_text(summarize_ability(secondary), .{3, 6}, text_color, second=true);
             }
 
             {
                 text_color := color_1;
 
-                draw_text(shader, main_font, "Repair", .{2, 8}, text_color);
+                draw_text("Repair", .{2, 8}, text_color);
             }
             {
                 text_color := color_2;
 
-                draw_text(shader, main_font, "Board", .{6, 8}, text_color);
+                draw_text("Board", .{6, 8}, text_color);
             }
         }
 
         if captain != .NONE {
-            render_captain(captain, transparency);
+            use_sprite_shader(transparency);
+            render_captain(captain);
 
             use_tile_shader(transparency);
             draw_background(.{12, 7}, color_3);
@@ -285,28 +327,28 @@ render_ui :: (map: Map, transparency := 1.0) {
             draw_background(.{14, 7}, color_3);
             draw_background(.{15, 7}, color_3);
 
-            shader := use_text_shader(transparency);
-            draw_text(shader, main_font, get_captain_name(captain), .{12, 8}, color_bg);
+            use_text_shader(transparency);
+            draw_text(get_captain_name(captain), .{12, 8});
         }
     }
     else if ui_unit {
         using ui_unit;
 
         // health
-        draw_tile(532, .{1, -1}, color_bg);
-        draw_number(health, .{1, -1}, color_fg);
+        draw_tile(532, .{1, -1}, color_black);
+        draw_number(health, .{1, -1}, color_white);
 
-        draw_tile(519, .{2, -1}, color_bg);
-        draw_number(crew, .{2, -1}, color_fg);
+        draw_tile(519, .{2, -1}, color_black);
+        draw_number(crew, .{2, -1}, color_white);
 
         // movement
         if moved {
-            draw_tile(1048, .{3, -1}, color_fg);
-            draw_number(movement, .{3, -1}, color_bg);
+            draw_tile(1048, .{3, -1}, color_black);
+            draw_number(movement, .{3, -1}, color_white);
         }
         else {
-            draw_tile(1048, .{3, -1}, color_bg);
-            draw_number(movement, .{3, -1}, color_fg);
+            draw_tile(1048, .{3, -1}, color_white);
+            draw_number(movement, .{3, -1}, color_black);
         }
 
         if status & .AFLAME {
@@ -333,7 +375,7 @@ render_ui :: (map: Map, transparency := 1.0) {
     }
 }
 
-render_captain :: (captain: Captain, transparency := 1.0) {
+render_captain :: (captain: Captain, right := true) {
     name := get_captain_name(captain);
     if name {
         sprite := table_find_pointer(*rendering.sprites, name);
@@ -342,8 +384,7 @@ render_captain :: (captain: Captain, transparency := 1.0) {
             return;
         }
 
-        use_sprite_shader(transparency);
-        draw_sprite(sprite, right=true);
+        draw_sprite(sprite, right=right);
     }
 }
 
@@ -354,9 +395,9 @@ render_start_screen :: (transparency := 1.0) {
         draw_sprite(mural);
     }
 
-    shader := use_text_shader(transparency);
-    draw_text(shader, main_font, "game by alex hartford.", xx (TILE_SIZE / 2), xx (TILE_SIZE / 2), color_1);
-    draw_text(shader, main_font, "art by emelia hartford.", xx (TILE_SIZE / 2), 2, color_1);
+    use_text_shader(transparency);
+    draw_text("game by alex hartford.", xx (TILE_SIZE / 2), xx (TILE_SIZE / 2), color_white);
+    draw_text("art by emelia hartford.", xx (TILE_SIZE / 2), 2, color_white);
 }
 
 render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
@@ -412,22 +453,21 @@ render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
         }
     }
 
-    shader := use_text_shader(transparency);
-
+    use_text_shader(transparency);
     {
         current_speaker_name := dialogue.lines[dialogue.line_index].name;
 
         if dialogue.speakers[0] == current_speaker_name {
-            draw_text(shader, main_font, current_speaker_name, xx (TILE_SIZE / 2), xx (TILE_SIZE / 2), color_1);
+            draw_text(current_speaker_name, xx (TILE_SIZE / 2), xx (TILE_SIZE / 2), color_1);
         }
 
         else if dialogue.speakers[1] == current_speaker_name {
-            draw_text(shader, main_font, current_speaker_name, xx (PIXEL_WIDTH - TILE_SIZE * 5), xx (TILE_SIZE / 2), color_1);
+            draw_text(current_speaker_name, xx (PIXEL_WIDTH - TILE_SIZE * 5), xx (TILE_SIZE / 2), color_1);
         }
     }
 
     line := to_lower_copy(dialogue.lines[dialogue.line_index].text);
-    draw_text_centered(shader, main_font, line, 5, color_black);
+    draw_text_centered(line, 5);
 }
 
 // Renders the given framebuffer as a texture on a screen-space quad.
@@ -468,7 +508,12 @@ draw_unit :: (using unit : Unit) {
 
     color := team_color(team);
 
-    draw_ship(sprite_index, direction, square - viewport.corner, color);
+    if sinking != 0 {
+        draw_tile(1, square - viewport.corner, color);
+    }
+    else {
+        draw_ship(sprite_index, direction, square - viewport.corner, color);
+    }
 
     /*
     if cursor.state == .TARGETING_PRIMARY || cursor.state == .TARGETING_SECONDARY {
@@ -477,7 +522,7 @@ draw_unit :: (using unit : Unit) {
     */
 }
 
-draw_squares_overlay :: (squares : [..] Square, color := color_fg) {
+draw_squares_overlay :: (squares : [..] Square, color := color_1) {
     for squares {
         draw_square_overlay(it, color);
     }
@@ -497,7 +542,7 @@ draw_background :: (square: Square, color := color_fg) {
     draw_tile(1076, square, color);
 }
 
-draw_number :: (number: int, square: Square, color := color_fg) {
+draw_number :: (number: int, square: Square, color := color_black) {
     get_number_sprite_index :: (i: int) -> int {
         return abs(i) + 868;
     }
@@ -505,25 +550,12 @@ draw_number :: (number: int, square: Square, color := color_fg) {
     draw_tile(get_number_sprite_index(number), square, color);
 }
 
-draw_die_number :: (number: int, square: Square, color := color_fg) {
+draw_die_number :: (number: int, square: Square, offset := Vector2.{0, 0}, color := color_black) {
     get_die_number_sprite_index :: (i: int) -> int {
         return abs(i) + 776;
     }
 
-    draw_tile(get_die_number_sprite_index(number), square, color);
-}
-
-draw_direction :: (direction: Direction, square: Square, color := color_fg) {
-    get_direction_sprite_index :: (d: Direction) -> int {
-        if #complete d == {
-            case .NORTH; return 1057;
-            case .EAST;  return 1058;
-            case .SOUTH; return 1059;
-            case .WEST;  return 1060;
-        }
-    }
-
-    draw_tile(get_direction_sprite_index(direction), square, color);
+    draw_tile(get_die_number_sprite_index(number), square, color, offset);
 }
 
 //
@@ -544,9 +576,9 @@ render_menu :: (using menu: Menu, transparency := 1.0) {
             draw_menu_element(it, .{3, it_index + 1}, color_white, color_black);
         }
 
+        // Draw selected element over it.
         if elements.count {
-            // Draw selected element over it.
-            draw_menu_element(elements[element_index], .{3, element_index + 1}, color_bg, color_fg);
+            draw_menu_element(elements[element_index], .{3, element_index + 1}, color_black, color_white);
         }
     }
 
@@ -564,7 +596,7 @@ render_start_menu :: (using menu: Menu, transparency := 1.0) {
 
         if elements.count {
             // Draw selected element over it.
-            draw_menu_element(elements[element_index], .{15, element_index + 5}, color_3, color_fg);
+            draw_menu_element(elements[element_index], .{15, element_index + 5}, color_black, color_white);
         }
     }
 }
@@ -585,9 +617,9 @@ render_game_over :: (transparency := 1.0) {
     }
 
     {
-        shader := use_text_shader(transparency);
+        use_text_shader(transparency);
 
-        draw_text_centered(shader, main_font, "game over", xx (PIXEL_HEIGHT / 2.0), color_bg);
-        draw_text_centered(shader, main_font, "retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height), color_1);
+        draw_text_centered("game over", xx (PIXEL_HEIGHT / 2.0), color_bg);
+        draw_text_centered("retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height), color_1);
     }
 }

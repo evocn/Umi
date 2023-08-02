@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Init
 // Alex Hartford
 // June 2023
@@ -12,7 +12,7 @@ init :: () -> bool {
     {
         SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 
-        window = SDL_CreateWindow("Tactics",
+        window = SDL_CreateWindow("Umi",
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height,
             SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN);
 
@@ -91,8 +91,11 @@ init :: () -> bool {
                 table_add(*rendering.sprites, name, new_sprite);
             }
 
+            register_sprite("aki");
             register_sprite("ojii");
             register_sprite("young takeda");
+            register_sprite("takeda");
+
             register_sprite("motonari");
 
             register_sprite("ui");

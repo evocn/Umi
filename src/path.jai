@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Path
 // Alex Hartford
 // June 2023
@@ -187,7 +187,7 @@ get_ability_squares_from_position :: (using map : Map, ability: Ability, unit : 
         return interactible;
     }
 
-    traversed := traverse(map, square, unit.team, pass=true, swift=true);
+    traversed := traverse(map, square, unit.team, pass=true, swift=true, flying=true);
     for traversed.squares {
         if it.distance_by_air <= ability.max_range && it.distance_by_air >= ability.min_range
             array_add(*interactible, it.square);
@@ -346,7 +346,7 @@ Traversal_Result :: struct {
 
 #scope_file
 // @Cleanup: It would be nice if we didn't end up with a proliferation of flags.
-traverse :: (using map : Map, origin : Square, team := Team.YOU, pass := false, swift := false) -> Traversal_Result {
+traverse :: (using map : Map, origin : Square, team := Team.YOU, pass := false, swift := false, flying := false) -> Traversal_Result {
     rows :: int.[-1,  0,  1,  0];
     cols :: int.[ 0,  1,  0, -1];
 
@@ -379,7 +379,7 @@ traverse :: (using map : Map, origin : Square, team := Team.YOU, pass := false, 
             cannot_traverse_due_to_enemy_unit := (new_square_occupant != null && new_square_occupant.team != team) && !pass;
             if cannot_traverse_due_to_enemy_unit then continue;
 
-            cannot_traverse_due_to_impassible_tile := is_impassible(map.tiles[new_square.col][new_square.row]);
+            cannot_traverse_due_to_impassible_tile := is_impassible(map.tiles[new_square.col][new_square.row]) && !flying;
             if cannot_traverse_due_to_impassible_tile then continue;
 
             field[from_square.col][from_square.row].reachable = true;

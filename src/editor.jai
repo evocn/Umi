@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Editor
 // Alex Hartford
 // June 2023
@@ -321,6 +321,8 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
 
                     ImGui.Checkbox("Primary", xx *primary.active);
                     ImGui.Checkbox("Secondary", xx *secondary.active);
+                    ImGui.Checkbox("Repair", xx *repair.active);
+                    ImGui.Checkbox("Board", xx *board.active);
                 }
 
                 ImGui.EndTabItem();
@@ -424,7 +426,7 @@ units_editor :: (units : *[..] *Unit) {
 
             new_unit := New(Unit, allocator=a);
 
-            new_unit.sprite_index = 677;
+            new_unit.sprite_index = 0;
             new_unit.square = editor.cursor + viewport.corner;
 
             new_unit.name = "unit";

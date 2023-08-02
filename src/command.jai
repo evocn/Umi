@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Command
 // Alex Hartford
 // July 2023
@@ -133,7 +133,7 @@ execute :: (using command: *Begin_Targeting_Command) {
         square = selected.square;
     }
     else { // Targeting with new unit
-        selected = map.occupancy[square.col][square.row];
+        selected = get_occupant(map, square);
         if !selected return;
 
         if selected.team != team {

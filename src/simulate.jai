@@ -1,11 +1,9 @@
-// Tactics
+// Umi
 // Simulate
 // Alex Hartford
 // July 2023
 
 simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
-    roll_time = clamp(roll_time - dt, 0, roll_onscreen_time);
-
     update_sound_player(dt);
 
     if program_paused {

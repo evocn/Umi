@@ -22,9 +22,6 @@ Mid-Battle Events
   Reinforcements
   Both on specific turns and after defeating specific units
 
-Talk to units ("Parley" ability)
-Recruiting new units?
-
 Unmanned ships can be claimed
 Sunk ships can have their men rescued.
 
@@ -35,7 +32,8 @@ Art Week
 Save/Load Game
 New Icon
 
-Animation for the menu, UI, character movement, etc.
+Talk to units ("Parley" ability)
+Recruiting new units?
 
 4 Fun levels.
 
@@ -54,6 +52,7 @@ Polish.
   Volume fades.
   Full-on Audio pass.
   Visual flourishes. Flashes of lightning, etc.
+  UI Animations
 
 Finish.
   QA Pass

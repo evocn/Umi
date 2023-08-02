@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Unit
 // Alex Hartford
 // June 2023
@@ -31,8 +31,9 @@ Unit :: struct {
     id : int;               @NoSerialize
     health : int;           @NoSerialize
     moved  : bool;          @NoSerialize
-    turned : bool;          @NoSerialize
     exhausted : bool;       @NoSerialize
+
+    sinking: int;           @NoSerialize
     dead   : bool;          @NoSerialize
 
     status : Status;        @NoSerialize
@@ -85,6 +86,11 @@ kill :: (using unit: *Unit) {
     play_sfx("dead");
 }
 
+begin_sinking :: (using unit: *Unit) {
+    sinking = 2;
+    play_sfx("dead");
+}
+
 hull_damage :: (using unit: *Unit, damage : int, armor_piercing := false) {
     if unit.flags & .ARMORED && !armor_piercing
         health = health - (damage - 1);
@@ -92,13 +98,13 @@ hull_damage :: (using unit: *Unit, damage : int, armor_piercing := false) {
         health = health - damage;
 
     health = clamp(health, 0, max_health);
-    if health == 0 then kill(unit);
+    if health == 0 then begin_sinking(unit);
 }
 
 crew_damage :: (using unit: *Unit, damage : int) {
-    health = health - damage;
-    health = clamp(health, 0, max_health);
-    if health == 0 then kill(unit);
+    crew = crew - damage;
+    crew = clamp(crew, 0, 9);
+    if crew == 0 then team == .NONE;
 }
 
 query_units :: (units: [..] *Unit, query: (*Unit) -> bool) -> [] *Unit {

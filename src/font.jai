@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Font
 // Alex Hartford
 // June 2023
@@ -11,25 +11,31 @@ Font :: struct {
     vao, vbo : GLuint;
 }
 
-draw_text :: (shader: Shader, font: Font, text: string, 
-              square: Square, color := color_fg, second := false)
+draw_text :: (text: string, square: Square, color := color_black, second := false)
 {
+    shader := rendering.text_shader;
+    font := main_font;
+
     set_vec4(shader, "color", color);
     x := cast(float)square.col * TILE_SIZE;
     y := (TILE_SIZE / 2) * cast(int)!second + (PIXEL_HEIGHT - TILE_SIZE - cast(float)square.row * TILE_SIZE);
     render_text(font, text, x, y, centered = false);
 }
 
-draw_text :: (shader: Shader, font: Font, text: string, 
-              x: float, y: float, color := color_fg)
+draw_text :: (text: string, x: float, y: float, color := color_black)
 {
+    shader := rendering.text_shader;
+    font := main_font;
+
     set_vec4(shader, "color", color);
     render_text(font, text, x, y, centered = false);
 }
 
-draw_text_centered :: (shader: Shader, font: Font, text: string, 
-                       y: float, color := color_fg)
+draw_text_centered :: (text: string, y: float, color := color_black)
 {
+    shader := rendering.text_shader;
+    font := main_font;
+
     set_vec4(shader, "color", color);
     render_text(font, text, 0, y, centered = true);
 }

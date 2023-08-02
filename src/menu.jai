@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Menu
 // Alex Hartford
 // July 2023
@@ -214,21 +214,21 @@ draw_menu_element :: (using element: *Menu_Element, square: Square, color := col
 // deprecated for this project, maybe useful later.
 //
 
-draw_menu_element_text :: (shader: Shader, font: Font, using element: *Menu_Element, height : float, color := color_fg) {
+draw_menu_element_text :: (using element: *Menu_Element, height : float, color := color_fg) {
     if kind == {
         case .GO;
             using cast(*Go_Element)element;
-            draw_text_centered(shader, font, name, height, color);
+            draw_text_centered(name, height, color);
 
         case .CHECKBOX;
             using cast(*Checkbox_Element)element;
             str := "Off";
             if value
                 str = "On";
-            draw_text_centered(shader, font, tprint("% - %", name, str), height, color);
+            draw_text_centered(tprint("% - %", name, str), height, color);
 
         case .SLIDER;
             using cast(*Slider_Element)element;
-            draw_text_centered(shader, font, tprint("% - %", name, value.*), height, color);
+            draw_text_centered(tprint("% - %", name, value.*), height, color);
     }
 }

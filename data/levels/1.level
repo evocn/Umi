@@ -1,0 +1,57 @@
+[1]	# Version Number
+
+16	# Width
+8	# Height
+
+# Tiles:
+1100000000000000
+1110000000000000
+1111111000000000
+1111000000000000
+1111000000000000
+1110000000000000
+1100000000000000
+1100000000000000
+---
+# Sprite Index Exceptions:
+---
+
+cannon	# name
+1	# team
+0	# ai
+0	# captain
+1	# crew
+2 3	# square
+2	# direction
+
+kobaya	# name
+1	# team
+0	# ai
+0	# captain
+1	# crew
+5 4	# square
+2	# direction
+
+kobaya	# name
+1	# team
+0	# ai
+0	# captain
+1	# crew
+4 6	# square
+2	# direction
+
+kobaya	# name
+1	# team
+0	# ai
+0	# captain
+1	# crew
+4 3	# square
+2	# direction
+
+kobaya	# name
+2	# team
+0	# ai
+0	# captain
+1	# crew
+15 3	# square
+3	# direction

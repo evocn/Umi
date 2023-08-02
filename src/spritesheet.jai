@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Spritesheet
 // Alex Hartford
 // June 2023
@@ -16,8 +16,8 @@ make_spritesheet :: (using spritesheet : *Spritesheet, filename : string) -> suc
     return success;
 }
 
-draw_tile :: (index: int, square : Square, color := color_fg, horizontal_flip := false) {
-    draw_spritesheet(rendering.spritesheet, index, square, color_override=color, horizontal_flip=horizontal_flip);
+draw_tile :: (index: int, square : Square, color := color_fg, offset := Vector2.{0, 0}, horizontal_flip := false) {
+    draw_spritesheet(rendering.spritesheet, index, square, color_override=color, offset=offset, horizontal_flip=horizontal_flip);
 }
 
 draw_ship :: (index: int, direction: Direction, square : Square, color := color_fg) {
@@ -33,7 +33,8 @@ draw_ship :: (index: int, direction: Direction, square : Square, color := color_
     }
 }
 
-draw_spritesheet :: (using sheet : Spritesheet, index: int, square : Square, horizontal_flip := false, use_color_override := true, color_override := color_fg) {
+draw_spritesheet :: (using sheet : Spritesheet, index: int, square : Square, 
+                     offset := Vector2.{0, 0}, horizontal_flip := false, use_color_override := true, color_override := color_fg) {
     bind(sheet.texture, 0);
     shader := rendering.shader;
 
@@ -49,7 +50,7 @@ draw_spritesheet :: (using sheet : Spritesheet, index: int, square : Square, hor
     set_vec2(shader, "relative_sheet_scale", relative_sheet_scale);
 
     model := Matrix4_Identity;
-    translation_vector := Vector3.{square.col * (1.0 / VIEWPORT_WIDTH), (VIEWPORT_HEIGHT - square.row - 1) * (1.0 / (VIEWPORT_HEIGHT + 1)), 1};
+    translation_vector := Vector3.{square.col * (1.0 / VIEWPORT_WIDTH) + offset.x / PIXEL_WIDTH, (VIEWPORT_HEIGHT - square.row - 1) * (1.0 / (VIEWPORT_HEIGHT + 1)) + offset.y / PIXEL_WIDTH, 1};
     scale_vector := Vector3.{1.0 / VIEWPORT_WIDTH, 1.0 / (VIEWPORT_HEIGHT + 1), 1};
 
     translate(*model, translation_vector);

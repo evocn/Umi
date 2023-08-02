@@ -1,4 +1,4 @@
-// Tactics
+// Umi
 // Manager
 // Alex Hartford
 // July 2023
@@ -41,9 +41,17 @@ next_turn :: (using map: *Map) -> Team {
     for units {
         if it.team == turn {
             it.moved = false;
-            it.turned = false;
             it.exhausted = false;
             apply_status_effects(it);
+
+            if it.sinking != 0 {
+                it.moved = true;
+                it.exhausted = true;
+                it.sinking -= 1;
+                if it.sinking == 0 {
+                    kill(it);
+                }
+            }
         }
     }
 
