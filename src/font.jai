@@ -19,7 +19,7 @@ draw_text :: (text: string, square: Square, color := color_black, second := fals
     set_vec4(shader, "color", color);
     x := cast(float)square.col * TILE_SIZE;
     y := (TILE_SIZE / 2) * cast(int)!second + (PIXEL_HEIGHT - TILE_SIZE - cast(float)square.row * TILE_SIZE);
-    render_text(font, text, x, y, centered = false);
+    render_text(font, text, x, y, alignment = .LEFT);
 }
 
 draw_text :: (text: string, x: float, y: float, color := color_black)
@@ -28,16 +28,25 @@ draw_text :: (text: string, x: float, y: float, color := color_black)
     font := main_font;
 
     set_vec4(shader, "color", color);
-    render_text(font, text, x, y, centered = false);
+    render_text(font, text, x, y, alignment = .LEFT);
 }
 
-draw_text_centered :: (text: string, y: float, color := color_black)
+draw_text_centered :: (text: string, y: float, nudge_x := 0.0, color := color_black)
 {
     shader := rendering.text_shader;
     font := main_font;
 
     set_vec4(shader, "color", color);
-    render_text(font, text, 0, y, centered = true);
+    render_text(font, text, nudge_x, y, alignment = .CENTER);
+}
+
+draw_text_right :: (text: string, y: float, nudge_x := 0.0, color := color_black)
+{
+    shader := rendering.text_shader;
+    font := main_font;
+
+    set_vec4(shader, "color", color);
+    render_text(font, text, nudge_x, y, alignment = .RIGHT);
 }
 
 //
@@ -51,7 +60,13 @@ initialize_freetype :: () {
     }
 }
 
-render_text :: (font : Font, text : string, x : float, y : float, $centered := true)
+Alignment :: enum {
+    LEFT;
+    CENTER;
+    RIGHT;
+}
+
+render_text :: (font : Font, text : string, x : float, y : float, $alignment := Alignment.CENTER)
 {
     glActiveTexture(GL_TEXTURE0);
     defer glBindTexture(GL_TEXTURE_2D, 0);
@@ -59,8 +74,8 @@ render_text :: (font : Font, text : string, x : float, y : float, $centered := t
     glBindVertexArray(font.vao);
     defer glBindVertexArray(0);
 
-    #if centered {
-        total_width : float;
+    total_width : float;
+    #if alignment == .CENTER || alignment == .RIGHT {
         for cast([] u8)text {
             glyph, found := table_find(*font.characters, it);
             assert(found);
@@ -75,10 +90,13 @@ render_text :: (font : Font, text : string, x : float, y : float, $centered := t
         assert(found);
 
         xpos : float;
-        #if centered
-            xpos = floor(x + 1 + ((PIXEL_WIDTH - total_width) / 2.0) + glyph.bearing.x);
+        #if alignment == .CENTER
+            xpos = floor(x + (PIXEL_WIDTH - total_width) / 2.0 + glyph.bearing.x);
+        else if alignment == .RIGHT
+            xpos = floor(x + (PIXEL_WIDTH - total_width) + glyph.bearing.x);
         else
             xpos = x + 1 + glyph.bearing.x;
+
         ypos := y - (glyph.size.y - glyph.bearing.y);
 
         w := glyph.size.x;

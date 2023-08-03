@@ -29,7 +29,7 @@ cursor : struct {
     inspecting : *Unit;
 }
 
-resolve_cursor_inputs :: (using map : *Map) {
+resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
     using cursor;
     using input;
 
@@ -82,6 +82,16 @@ resolve_cursor_inputs :: (using map : *Map) {
 
             if pressed(*button_info) {
                 begin_inspecting(map);
+                occupant := get_occupant(map, square);
+                if occupant && occupant.flashback {
+                    success := load_dialogue_file(dialogue, tprint("%.dialogue", occupant.flashback));
+                    if !success {
+                        log_error("Unable to load dialogue file %.\n", occupant.flashback);
+                        return;
+                    }
+                    switch_mode(.DIALOGUE);
+                    occupant.flashback = "";
+                }
             }
         }
 

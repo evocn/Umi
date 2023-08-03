@@ -12,6 +12,9 @@ imgui_context   : *ImGui.ImGuiContext;
 WINDOW_WIDTH  :: 1536;
 WINDOW_HEIGHT :: 864;
 
+//WINDOW_WIDTH  :: 512;
+//WINDOW_HEIGHT :: 288;
+
 PIXEL_WIDTH :: 512;
 PIXEL_HEIGHT :: 288;
 
@@ -114,7 +117,6 @@ save_load_logger :: (message: string, data: *void, info: Log_Info) {
 main :: () {
     init_result := init();
     assert(init_result);
-
     // init gameplay objects
     units : [..] *Unit;
     success := load_units(*units, "all.units");

@@ -297,6 +297,8 @@ unit_editor :: (using unit: *Unit, map: *Map, templates: [..] *Unit) {
 
         ti = type_info(Direction);
         ImGui.SliderInt("Direction", xx *direction, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx direction]));
+
+        // Add flashbacks in the file... Not worth the extra kludge.
     }
     ImGui.End();
 }
@@ -389,6 +391,7 @@ percolate_changes_to_map_units :: (map: *Map, unit: *Unit) {
             it.crew = unit_copy.crew;
             it.square = unit_copy.square;
             it.direction = unit_copy.direction;
+            it.flashback = unit_copy.flashback;
 
             it.health = it.max_health;
         }

@@ -43,9 +43,11 @@ build :: () {
     add_build_file(tprint("%/credits.jai", #filepath), w);
     add_build_file(tprint("%/serialization.jai", #filepath), w);
 
-    add_build_file(tprint("%/simulate.jai", #filepath), w);
     add_build_file(tprint("%/spine.jai", #filepath), w);
     add_build_file(tprint("%/manager.jai", #filepath), w);
+    add_build_file(tprint("%/event.jai", #filepath), w);
+
+    add_build_file(tprint("%/simulate.jai", #filepath), w);
     add_build_file(tprint("%/cursor.jai", #filepath), w);
     add_build_file(tprint("%/command.jai", #filepath), w);
     add_build_file(tprint("%/ai.jai", #filepath), w);

@@ -8,14 +8,9 @@ TODO
 4 Fun levels.
 
 Mid-Battle Events
-  Basic Dialogue events
-  Change stage
   Reinforcements
   Both on specific turns and after defeating specific units
-
-Unmanned ships can be claimed
-Sunk ships can have their men rescued.
-* Talk to Grant and Josh!
+  Battle start and end dialogues.
 
 Week 3
 ------

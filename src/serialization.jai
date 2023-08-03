@@ -445,6 +445,7 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
                     new_unit.crew = unit_copy.crew;
                     new_unit.square = unit_copy.square;
                     new_unit.direction = unit_copy.direction;
+                    new_unit.flashback = unit_copy.flashback;
 
                     new_unit.health = new_unit.max_health;
                     break;

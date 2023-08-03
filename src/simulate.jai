@@ -24,7 +24,7 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
         turn := whose_turn();
         if #complete turn == {
             case .YOU;
-            resolve_cursor_inputs(map);
+            resolve_cursor_inputs(map, dialogue);
             for command_queue {
                 execute(it);
                 free(it);
@@ -35,7 +35,7 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
             ai_update(map, dt);
 
             case .NONE;
-            print("This team shouldn't be active!\n");
+                log_error("This team shouldn't be active!\n");
         }
 
         for map.units {

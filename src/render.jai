@@ -400,10 +400,10 @@ render_start_screen :: (transparency := 1.0) {
 render_credits :: (transparency := 1.0) {
     use_text_shader(transparency);
     k := cast(float)PIXEL_HEIGHT * 3 / 4;
-    draw_text_centered("Game by Alex Hartford.", k, color_black);
-    draw_text_centered("Design by Grant Neighbor.", k - TILE_SIZE, color_1);
-    draw_text_centered("Art by Emelia Hartford.", k - 2*TILE_SIZE, color_2);
-    draw_text_centered("etc...", k - 3*TILE_SIZE, color_3);
+    draw_text_centered("Game by Alex Hartford.", k, color=color_black);
+    draw_text_centered("Design by Grant Neighbor.", k - TILE_SIZE, color=color_1);
+    draw_text_centered("Art by Emelia Hartford.", k - 2*TILE_SIZE, color=color_2);
+    draw_text_centered("etc...", k - 3*TILE_SIZE, color=color_3);
 }
 
 render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
@@ -428,39 +428,44 @@ render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
 }
 
 render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
-    use_sprite_shader(transparency);
-
-    name := to_lower_copy(dialogue.speakers[0]);
-    if name {
-        sprite := table_find_pointer(*rendering.sprites, name);
-        if !sprite {
-            log_error("Unable to find sprite % in the sprites catalogue.\n", name);
-            return;
-        }
-
-        draw_sprite(sprite, x_offset=dialogue.left_sprite_offset, y_offset=TILE_SIZE);
-    }
-
-    name = to_lower_copy(dialogue.speakers[1]);
-    if name {
-        sprite := table_find_pointer(*rendering.sprites, name);
-        if !sprite {
-            log_error("Unable to find sprite % in the sprites catalogue.\n", name);
-            return;
-        }
-
-        draw_sprite(sprite, x_offset=dialogue.right_sprite_offset, y_offset=TILE_SIZE, right=true);
-    }
-
-    use_tile_shader(transparency);
-    for col: 0..VIEWPORT_WIDTH {
-        for row: VIEWPORT_HEIGHT - 1 .. VIEWPORT_HEIGHT {
-            draw_background(.{col, row}, color_3);
-        }
-    }
-
-    use_text_shader(transparency);
     {
+        // Draw speaker sprites.
+        use_sprite_shader(transparency);
+
+        name := to_lower_copy(dialogue.speakers[0]);
+        if name {
+            sprite := table_find_pointer(*rendering.sprites, name);
+            if !sprite {
+                log_error("Unable to find sprite % in the sprites catalogue.\n", name);
+                return;
+            }
+
+            draw_sprite(sprite, x_offset=dialogue.left_sprite_offset, y_offset=TILE_SIZE);
+        }
+
+        name = to_lower_copy(dialogue.speakers[1]);
+        if name {
+            sprite := table_find_pointer(*rendering.sprites, name);
+            if !sprite {
+                log_error("Unable to find sprite % in the sprites catalogue.\n", name);
+                return;
+            }
+
+            draw_sprite(sprite, x_offset=dialogue.right_sprite_offset, y_offset=TILE_SIZE, right=true);
+        }
+    }
+
+    {
+        // Draw dialogue box
+        use_tile_shader(transparency);
+        for col: 0..VIEWPORT_WIDTH {
+            for row: VIEWPORT_HEIGHT - 1 .. VIEWPORT_HEIGHT {
+                draw_background(.{col, row}, color_3);
+            }
+        }
+
+        // Draw dialogue text
+        use_text_shader(transparency);
         current_speaker_name := dialogue.lines[dialogue.line_index].name;
 
         if dialogue.speakers[0] == current_speaker_name {
@@ -468,12 +473,12 @@ render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
         }
 
         else if dialogue.speakers[1] == current_speaker_name {
-            draw_text(current_speaker_name, xx (PIXEL_WIDTH - TILE_SIZE * 5), xx (TILE_SIZE / 2), color_1);
+            draw_text_right(current_speaker_name, xx (TILE_SIZE / 2), nudge_x = xx (-TILE_SIZE / 2), color=color_1);
         }
-    }
 
-    line := to_lower_copy(dialogue.lines[dialogue.line_index].text);
-    draw_text_centered(line, 5);
+        line := dialogue.lines[dialogue.line_index].text;
+        draw_text_centered(line, 5);
+    }
 }
 
 // Renders the given framebuffer as a texture on a screen-space quad.
@@ -637,7 +642,67 @@ render_game_over :: (transparency := 1.0) {
     {
         use_text_shader(transparency);
 
-        draw_text_centered("game over", xx (PIXEL_HEIGHT / 2.0), color_bg);
-        draw_text_centered("retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height), color_1);
+        draw_text_centered("game over", xx (PIXEL_HEIGHT / 2.0), color=color_bg);
+        draw_text_centered("retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height), color=color_1);
+    }
+}
+
+//
+// Menus
+//
+
+draw_menu_element :: (using element: *Menu_Element, square: Square, color := color_fg, second_color := color_3) {
+    if kind == {
+        case .GO;
+            using cast(*Go_Element)element;
+            draw_tile(sprite_index, square, color);
+
+        case .CHECKBOX;
+            using cast(*Checkbox_Element)element;
+            if value.* {
+                draw_tile(sprite_index, square, color);
+            }
+            else {
+                draw_tile(sprite_index_two, square, color);
+            }
+
+        case .SLIDER;
+            using cast(*Slider_Element)element;
+            draw_tile(754, square - .{2, 0}, second_color);
+            draw_tile(755, square - .{1, 0}, second_color);
+            draw_tile(755, square, second_color);
+            draw_tile(755, square + .{1, 0}, second_color);
+            draw_tile(754, square + .{2, 0}, second_color, horizontal_flip=true);
+
+            value_index := cast(int)(value.* * 4) - 2;
+            if value_index == -2 {
+                draw_tile(sprite_index_two, square + .{value_index, 0}, color);
+            }
+            else {
+                draw_tile(sprite_index, square + .{value_index, 0}, color);
+            }
+    }
+}
+
+//
+// deprecated for this project, maybe useful later.
+//
+
+draw_menu_element_text :: (using element: *Menu_Element, height : float, color := color_fg) {
+    if kind == {
+        case .GO;
+            using cast(*Go_Element)element;
+            draw_text_centered(name, height, color=color);
+
+        case .CHECKBOX;
+            using cast(*Checkbox_Element)element;
+            str := "Off";
+            if value
+                str = "On";
+            draw_text_centered(tprint("% - %", name, str), height, color=color);
+
+        case .SLIDER;
+            using cast(*Slider_Element)element;
+            draw_text_centered(tprint("% - %", name, value.*), height, color=color);
     }
 }

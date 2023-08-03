@@ -29,6 +29,7 @@ Unit :: struct {
 
     using square : Square;  @PerLevel
     direction : Direction;  @PerLevel
+    flashback : string;     @PerLevel
 
     // State
     id : int;               @NoSerialize
