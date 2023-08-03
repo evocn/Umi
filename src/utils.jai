@@ -3,6 +3,8 @@
 // Alex Hartford
 // June 2023
 
+E :: 2.71828;
+
 Square :: struct {
     col : int;
     row : int;

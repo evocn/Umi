@@ -111,6 +111,7 @@ init :: () -> bool {
 
             register_mural("title");
             register_mural("wave");
+            register_mural("bryce");
         }
 
         {
@@ -274,6 +275,12 @@ init_menus :: () {
         fullscreen.sprite_index = 831;
         fullscreen.sprite_index_two = 830;
         array_add(*elements, cast(*Menu_Element)fullscreen);
+
+        credits := New(Go_Element, allocator=a);
+        credits.name = "credits";
+        credits.callback = show_credits;
+        credits.sprite_index = 768;
+        array_add(*elements, cast(*Menu_Element)credits);
 
         quit := New(Go_Element, allocator=a);
         quit.name = "quit";

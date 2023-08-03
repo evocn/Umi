@@ -51,6 +51,9 @@ render :: (map: Map, dialogue: Dialogue) {
                 render_map(map, transparency = 0.3);
                 render_ui(map, transparency = 0.3);
                 render_game_over();
+
+            case .CREDITS;
+                render_credits();
         }
 
         render_slice();
@@ -117,7 +120,11 @@ render_slice :: (transparency := 1.0) {
             if user_die_result != 0 {
                 percent := (screen_slice.progress) / (USER_DICE_ROLLED_AT) * 3;
                 percent = clamp(percent, 0.0, 1.0);
-                draw_die_number(user_die_result, .{4, 9}, offset=.{0, percent * 4 * TILE_SIZE}, color_black);
+                draw_die_number(user_die_result, .{4, 8}, offset=.{0, percent * 2 * TILE_SIZE}, color=color_black);
+            }
+            if user_die_bonus != 0 {
+                draw_tile(1016, .{5, 7}, color=color_black);
+                draw_number(user_die_bonus, .{6, 7}, color=color_black);
             }
         }
 
@@ -137,12 +144,6 @@ render_slice :: (transparency := 1.0) {
 
             draw_tile(519, .{11, 0}, color_black);
             draw_number(victim_crew, .{11, -1}, color_black);
-
-            if victim_die_result != 0 {
-                percent := (screen_slice.progress) / (VICTIM_DICE_ROLLED_AT) * 3;
-                percent = clamp(percent, 0.0, 1.0);
-                draw_die_number(victim_die_result, .{10, 9}, offset=.{0, percent * 4 * TILE_SIZE}, color_black);
-            }
         }
     }
 }
@@ -394,10 +395,15 @@ render_start_screen :: (transparency := 1.0) {
     if found {
         draw_sprite(mural);
     }
+}
 
+render_credits :: (transparency := 1.0) {
     use_text_shader(transparency);
-    draw_text("game by alex hartford.", xx (TILE_SIZE / 2), xx (TILE_SIZE / 2), color_white);
-    draw_text("art by emelia hartford.", xx (TILE_SIZE / 2), 2, color_white);
+    k := cast(float)PIXEL_HEIGHT * 3 / 4;
+    draw_text_centered("Game by Alex Hartford.", k, color_black);
+    draw_text_centered("Design by Grant Neighbor.", k - TILE_SIZE, color_1);
+    draw_text_centered("Art by Emelia Hartford.", k - 2*TILE_SIZE, color_2);
+    draw_text_centered("etc...", k - 3*TILE_SIZE, color_3);
 }
 
 render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
@@ -544,18 +550,30 @@ draw_background :: (square: Square, color := color_fg) {
 
 draw_number :: (number: int, square: Square, color := color_black) {
     get_number_sprite_index :: (i: int) -> int {
-        return abs(i) + 868;
+        if i < 10
+            return i + 868 + 49 * 0;
+        else if i < 20
+            return i % 10 + 868 + 49 * 1;
+        else if i < 30
+            return i % 10 + 868 + 49 * 2;
+
+        log_error("Unprintable number: %\n", i);
+        return 0;
     }
 
-    draw_tile(get_number_sprite_index(number), square, color);
+    draw_tile(get_number_sprite_index(abs(number)), square, color);
 }
 
 draw_die_number :: (number: int, square: Square, offset := Vector2.{0, 0}, color := color_black) {
     get_die_number_sprite_index :: (i: int) -> int {
+        if i > 6 {
+            log_error("Can't draw % on a die!\n", i);
+            return 0;
+        }
         return abs(i) + 776;
     }
 
-    draw_tile(get_die_number_sprite_index(number), square, color, offset);
+    draw_tile(get_die_number_sprite_index(abs(number)), square, color, offset);
 }
 
 //
@@ -591,12 +609,12 @@ render_start_menu :: (using menu: Menu, transparency := 1.0) {
         use_tile_shader(transparency);
 
         for elements {
-            draw_menu_element(it, .{15, it_index + 5}, color_white, color_black);
+            draw_menu_element(it, .{15, it_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 1}, color_1, color_4);
         }
 
         if elements.count {
             // Draw selected element over it.
-            draw_menu_element(elements[element_index], .{15, element_index + 5}, color_black, color_white);
+            draw_menu_element(elements[element_index], .{15, element_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 1}, color_3, color_4);
         }
     }
 }

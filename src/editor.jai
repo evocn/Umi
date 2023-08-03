@@ -77,9 +77,33 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
         case ResizeNWSE;    SDL_SetCursor(cursor_resize_nwse);
     }
 
-    ImGui.ShowDemoWindow();
+    grant_editor();
+
+    //ImGui.ShowDemoWindow();
 
     ImGui.Render();
+}
+
+grant_editor :: () {
+    ImGui.Begin("Grant");
+    {
+        ImGui.InputFloat("Exponent Coefficient", *EXPONENT_COEFFICIENT, -5.0, 5.0);
+        ImGui.InputInt("Aggressor bonus die", xx *BOARDING_AGGRESSOR_DIE, 0, 20);
+        ImGui.InputInt("Aggressor bonus value", xx *BOARDING_AGGRESSOR_BONUS, 0, 20);
+        if ImGui.Button("Test!\n") {
+            for a: 0..30 {
+                for b: 0..30 {
+                    damage_a_to_b := get_damage(a, b);
+                    damage_b_to_a := get_damage(b, a);
+                    print("a: %, b: % | a -> b: %, b -> a: %\n", FormatInt.{value=a, minimum_digits=2, padding=#char " "}, 
+                                                                 FormatInt.{value=b, minimum_digits=2, padding=#char " "}, 
+                                                                 FormatInt.{value=damage_a_to_b, minimum_digits=2, padding=#char " "}, 
+                                                                 FormatInt.{value=damage_b_to_a, minimum_digits=2, padding=#char " "});
+                }
+            }
+        }
+    }
+    ImGui.End();
 }
 
 level_index := -1;
@@ -229,7 +253,7 @@ level_editor :: (using map: *Map) {
                 if ImGui.Selectable(temp_c_string(tprint("% | %", it_index, it.name)), last_moving_unit == it_index) {
                     last_moving_unit = it_index;
                     editor.moving_unit = it;
-                    editor.cursor = it.square;
+                    editor.cursor = it.square - viewport.corner;
                 }
             }
             ImGui.EndListBox();
@@ -269,7 +293,7 @@ unit_editor :: (using unit: *Unit, map: *Map, templates: [..] *Unit) {
         ti = type_info(Captain);
         ImGui.SliderInt("Captain", xx *captain, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx captain]));
 
-        ImGui.SliderInt("Crew", xx *crew, 1, 9);
+        ImGui.SliderInt("Crew", xx *crew, 1, MAX_CREW);
 
         ti = type_info(Direction);
         ImGui.SliderInt("Direction", xx *direction, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx direction]));

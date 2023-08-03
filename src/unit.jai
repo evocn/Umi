@@ -3,6 +3,9 @@
 // Alex Hartford
 // June 2023
 
+MAX_CREW :: 29;
+MAX_HULL :: 9;
+
 Unit :: struct {
     // Properties
     name : string;          @Always
@@ -22,7 +25,7 @@ Unit :: struct {
     team : Team;            @PerLevel
     ai: AI_Behavior;        @PerLevel
     captain : Captain;      @PerLevel
-    crew : int = 1;         @PerLevel
+    crew : int = 5;         @PerLevel
 
     using square : Square;  @PerLevel
     direction : Direction;  @PerLevel
@@ -86,25 +89,20 @@ kill :: (using unit: *Unit) {
     play_sfx("dead");
 }
 
-begin_sinking :: (using unit: *Unit) {
-    sinking = 2;
-    play_sfx("dead");
-}
-
-hull_damage :: (using unit: *Unit, damage : int, armor_piercing := false) {
+damage_hull :: (using unit: *Unit, damage : int, armor_piercing := false) {
     if unit.flags & .ARMORED && !armor_piercing
         health = health - (damage - 1);
     else
         health = health - damage;
 
     health = clamp(health, 0, max_health);
-    if health == 0 then begin_sinking(unit);
+    if health == 0 then kill(unit);
 }
 
-crew_damage :: (using unit: *Unit, damage : int) {
+damage_crew :: (using unit: *Unit, damage : int) {
     crew = crew - damage;
     crew = clamp(crew, 0, 9);
-    if crew == 0 then team == .NONE;
+    if crew == 0 then kill(unit);
 }
 
 query_units :: (units: [..] *Unit, query: (*Unit) -> bool) -> [] *Unit {

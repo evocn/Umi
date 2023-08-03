@@ -5,15 +5,6 @@ July 2023
 
 TODO
 ====
-Week 2
-------
-Tighter UI for attacks.
-  We want just dice, or some other simple system.
-  Really show the result happening.
-
-Flame Visual.
-Thunder Tile.
-
 4 Fun levels.
 
 Mid-Battle Events
@@ -24,18 +15,19 @@ Mid-Battle Events
 
 Unmanned ships can be claimed
 Sunk ships can have their men rescued.
+* Talk to Grant and Josh!
 
 Week 3
 ------
 Art Week
+
+4 Fun levels.
 
 Save/Load Game
 New Icon
 
 Talk to units ("Parley" ability)
 Recruiting new units?
-
-4 Fun levels.
 
 Week 4
 ------

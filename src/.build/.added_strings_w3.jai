@@ -1,5 +1,17 @@
 // Workspace: Umi Workspace
 //
+// #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:228.
+//
+if !unserialize(*s.name, handler) return false;
+if !unserialize(*s.description, handler) return false;
+if !unserialize(*s.sprite_index, handler) return false;
+if !unserialize(*s.max_health, handler) return false;
+if !unserialize(*s.movement, handler) return false;
+if !unserialize(*s.flags, handler) return false;
+if !unserialize(*s.primary, handler) return false;
+if !unserialize(*s.secondary, handler) return false;
+
+//
 // #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:103.
 //
 if !serialize(s.name, "name", builder) return false;
@@ -62,15 +74,3 @@ if !unserialize(*s.captain, handler) return false;
 if !unserialize(*s.crew, handler) return false;
 if !unserialize(*s.square, handler) return false;
 if !unserialize(*s.direction, handler) return false;
-
-//
-// #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:228.
-//
-if !unserialize(*s.name, handler) return false;
-if !unserialize(*s.description, handler) return false;
-if !unserialize(*s.sprite_index, handler) return false;
-if !unserialize(*s.max_health, handler) return false;
-if !unserialize(*s.movement, handler) return false;
-if !unserialize(*s.flags, handler) return false;
-if !unserialize(*s.primary, handler) return false;
-if !unserialize(*s.secondary, handler) return false;

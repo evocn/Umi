@@ -119,8 +119,6 @@ Resolution :: struct {
     user_status : Status;
 
     victim_died : bool;
-    victim_die_result: int;
-    victim_die_bonus : int;
     victim_initial_hull: int;
     victim_final_hull: int;
     victim_initial_crew: int;
@@ -128,7 +126,26 @@ Resolution :: struct {
     victim_status : Status;
 }
 
-BOARD_AGGRESSOR_BONUS :: 1;
+BOARDING_AGGRESSOR_DIE := 4;
+BOARDING_AGGRESSOR_BONUS := -1;
+EXPONENT_COEFFICIENT := 1.0;
+
+get_multiplier :: (differential: int) -> float {
+    factor := -cast(float)differential * EXPONENT_COEFFICIENT;
+    zero_to_one := 1 / (1 + pow(E, factor));
+    multiplier := 0.5 + zero_to_one;
+    return multiplier;
+}
+
+get_damage :: (attacker_strength : int, victim_strength : int) -> int {
+    differential := attacker_strength - victim_strength;
+
+    multiplier := get_multiplier(differential);
+
+    damage := cast(int)(attacker_strength / 2.0 * multiplier);
+
+    return damage;
+}
 
 resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *Unit, square: Square) -> Resolution {
     assert(user != null);
@@ -152,39 +169,34 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
 
         // damage
         if targeting == .BOARDING {
-            {
-                die_result := roll_die(user.crew);
-                damage_to_victim := die_result + BOARD_AGGRESSOR_BONUS + bonus_damage;
+            die_result := roll_die(BOARDING_AGGRESSOR_DIE) + BOARDING_AGGRESSOR_BONUS;
+
+            calculated_user_crew := user.crew + die_result + bonus_damage;
+            calculated_victim_crew := victim.crew + bonus_damage;
+            differential := calculated_user_crew - calculated_victim_crew;
+
+            damage_to_victim := get_damage(calculated_user_crew, calculated_victim_crew);
+            damage_to_victim = clamp(damage_to_victim, 0, MAX_CREW);
+
+            damage_to_user := get_damage(calculated_victim_crew, calculated_user_crew);
+            damage_to_user = clamp(damage_to_user, 0, MAX_CREW);
+
+            print("user crew (initial) : %\n", user.crew);
+            print("user crew (adjusted): %\n", calculated_user_crew);
+            print("victim crew         : %\n", calculated_victim_crew);
+            print("differential        : %\n", differential);
+
+            print("damage to user      : %\n", damage_to_user);
+            print("damage to victim    : %\n", damage_to_victim);
+
+            damage_crew(victim, damage_to_victim);
+            damage_crew(user, damage_to_user);
+
                 result.user_die_result = die_result;
-                if user.captain == .WARLORD {
-                    damage_to_victim += 2;
-                }
-                if victim.flags & .TURTLE {
-                    damage_to_victim -= 2;
-                }
                 result.user_die_bonus = damage_to_victim - die_result;
 
-                damage_to_victim = clamp(damage_to_victim, 0, 9);
-                crew_damage(victim, damage_to_victim);
                 if victim.dead result.victim_died = true;
-            }
-
-            {
-                die_result := roll_die(user.crew);
-                damage_to_assailant := die_result + bonus_damage;
-                result.victim_die_result = die_result;
-                if victim.captain == .WARLORD {
-                    damage_to_assailant += 2;
-                }
-                if user.flags & .TURTLE {
-                    damage_to_assailant -= 2;
-                }
-                result.victim_die_bonus = damage_to_assailant - die_result;
-
-                damage_to_assailant = clamp(damage_to_assailant, 0, 9);
-                crew_damage(user, damage_to_assailant);
                 if user.dead result.user_died = true;
-            }
         }
         else if damage > 0 || (damage == 0 && bonus_damage > 0) {
             tile := get_tile(map.*, victim.square);
@@ -200,8 +212,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             result.user_die_result = die_result;
             result.user_die_bonus = attack_damage - die_result;
 
-            attack_damage = clamp(attack_damage, 0, 9);
-            hull_damage(victim, attack_damage);
+            attack_damage = clamp(attack_damage, 0, MAX_CREW);
+            damage_hull(victim, attack_damage);
             if victim.dead result.victim_died = true;
         }
         else if damage < 0 || (damage == 0 && bonus_damage < 0) {
@@ -211,8 +223,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             result.user_die_result = die_result;
             result.user_die_bonus = heal_amount - die_result;
 
-            heal_amount = clamp(heal_amount, 0, 9);
-            crew_damage(victim, -1 * heal_amount);
+            heal_amount = clamp(heal_amount, 0, MAX_CREW);
+            damage_hull(victim, -1 * heal_amount);
             if victim.dead result.victim_died = true; // unlikely...
         }
 

@@ -150,6 +150,10 @@ quit_game :: () {
     running = false;
 }
 
+show_credits :: () {
+    switch_mode(.CREDITS);
+}
+
 toggle_fullscreen :: () {
     using settings;
 

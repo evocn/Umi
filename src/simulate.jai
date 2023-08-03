@@ -75,6 +75,9 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
         if !program_state.imgui_capturing_keyboard {
             update_editor_cursor(map);
         }
+
+        case .CREDITS;
+            resolve_credits_input();
     }
 
     if spine.ready_for_next_section {

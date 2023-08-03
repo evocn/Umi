@@ -40,6 +40,7 @@ build :: () {
 
     add_build_file(tprint("%/animator.jai", #filepath), w);
     add_build_file(tprint("%/menu.jai", #filepath), w);
+    add_build_file(tprint("%/credits.jai", #filepath), w);
     add_build_file(tprint("%/serialization.jai", #filepath), w);
 
     add_build_file(tprint("%/simulate.jai", #filepath), w);

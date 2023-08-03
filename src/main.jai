@@ -30,6 +30,7 @@ Program_Mode :: enum {
     DIALOGUE;
     MENU;
     GAME_OVER;
+    CREDITS;
 }
 
 switch_mode :: (new_mode: Program_Mode) {
