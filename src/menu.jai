@@ -139,7 +139,7 @@ nudge_menu_element :: (using element: *Menu_Element, left := false) {
 //
 
 start_game :: () {
-    spine.ready_for_next_section = true;
+    fade_start(.OUT, next_section_fade_in, easing = smooth_stop);
 }
 
 resume_game :: () {

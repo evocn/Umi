@@ -29,15 +29,6 @@ kobaya	# name
 2	# team
 0	# ai
 0	# captain
-1	# crew
-15 3	# square
-3	# direction
-!	# flashback
-
-kobaya	# name
-2	# team
-0	# ai
-0	# captain
 5	# crew
 6 3	# square
 0	# direction

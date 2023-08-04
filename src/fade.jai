@@ -14,10 +14,9 @@ Fade :: struct {
     time   : float;
     original_master : float;
 
-    callback : #type (string);
-    argument : string;
+    callback : #type ();
 
-    // @CONSIDER: Different curve types, instead of plain-old linear fade.
+    easing : #type (float) -> float;
 }
 
 Fade_Kind :: enum {
@@ -28,14 +27,22 @@ Fade_Kind :: enum {
 //
 //
 
-fade_start :: (kind : Fade_Kind, callback: #type (string), argument: string, length := 3.0) {
+fade_get_t_value :: () -> float {
+    t := fade.easing(fade.time / fade.length);
+    if #complete fade.kind == {
+        case .OUT; return t;
+        case .IN;  return 1.0 - t;
+    }
+}
+
+fade_start :: (kind : Fade_Kind, callback: (), length := 3.0, easing := identity) {
     fade.kind = kind;
     fade.length = length;
+    fade.callback = callback;
+    fade.easing = easing;
     fade.original_master = sound_player.master_volume;
 
-    fade.callback = callback;
-    fade.argument = argument;
-
+    fade.time = 0.0;
     fade.active = true;
 }
 
@@ -58,8 +65,8 @@ fade_update :: (dt : float) {
     if time > length {
         sound_player.master_volume = original_master;
 
-        callback(argument);
-
         fade.active = false;
+
+        callback();
     }
 }

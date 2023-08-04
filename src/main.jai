@@ -127,7 +127,7 @@ main :: () {
     dialogue: Dialogue;
     initialize(*dialogue);
 
-    load_spine("the.spine");
+    spine_load("the.spine");
 
     // The Loop
     dt, last_frame := 0.0;

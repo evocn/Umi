@@ -47,13 +47,15 @@ next_line_has_mural_name :: (using dialogue: Dialogue) -> bool {
     else return false;
 }
 
-update_and_resolve_dialogue_inputs :: (dialogue: *Dialogue, dt: float) {
+update_dialogue_animators :: (dialogue: *Dialogue, dt: float) {
     update(*dialogue.left_animator, dt);
     update(*dialogue.left_animator2, dt);
 
     update(*dialogue.right_animator, dt);
     update(*dialogue.right_animator2, dt);
+}
 
+resolve_dialogue_inputs :: (dialogue: *Dialogue) {
     using input;
 
     if pressed(*button_menu) {
@@ -93,12 +95,11 @@ update_and_resolve_dialogue_inputs :: (dialogue: *Dialogue, dt: float) {
 
     if pressed(*button_select) {
         finish_dialogue();
-        reset_dialogue(dialogue);
     }
 
     if is_finished(dialogue) {
+        dialogue.line_index -= 1;
         finish_dialogue();
-        reset_dialogue(dialogue);
     }
 }
 
@@ -111,7 +112,7 @@ reset_dialogue :: (using dialogue: *Dialogue) {
 
 finish_dialogue :: () {
     if program_mode == .CUTSCENE {
-        spine.ready_for_next_section = true;
+        fade_start(.OUT, next_section_fade_in);
     }
 
     else if program_mode == .DIALOGUE {
@@ -171,6 +172,7 @@ load_dialogue_file :: (dialogue: *Dialogue, filename: string) -> success: bool {
         return error_out(handler, "Invalid version number.");
 
     array_reset(*dialogue.lines);
+    reset_dialogue(dialogue);
 
     a: Allocator;
     a.proc = flat_pool_allocator_proc;

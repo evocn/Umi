@@ -176,3 +176,31 @@ check_gl_error :: (str := "-") {
     err := glGetError();
     if err print("error(%) = %\n", str, err);
 }
+
+//
+// Easing functions
+//
+
+identity :: (t: float) -> float {
+    return t;
+}
+
+flip :: (t: float) -> float {
+    return 1 - t;
+}
+
+smooth_start :: (t: float) -> float {
+    return t * t * t;
+}
+
+smooth_stop :: (t: float) -> float {
+    return flip(smooth_start(flip(t)));
+}
+
+smooth_start_stop :: (t: float) -> float {
+    return lerp(smooth_start(t), smooth_stop(t), t);
+}
+
+stair :: (t: float) -> float {
+    return cast(float)cast(int)t;
+}

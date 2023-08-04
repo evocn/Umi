@@ -4,6 +4,10 @@
 // June 2023
 
 render :: (map: Map, dialogue: Dialogue) {
+    fade_progress := 0.0;
+    if fade.active || spine.ready_for_next_section
+        fade_progress = fade_get_t_value();
+
     {
         // Render all this to the framebuffer.
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -13,19 +17,19 @@ render :: (map: Map, dialogue: Dialogue) {
 
         if #complete program_mode == {
             case .GAME;
-                render_map(map);
-                render_ui(map);
+                render_map(map, transparency = 1.0 - fade_progress);
+                render_ui(map, transparency = 1.0 - fade_progress);
 
             case .START;
-                render_start_screen();
-                render_start_menu(start_menu);
+                render_start_screen(transparency = 1.0 - fade_progress);
+                render_start_menu(start_menu, transparency = 1.0 - fade_progress);
 
             case .EDITOR;
                 render_map(map);
                 render_ui(map);
 
             case .CUTSCENE;
-                render_cutscene(dialogue);
+                render_cutscene(dialogue, transparency = 1.0 - fade_progress);
 
             case .DIALOGUE;
                 render_map(map, transparency = 0.3);
@@ -57,7 +61,6 @@ render :: (map: Map, dialogue: Dialogue) {
         }
 
         render_slice();
-        render_fade();
     }
 
     {
@@ -146,11 +149,6 @@ render_slice :: (transparency := 1.0) {
             draw_number(victim_crew, .{11, -1}, color_black);
         }
     }
-}
-
-render_fade :: () {
-    if !fade.active then return; 
-
 }
 
 render_map :: (map : Map, transparency := 1.0)
@@ -400,10 +398,14 @@ render_start_screen :: (transparency := 1.0) {
 render_credits :: (transparency := 1.0) {
     use_text_shader(transparency);
     k := cast(float)PIXEL_HEIGHT * 3 / 4;
+    draw_text_centered("~Umi Development Team~", k + TILE_SIZE, color=color_black);
+
     draw_text_centered("Game by Alex Hartford.", k, color=color_black);
-    draw_text_centered("Design by Grant Neighbor.", k - TILE_SIZE, color=color_1);
-    draw_text_centered("Art by Emelia Hartford.", k - 2*TILE_SIZE, color=color_2);
-    draw_text_centered("etc...", k - 3*TILE_SIZE, color=color_3);
+    draw_text_centered("Art by Emelia Hartford.", k - TILE_SIZE, color=color_2);
+    draw_text_centered("Murals by Bryce Nevitt.", k - 2*TILE_SIZE, color=color_2);
+    draw_text_centered("System Design by Grant Neighbor.", k - 3*TILE_SIZE, color=color_1);
+    draw_text_centered("Level Design by Josh Elijah.", k - 4*TILE_SIZE, color=color_1);
+    draw_text_centered("Music and Sounds by Riley Morris.", k - 5*TILE_SIZE, color=color_3);
 }
 
 render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
@@ -481,12 +483,7 @@ render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
     }
 }
 
-// Renders the given framebuffer as a texture on a screen-space quad.
-render_framebuffer_to_screen :: () {
-    shader := rendering.quad_shader;
-    use_shader(shader);
-    defer disable_shaders();
-
+draw_screen_quad :: (shader: Shader) {
     model := Matrix4_Identity;
 
     translation_vector := Vector3.{-1, -1, 1};
@@ -497,9 +494,19 @@ render_framebuffer_to_screen :: () {
 
     set_mat4(shader, "model", model);
 
+    draw_quad(rendering.quad);
+}
+
+// Renders the given framebuffer as a texture on a screen-space quad.
+render_framebuffer_to_screen :: () {
+    shader := rendering.quad_shader;
+    use_shader(shader);
+    defer disable_shaders();
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, render_texture);
-    draw_quad(rendering.quad);
+
+    draw_screen_quad(shader);
 }
 
 //

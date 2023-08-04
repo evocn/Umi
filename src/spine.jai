@@ -22,25 +22,36 @@ spine : struct {
     current_section : int = -1;
 }
 
-reset_spine :: () {
+spine_reset :: () {
     spine.current_chapter = -1;
     spine.current_section = -1;
 }
 
-next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
+next_section :: () {
+    spine.ready_for_next_section = true;
+}
+
+next_section_fade_in :: () {
+    spine.ready_for_next_section = true;
+
+    do_nothing :: () {}
+    fade_start(.IN, do_nothing, easing = smooth_start);
+}
+
+spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
     using spine;
 
     current_section += 1;
     if current_section >= 3 {
-        next_chapter(map, units, dialogue);
+        spine_next_chapter(map, units, dialogue);
     }
 
     if current_chapter == -1 {
-        next_chapter(map, units, dialogue);
+        spine_next_chapter(map, units, dialogue);
         current_section = 0;
     }
     if current_chapter >= chapters.count {
-        reset_spine();
+        spine_reset();
         stop_stream_abruptly(sound_player, music);
         play_music("mohican");
         switch_mode(.START);
@@ -70,14 +81,14 @@ next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
     }
 }
 
-next_chapter :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
+spine_next_chapter :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
     using spine;
 
     current_chapter += 1;
     current_section = 0;
 }
 
-load_spine :: (filename: string) -> success: bool {
+spine_load :: (filename: string) -> success: bool {
     handler : Text_File_Handler;
     defer deinit(*handler);
 

@@ -5,6 +5,12 @@
 
 simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
     update_sound_player(dt);
+    update_dialogue_animators(dialogue, dt);
+
+    if spine.ready_for_next_section {
+        spine.ready_for_next_section = false;
+        spine_go_to_next_section(map, units, dialogue);
+    }
 
     if program_paused {
         return;
@@ -14,6 +20,7 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
         fade_update(dt);
         return;
     }
+
     if screen_slice.active {
         slice_update(dt);
         return;
@@ -45,14 +52,19 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
             }
         }
 
-        player_units_left := query_units(map.units, (x) => (x.team == .YOU));
-        if player_units_left.count == 0 {
-            switch_mode(.GAME_OVER);
-        }
+        {
+            player_units_left := query_units(map.units, (x) => (x.team == .YOU));
+            enemy_units_left := query_units(map.units, (x) => (x.team == .THEM));
 
-        enemy_units_left := query_units(map.units, (x) => (x.team == .THEM));
-        if enemy_units_left.count == 0 {
-            spine.ready_for_next_section = true;
+            // For the actual gameplay.
+            /*
+            if player_units_left.count == 0 {
+                switch_mode(.GAME_OVER);
+            }
+            if enemy_units_left.count == 0 {
+                fade_start(.OUT, next_section);
+            }
+            */
         }
 
         case .START;
@@ -60,10 +72,10 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
         resolve_menu_inputs(*start_menu);
 
         case .CUTSCENE;
-        update_and_resolve_dialogue_inputs(dialogue, dt);
+        resolve_dialogue_inputs(dialogue);
 
         case .DIALOGUE;
-        update_and_resolve_dialogue_inputs(dialogue, dt);
+        resolve_dialogue_inputs(dialogue);
 
         case .MENU;
         resolve_menu_inputs(*menu);
@@ -78,10 +90,5 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
 
         case .CREDITS;
             resolve_credits_input();
-    }
-
-    if spine.ready_for_next_section {
-        spine.ready_for_next_section = false;
-        next_section(map, units, dialogue);
     }
 }
