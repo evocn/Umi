@@ -1,22 +1,22 @@
 [1]	# Version Number
 
-1-1
+2_prologue
+none
+
+2
+biwa
+
+2_epilogue
+dannoura
+
+---
+
+1_prologue
 dannoura
 
 1
 biwa
 
-1-2
+1_epilogue
 dannoura
-
----
-1-1
-dannoura
-
-2
-biwa
-
-1-2
-dannoura
-
 ---

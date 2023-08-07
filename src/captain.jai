@@ -10,9 +10,16 @@ Captain :: enum {
     OJII;
     // More movement?
     YOUNG_TAKEDA;
-    // Boarding strength is doubled.
+    // None.
     TAKEDA;
     // Boarding strength is doubled.
+
+    ARUKAHIME;
+    // Better at ranged attacks.
+    // Specifically bow + arrow.
+
+    HARUHACHI;
+    // Artillerist.
 
     KUKI;
     // Something really annoying.
@@ -38,6 +45,9 @@ get_captain_name :: (captain: Captain) -> string {
         case .OJII;         return "ojii";
         case .YOUNG_TAKEDA; return "young takeda";
         case .TAKEDA;       return "takeda";
+
+        case .ARUKAHIME;    return "arukahime";
+        case .HARUHACHI;    return "haruhachi";
 
         case .KUKI;         return "kuki";
 

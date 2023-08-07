@@ -4,32 +4,52 @@
 8	# Height
 
 # Tiles:
-1100000000000000
+1100000011010000
 1110000000000000
-1111111000000000
+1111111000001000
+1111000000001000
 1111000000000000
-1111000000000000
-1110000000000000
-1100000000000000
-1100000000000000
+1110000000000100
+1100000000000110
+1100000000011111
 ---
 # Sprite Index Exceptions:
 ---
+# Events: 
+---
 
-cannon	# name
+Small Kobaya	# name
 1	# team
 0	# ai
-0	# captain
-1	# crew
-2 3	# square
-2	# direction
-2-a	# flashback
+3	# captain
+2	# crew
+10 4	# square
+3	# direction
+!	# flashback
 
-kobaya	# name
+Fish	# name
 2	# team
 0	# ai
 0	# captain
-5	# crew
-6 3	# square
+0	# crew
+8 3	# square
+0	# direction
+!	# flashback
+
+Fish	# name
+2	# team
+0	# ai
+0	# captain
+1	# crew
+7 6	# square
+0	# direction
+!	# flashback
+
+Fish	# name
+2	# team
+0	# ai
+0	# captain
+1	# crew
+5 4	# square
 0	# direction
 !	# flashback

@@ -94,9 +94,11 @@ init :: () -> bool {
             register_sprite("aki");
             register_sprite("ojii");
             register_sprite("young takeda");
-            register_sprite("takeda");
 
+            register_sprite("takeda");
             register_sprite("motonari");
+            register_sprite("arukahime");
+            register_sprite("haruhachi");
 
             register_sprite("ui");
         }
@@ -112,6 +114,8 @@ init :: () -> bool {
             register_mural("title");
             register_mural("wave");
             register_mural("bryce");
+            register_mural("study");
+            register_mural("black");
         }
 
         {
@@ -211,13 +215,14 @@ init_audio :: () {
 }
 
 init_menus :: () {
+    a: Allocator;
+    a.proc = flat_pool_allocator_proc;
+    a.data = *pool;
+
     {
         using menu;
+        elements.allocator = a;
         name = "pause";
-
-        a: Allocator;
-        a.proc = flat_pool_allocator_proc;
-        a.data = *pool;
 
         resume := New(Go_Element, allocator=a);
         resume.name = "resume";
@@ -256,11 +261,8 @@ init_menus :: () {
 
     {
         using start_menu;
+        elements.allocator = a;
         name = "start";
-
-        a: Allocator;
-        a.proc = flat_pool_allocator_proc;
-        a.data = *pool;
 
         resume := New(Go_Element, allocator=a);
         resume.name = "start";

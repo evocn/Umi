@@ -72,7 +72,18 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
             stop_stream_abruptly(sound_player, music);
             play_music(chapters[current_chapter].level_song);
             switch_mode(.GAME);
-            
+
+            // @TODO: Function this
+            {
+                for map.events {
+                    if it.turn == 0 {
+                        activate_event(it, map, dialogue);
+                    }
+                }
+            }
+
+            put_cursor_over_commander(map.*);
+
         case 2;
             load_dialogue_file(dialogue, tprint("%.dialogue", chapters[current_chapter].outro));
             stop_stream_abruptly(sound_player, music);

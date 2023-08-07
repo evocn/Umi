@@ -95,6 +95,8 @@ play_sfx :: (name : string) {
 }
 
 play_music :: (name : string) {
+    if name == "none" then return;
+
     full_path := tprint("%/%.ogg", music_path, name);
 
     music = load_audio_file(full_path);

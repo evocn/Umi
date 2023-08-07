@@ -31,20 +31,31 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
         turn := whose_turn();
         if #complete turn == {
             case .YOU;
-            resolve_cursor_inputs(map, dialogue);
-            for command_queue {
-                execute(it);
-                free(it);
-            }
-            array_reset(*command_queue);
+                resolve_cursor_inputs(map, dialogue);
+                for command_queue {
+                    execute(it);
+                    free(it);
+                }
+                array_reset(*command_queue);
 
             case .THEM;
-            ai_update(map, dt);
+                ai_update(map, dt);
+
+                // @NOTE: This is a little unclear... 
+                // This block of code should only run after the ai has passed the turn back to the user.
+                if whose_turn() == .YOU {
+                    for map.events {
+                        if it.turn == manager.turn_number {
+                            activate_event(it, map, dialogue);
+                        }
+                    }
+                }
 
             case .NONE;
-                log_error("This team shouldn't be active!\n");
+                log_error("This team shouldn't ever be active!\n");
         }
 
+        // Remove dead units.
         for map.units {
             if it.dead {
                 remove_occupant(map, it.square);
@@ -56,7 +67,7 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
             player_units_left := query_units(map.units, (x) => (x.team == .YOU));
             enemy_units_left := query_units(map.units, (x) => (x.team == .THEM));
 
-            // For the actual gameplay.
+            // @RELEASE: Put this back in for the actual gameplay.
             /*
             if player_units_left.count == 0 {
                 switch_mode(.GAME_OVER);

@@ -1,0 +1,67 @@
+[1]
+
+The world is calm. You write a letter to a neighboring lord.
+@ study 
+It is early morning.
+
+The sound of seagulls carries in on the breeze from without.
+
+Takeda | That will do. Hm... 
+Takeda | Perhaps the ships could carry this letter today.
+Takeda | ...
+Takeda | Perhaps tomorrow will do.
+Takeda | Politics... So very boring...
+
+All is still.
+
+Suddenly, the sound of footfalls.
+The door of your study slides open.
+It is your cousin, Aki. He is not supposed to be here until sundown.
+He hastily removes his shoes, kneels, and quickly bows to you.
+
+Aki | Lord Takeda, pirates approach from the east. 
+Aki | I came right away.
+Aki | It is the Wako. I believe they mean to ransack Noshima.
+
+Takeda | ...
+< Aki
+Takeda | Interesting...
+Aki | My lord? We must prepare an offering before they arrive!
+> Aki
+
+Takeda | Wako, I see... After so many years of peace.
+Takeda | Then the day has come.
+
+Aki | My lord, what do you mean?
+
+Takeda | Today the Murakami determine their own fate.
+
+Aki | !!!
+Aki | You mean to fight them.
+
+Takeda | How many ships were there?
+
+Aki | Four Kobaya and one Sekibune.
+
+Takeda | Do they have us beat on manpower?
+Aki | Yes, at least those which will fit on our vessels.
+
+Takeda | Artillery?
+
+Aki | Arquebus. no cannons... Wait, cousin, are you serious?
+Aki | Our fathers have taught us the ways of the pirates.
+Aki | We must give tribute to them. They will pass us by.
+Aki | Would not a portion of our wealth and one maiden suffice?
+
+Takeda | It certainly would.
+
+Aki | Then why do you speak of fighting?
+
+Takeda | For if the Wako recieve what they desire today,
+Takeda | they will know us as the farmer knows his rice.
+Takeda | They will return, year after year, to harvest us.
+Takeda | Do you see?
+Takeda | For that reason, we must strike decisively.
+Takeda | One battle, to drive them off forever.
+
+Takeda | Gather the men, and fetch me Haruhachi. We must be swift.

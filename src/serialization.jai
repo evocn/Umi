@@ -346,8 +346,30 @@ save_level :: (map : Map, filename : string) -> bool {
 
     print_to_builder(*builder, "# Tiles:\n");
     print_tiles_to_builder(*builder, map);
+
     print_to_builder(*builder, "---\n");
 
+    // Events
+    print_to_builder(*builder, "# Events: \n");
+    for map.events {
+        print_to_builder(*builder, "\n");
+        print_to_builder(*builder, "%\n", it.kind);
+        print_to_builder(*builder, "%\n", it.turn);
+        if #complete it.kind == {
+            case .DIALOGUE;
+                using cast(*Dialogue_Event)it;
+                print_to_builder(*builder, "%\n", dialogue_name);
+
+            case .ENVIRONMENTAL;
+
+            case .REINFORCEMENTS;
+
+        }
+    }
+
+    print_to_builder(*builder, "---\n");
+
+    // Units
     for map.units {
         print_to_builder(*builder, "\n");
         success := serialize_structure(it.*, *builder, per_level=true);
@@ -369,6 +391,10 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
 
     if handler.version != VERSION
         return error_out(handler, "Invalid version number.");
+
+    a: Allocator;
+    a.proc = flat_pool_allocator_proc;
+    a.data = *level_pool;
 
     // Tiles
     {
@@ -417,15 +443,43 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
         }
     }
 
+    // Events
+    {
+        array_reset(*map.events);
+
+        map.events.allocator=a;
+
+        line, found := consume_next_line(*handler);
+        while found {
+            if line == "---" break;
+            if line == {
+                case "DIALOGUE";
+                    new_event := New(Dialogue_Event, allocator=a);
+                    success : bool;
+                    new_event.turn, success = parse_int(*handler);
+                    if !success error(handler, "No event turn! %.\n", filename);
+
+                    new_event.dialogue_name, success = parse_string(*handler);
+                    if !success error(handler, "No name for the dialogue event! %.\n", filename);
+
+                    array_add(*map.events, cast(*Event)new_event);
+                    
+                case "REINFORCEMENTS";
+                    
+                case "ENVIRONMENTAL";
+                    
+            }
+
+            line, found = consume_next_line(*handler);
+        }
+    }
+
+
     // Units
     {
         array_reset(*map.units);
 
         next_id_value = 0;
-
-        a: Allocator;
-        a.proc = flat_pool_allocator_proc;
-        a.data = *level_pool;
 
         map.units.allocator=a;
         while handler.file_data {

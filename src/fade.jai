@@ -35,7 +35,7 @@ fade_get_t_value :: () -> float {
     }
 }
 
-fade_start :: (kind : Fade_Kind, callback: (), length := 3.0, easing := identity) {
+fade_start :: (kind : Fade_Kind, callback: (), length := 1.0, easing := identity) {
     fade.kind = kind;
     fade.length = length;
     fade.callback = callback;

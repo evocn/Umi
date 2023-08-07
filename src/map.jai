@@ -14,6 +14,8 @@ Map :: struct {
 
     next_id : int;
     units : [..] *Unit;
+
+    events : [..] *Event;
 }
 
 clear :: (using map: *Map) {

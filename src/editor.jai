@@ -39,9 +39,14 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
                 log_error("Error saving units.\n");
             }
 
-            success = save_level(map, tprint("%.level", levels[program_state.current_level_index]));
-            if !success {
-                log_error("Error saving level.\n");
+            if program_state.current_level_index == -1 {
+                log_error("No level selected to save to!\n");
+            }
+            else {
+                success = save_level(map, tprint("%.level", levels[program_state.current_level_index]));
+                if !success {
+                    log_error("Error saving level.\n");
+                }
             }
 
             init_levels();
@@ -60,7 +65,9 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
         unit_editor(moving_unit, map, units.*);
     }
 
-    level_editor(map);
+    if program_state.current_level_index != -1 {
+        level_editor(map);
+    }
 
     tile_editor(map);
 
@@ -116,8 +123,14 @@ save_load :: (map: *Map, units: *[..] *Unit) {
         ImGui.SameLine();
         if(ImGui.Button("Load")) {
             load_units(units, "all.units");
-            init_level(map, units.*, levels[program_state.current_level_index]);
-            editor.moving_unit = null;
+
+            if program_state.current_level_index == -1 {
+                log_error("No level selected to load!\n");
+            }
+            else {
+                init_level(map, units.*, levels[program_state.current_level_index]);
+                editor.moving_unit = null;
+            }
         }
 
         ImGui.SameLine();
@@ -136,8 +149,14 @@ save_load :: (map: *Map, units: *[..] *Unit) {
 
         ImGui.SameLine();
         if(ImGui.Button("Delete")) {
-            success := file_delete(tprint("%/%.level", levels_path, levels[program_state.current_level_index]));
-            assert(success);
+            if program_state.current_level_index == -1 {
+                log_error("No level selected to delete.\n");
+            }
+            else {
+                success := file_delete(tprint("%/%.level", levels_path, levels[program_state.current_level_index]));
+                assert(success);
+            }
+
             init_levels();
             program_state.current_level_index = 0;
             init_level(map, units.*, levels[program_state.current_level_index]);
@@ -335,9 +354,6 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 ImGui.Text("%", description);
 
                 {
-                    ti := type_info(Captain);
-                    ImGui.SliderInt("Captain", xx *captain, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx captain]));
-
                     using selected_unit;
                     ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 8, "%d", .ImGuiSliderFlags_AlwaysClamp);
 

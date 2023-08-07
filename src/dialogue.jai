@@ -3,10 +3,26 @@
 // Alex Hartford
 // July 2023
 
+Dialogue_Effect :: struct {
+    kind : enum {
+        NONE;
+        ENTER;
+        EXIT;
+
+        NEUTRAL;
+        HAPPY;
+        SAD;
+        ANGRY;
+    }
+
+    name: string;
+}
+
 Dialogue_Line :: struct {
     name: string;
     text: string;
     mural_name : string;
+    effect : Dialogue_Effect;
 }
 
 Dialogue :: struct {
@@ -47,6 +63,12 @@ next_line_has_mural_name :: (using dialogue: Dialogue) -> bool {
     else return false;
 }
 
+next_line_has_effect :: (using dialogue: Dialogue) -> bool {
+    if line_index >= lines.count - 1 then return false;
+    if lines[line_index + 1].effect.kind != .NONE then return true;
+    else return false;
+}
+
 update_dialogue_animators :: (dialogue: *Dialogue, dt: float) {
     update(*dialogue.left_animator, dt);
     update(*dialogue.left_animator2, dt);
@@ -83,6 +105,42 @@ resolve_dialogue_inputs :: (dialogue: *Dialogue) {
                     dialogue.speakers[1] = new_speaker_name;
                     restart(*dialogue.right_animator);
                 }
+            }
+        }
+
+        if next_line_has_effect(dialogue.*) {
+            effect := dialogue.lines[dialogue.line_index + 1].effect;
+            if #complete effect.kind == {
+                case .NONE;
+                    log_error("Shouldn't get here!\n");
+
+                case .ENTER;
+                    if effect.name == dialogue.speakers[0] {
+                        restart(*dialogue.left_animator);
+                    }
+                    else if effect.name == dialogue.speakers[1] {
+                        restart(*dialogue.right_animator);
+                    }
+                    else {
+                        log_error("Unknown party is entering the scene.\n");
+                    }
+
+                case .EXIT;
+                    if effect.name == dialogue.speakers[0] {
+                        restart(*dialogue.left_animator2);
+                    }
+                    else if effect.name == dialogue.speakers[1] {
+                        restart(*dialogue.right_animator2);
+                    }
+                    else {
+                        log_error("Unknown party is exiting the scene.\n");
+                    }
+
+                // @TODO
+                case .NEUTRAL;
+                case .HAPPY;
+                case .SAD;
+                case .ANGRY;
             }
         }
 
@@ -188,14 +246,32 @@ load_dialogue_file :: (dialogue: *Dialogue, filename: string) -> success: bool {
             dialogue.lines[dialogue.lines.count - 1].mural_name = copy_string(trimmed, a);
             continue;
         }
+
+        if contains(line, #char "<") {
+            assert(dialogue.lines.count > 0, "Can't have an > before any lines!");
+            replace_chars(line, "<", #char " ");
+            trimmed := trim(line);
+            dialogue.lines[dialogue.lines.count - 1].effect.kind = .EXIT;
+            dialogue.lines[dialogue.lines.count - 1].effect.name = copy_string(trimmed, a);
+            continue;
+        }
+
+        if contains(line, #char ">") {
+            assert(dialogue.lines.count > 0, "Can't have an < before any lines!");
+            replace_chars(line, ">", #char " ");
+            trimmed := trim(line);
+            dialogue.lines[dialogue.lines.count - 1].effect.kind = .ENTER;
+            dialogue.lines[dialogue.lines.count - 1].effect.name = copy_string(trimmed, a);
+            continue;
+        }
         // @NOTE: Put special case lines here. (Extra expressions, sound effects, etc.)
 
         found_separator, left, right := split_from_left(line, #char "|");
         if found_separator {
-            array_add(*dialogue.lines, .{copy_string(trim_right(left), allocator=a), copy_string(trim_left(right), allocator=a), ""});
+            array_add(*dialogue.lines, .{name=copy_string(trim_right(left), allocator=a), text=copy_string(trim_left(right), allocator=a)});
         }
         else {
-            array_add(*dialogue.lines, .{"", copy_string(line, allocator=a), ""});
+            array_add(*dialogue.lines, .{text=copy_string(line, allocator=a)});
         }
 
         if !success {

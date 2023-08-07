@@ -55,11 +55,27 @@ next_turn :: (using map: *Map) -> Team {
         }
     }
 
-    if turn == .YOU then turn_number += 1;
+    if turn == .YOU {
+        turn_number += 1;
+
+        put_cursor_over_commander(map.*);
+    }
 
     if turn == .THEM {
         ai.to_check = array_copy(query_units(map.units, (x) => (x.team == .THEM && !x.moved)));
     }
 
     return whose_turn();
+}
+
+
+put_cursor_over_commander :: (map: Map) {
+    for map.units {
+        if it.team == .YOU {
+            if it.captain == .YOUNG_TAKEDA || it.captain == .TAKEDA {
+                cursor.square = it.square;
+                return;
+            }
+        }
+    }
 }

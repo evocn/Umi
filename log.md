@@ -5,31 +5,36 @@ July 2023
 
 TODO
 ====
-4 Fun levels.
-
-Mid-Battle Events
-  Reinforcements
-  Both on specific turns and after defeating specific units
-  Battle start and end dialogues.
 
 Week 3
 ------
-Art Week
+Design Week
 
-4 Fun levels.
+Reinforcements
+Transfer Units
+Tight System
 
-Save/Load Game
-New Icon
-
-Talk to units ("Parley" ability)
-Recruiting new units?
+7 Fun levels.
 
 Week 4
 ------
+Art Week
+* All map sprites
+* All character sprites
+* All murals
+* All slices
+* All music
+
 Reduce draw calls (screen culling)
 undo for gameplay
 Better Cursor
 Soft Viewport
+
+New Icon
+
+Save/Load Game?
+  Maybe just a code system?
+  Maybe just let the user pick their starting level?
 
 Week 5
 ------
@@ -52,7 +57,7 @@ Release.
 
 Vision
 ======
-Goal: A Fun 30 Minute Demo
+Goal: A Fun 2-Hour Demo
 
 Choice.
 Uncertainty.

@@ -36,8 +36,8 @@ ai_plan :: (using map: *Map) {
 
     // Find Red Unit
     if !to_check {
-        next_turn(map);
         array_reset(*to_check);
+        next_turn(map);
         return;
     }
 
@@ -131,10 +131,12 @@ Action :: struct {
 }
 
 action_choose :: (unit: *Unit, map: Map) -> Action {
+    /*
     if unit.health <= 1 {
         print("Repairing.");
         return action_repair(unit);
     }
+    */
 
     if unit.primary.targeting == {
         case .ORTHOGRAPHIC;
@@ -295,7 +297,6 @@ action_wait :: (unit: *Unit) -> Action {
     action.square = unit.square;
     action.target = null;
     action.ability = null;
-
 
     return action;
 }

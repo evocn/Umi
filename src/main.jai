@@ -53,7 +53,7 @@ using program_state : struct {
 
     program_paused : bool;
 
-    current_level_index := 0;
+    current_level_index := -1;
 
     imgui_capturing_mouse    := false;
     imgui_capturing_keyboard := false;
@@ -159,25 +159,27 @@ main :: () {
 
     {
         // Cleanup
-        reset(*pool, overwrite_memory=true);
+        reset(*level_pool, overwrite_memory=true);
 
         array_reset(*units);
         reset(*units_pool, overwrite_memory=true);
 
-        reset(*level_pool, overwrite_memory=true);
-
-        array_reset(*menu.elements);
         array_reset(*levels);
+        array_reset(*menu.elements);
+        reset(*pool, overwrite_memory=true);
 
         deinit(*main_font.characters);
         deinit(*second_font.characters);
 
         stop_all_sounds_abruptly(sound_player, 0);
         shutdown(sound_player);
-
         free(sound_player);
         reset(*audio_pool, overwrite_memory=true);
         deinit(*sfx);
+
+        deinit(*rendering.sprites);
+        deinit(*rendering.murals);
+        deinit(*rendering.slices);
 
         ImGui_ImplSdl_Shutdown();
         ImGui.DestroyContext(imgui_context);

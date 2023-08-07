@@ -312,7 +312,7 @@ render_ui :: (map: Map, transparency := 1.0) {
             {
                 text_color := color_2;
 
-                draw_text("Board", .{6, 8}, text_color);
+                draw_text("Attack", .{6, 8}, text_color);
             }
         }
 
@@ -398,7 +398,7 @@ render_start_screen :: (transparency := 1.0) {
 render_credits :: (transparency := 1.0) {
     use_text_shader(transparency);
     k := cast(float)PIXEL_HEIGHT * 3 / 4;
-    draw_text_centered("~Umi Development Team~", k + TILE_SIZE, color=color_black);
+    draw_text_centered("<Umi Development Team>", k + TILE_SIZE, color=color_black);
 
     draw_text_centered("Game by Alex Hartford.", k, color=color_black);
     draw_text_centered("Art by Emelia Hartford.", k - TILE_SIZE, color=color_2);
@@ -613,7 +613,8 @@ render_menu :: (using menu: Menu, transparency := 1.0) {
     }
 
     use_sprite_shader(transparency);
-    draw_sprite(rendering.controls, x_offset=0, y_offset=0);
+    controls_sprite, success := table_find(*rendering.sprites, "ui");
+    draw_sprite(controls_sprite, x_offset=-PIXEL_WIDTH * 9 / 16, y_offset=PIXEL_HEIGHT * 2 / 5, use_color_override = true, color_override = color_black);
 }
 
 render_start_menu :: (using menu: Menu, transparency := 1.0) {

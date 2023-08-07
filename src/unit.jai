@@ -18,8 +18,8 @@ Unit :: struct {
 
     primary: Ability;
     secondary: Ability;
-    repair: Ability = Ability.{name="Repair", sprite_index=380, targeting=.SELF, damage=-2}; @NoSerialize
-    board:  Ability = Ability.{name="Board",  sprite_index=474, targeting=.BOARDING};       @NoSerialize
+    repair: Ability = Ability.{name="Repair", sprite_index=380, targeting=.SELF, damage=-2};    @NoSerialize
+    board:  Ability = Ability.{name="Board",  sprite_index=474, targeting=.BOARDING};           @NoSerialize
 
     // Per-Level
     team : Team;            @PerLevel

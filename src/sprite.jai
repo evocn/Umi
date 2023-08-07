@@ -13,7 +13,7 @@ make_sprite :: (using sprite : *Sprite, filename : string, tiled := true) -> suc
     return success;
 }
 
-draw_sprite :: (using sprite : Sprite, x_offset := 0, y_offset := 0, right := false, use_color_override := true, color_override := color_fg) {
+draw_sprite :: (using sprite : Sprite, x_offset := 0, y_offset := 0, right := false, use_color_override := false, color_override := color_fg) {
     bind(sprite.texture, 0);
     shader := rendering.sprite_shader;
 
@@ -35,7 +35,7 @@ draw_sprite :: (using sprite : Sprite, x_offset := 0, y_offset := 0, right := fa
 
     set_vec4(shader, "color_override", color_override);
     set_bool(shader, "horizontal_flip", right);
-    set_bool(shader, "use_actual_color", use_color_override);
+    set_bool(shader, "use_color_override", use_color_override);
 
     draw_quad(rendering.quad);
 }
