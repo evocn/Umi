@@ -1,0 +1,87 @@
+[1]
+
+* night
+# Another calm night in the study of Takeda.
+
+It has been a year since the battle of Noshima.
+@ study
+The Murakami have been changed by it. They are proud. Zealous.
+They tell tales of the battle late into the night.
+They eat more fish than before.
+They catch extra to trade with the neighboring lordships.
+They drink imported sake and play games of Shogi.
+
+The fish have been plentiful. 
+The men carry home enough for all Murakami by noontime.
+In the free afternoons, the men train in the martial arts.
+There is a pervasive joy about Noshima castle.
+You gleam with pride every night.
+
+The tale of The Battle of Noshima spreads to other lands.
+Murakami becomes a name known to samurai as far north as Uesugi.
+
+One summer night, this fame leads to an unexpected meeting.
+@ black
+
+Takeda | Lord Motonari, I am honored by your presence at Noshima Castle.
+Motonari | And I am honored at meeting you, Lord Takeda.
+Takeda | Come inside, we have prepared our finest fish for you.
+Takeda | Your men may come as well. I understand your hesitancy.
+Motonari | Thank you.
+< Takeda
+
+...
+@ study
+
+The two clans eat and drink in stolid silence.
+< Motonari
+They eye eachother - sailors and mainlanders.
+They do not trust easily, these samurai of different families.
+
+Takeda | Lord Motonari, in your correspondence, you mentioned something.
+> Takeda
+Takeda | Something to bring our clans closer together.
+Takeda | Would you elaborate?
+
+Motonari | You and your family are known for the defeat of the Wako.
+> Motonari
+Motonari | Since then, as safe escort of the Seto, and staunch defenders.
+Motonari | You are, as of now, the most powerful naval force in all Japan.
+
+Takeda | I thank you for the compliments.
+Takeda | The Murakami are proud of what we have accomplished.
+
+Motonari | Because of this, I come to your castle to ask a special favor.
+Takeda | What does this... "favor" entail?
+
+Motonari | I have a mission for you. It would be too dangerous for my men,
+Motonari | But for you and your fleet, it should provide immensely simple.
+Motonari | It is a sea mission.
+
+Takeda | I see. And in return?
+
+Motonari | I give to you the lands north of Innoshima.
+Motonari | One thousand Koku. 
+Motonari | And when I am shogun, I will give two thousand more.
+
+Takeda | !!!
+< Motonari
+Takeda | That is an immense amount of land...
+Takeda | Tenfold the size of Murakami lands now.
+Takeda | We would live as emporers.
+Takeda | This is what the Murakami are destined for!
+
+Takeda | I accept your offer!
+
+Motonari | Then it is settled. You are to be my admiral.
+> Motonari
+Motonari | We shall discuss more in the interim.
+Motonari | But for now, we must tell our men.
+
+The two walk out of their private room and into the silent hall.
+
+Takeda | Murakami, hear me!
+Takeda | From this day forth, the Mori and the Murakami will be allies!
+
+Motonari | A toast, then!
+Takeda | To the friendship of the Mori and Murakami clans!

@@ -1,7 +1,7 @@
 [1]	# Version Number
 
 2_prologue
-none
+dannoura
 
 2
 biwa
@@ -19,4 +19,16 @@ biwa
 
 1_epilogue
 dannoura
+
+---
+
+3_prologue
+dannoura
+
+3
+biwa
+
+3_epilogue
+dannoura
+
 ---

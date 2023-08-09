@@ -19,6 +19,12 @@ color_5_hex : Hex_Color : 0xb9886e;
 color_6_hex : Hex_Color : 0x55392c;
 
 color_none :: Color.{};
+
+using colors : struct {
+    bg, fg : Color;
+    text, text_2, ui : Color;
+}
+
 color_bg :: #run color_from_hex(bg_hex);
 color_fg :: #run color_from_hex(fg_hex);
 color_1  :: #run color_from_hex(color_1_hex);

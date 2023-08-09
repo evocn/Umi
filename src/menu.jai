@@ -150,6 +150,14 @@ quit_game :: () {
     running = false;
 }
 
+go_home :: () {
+    switch_mode(.START);
+    spine.current_chapter = -1;
+    spine.current_section = -1;
+    stop_stream_abruptly(sound_player, music);
+    play_music("mohican");
+}
+
 show_credits :: () {
     switch_mode(.CREDITS);
 }

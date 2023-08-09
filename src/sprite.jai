@@ -13,7 +13,7 @@ make_sprite :: (using sprite : *Sprite, filename : string, tiled := true) -> suc
     return success;
 }
 
-draw_sprite :: (using sprite : Sprite, x_offset := 0, y_offset := 0, right := false, use_color_override := false, color_override := color_fg) {
+draw_sprite :: (using sprite : Sprite, x_offset := 0, y_offset := 0, right := false, use_color_override := false, color_override := color_black) {
     bind(sprite.texture, 0);
     shader := rendering.sprite_shader;
 

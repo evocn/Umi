@@ -1,10 +1,15 @@
 [1]
 
-The world is calm. You write a letter to a neighboring lord.
+The world is calm. 
 @ study 
-It is early morning.
 
-The sound of seagulls carries in on the breeze from without.
+It is early morning.
+You write a letter to a neighboring lord.
+
+The sound of seagulls carries on the sea breeze.
+It has been two years since you became leader.
+Head of the Noshima Murakami, and therefore leader of all.
+Two years of tranquility.
 
 Takeda | That will do. Hm... 
 Takeda | Perhaps the ships could carry this letter today.
@@ -16,8 +21,18 @@ All is still.
 
 Suddenly, the sound of footfalls.
 The door of your study slides open.
-It is your cousin, Aki. He is not supposed to be here until sundown.
+It is your cousin, Aki.
+
+Aki | My lord!
+
+Aki is your cousin.
+< Takeda
+
+He is head of the Kurushima Murakami.
+He is your cousin, and brother of Arukahime.
+
 He hastily removes his shoes, kneels, and quickly bows to you.
+> Takeda
 
 Aki | Lord Takeda, pirates approach from the east. 
 Aki | I came right away.
@@ -37,7 +52,7 @@ Aki | My lord, what do you mean?
 Takeda | Today the Murakami determine their own fate.
 
 Aki | !!!
-Aki | You mean to fight them.
+Aki | You mean to fight them?!
 
 Takeda | How many ships were there?
 
@@ -48,7 +63,7 @@ Aki | Yes, at least those which will fit on our vessels.
 
 Takeda | Artillery?
 
-Aki | Arquebus. no cannons... Wait, cousin, are you serious?
+Aki | Arquebuses. no cannons... Wait, cousin, are you serious?
 Aki | Our fathers have taught us the ways of the pirates.
 Aki | We must give tribute to them. They will pass us by.
 Aki | Would not a portion of our wealth and one maiden suffice?
@@ -57,11 +72,26 @@ Takeda | It certainly would.
 
 Aki | Then why do you speak of fighting?
 
-Takeda | For if the Wako recieve what they desire today,
+Takeda | For if the Wako receive what they desire today,
 Takeda | they will know us as the farmer knows his rice.
 Takeda | They will return, year after year, to harvest us.
 Takeda | Do you see?
 Takeda | For that reason, we must strike decisively.
 Takeda | One battle, to drive them off forever.
 
-Takeda | Gather the men, and fetch me Haruhachi. We must be swift.
+Takeda | Gather the men, and send for Haruhachi. We must be swift.
+< Aki
+
+Haruhachi | No need.
+
+Takeda | Haruhachi!
+
+Haruhachi | I came as swiftly as the hawk flies.
+
+Haruhachi is head of the Innoshima Murakami.
+< Takeda
+He is eight years your senior.
+
+Takeda | I'm glad you're here, cousin.
+> Takeda
+Takeda | Come, we must rally the men.

@@ -1,5 +1,7 @@
 [1]	# Version Number
 
+0
+
 24	# Width
 8	# Height
 
@@ -35,26 +37,17 @@ kobaya	# name
 1	# team
 0	# ai
 1	# captain
-3	# crew
-9 3	# square
+4	# crew
+8 4	# square
 2	# direction
-2_aki	# flashback
+!	# flashback
 
 kobaya	# name
 1	# team
 0	# ai
 2	# captain
-9	# crew
-11 5	# square
-2	# direction
-2_ojii	# flashback
-
-kobaya	# name
-1	# team
-0	# ai
-4	# captain
 4	# crew
-7 4	# square
+9 5	# square
 2	# direction
 !	# flashback
 
@@ -62,7 +55,7 @@ kobaya	# name
 2	# team
 4	# ai
 0	# captain
-4	# crew
+8	# crew
 18 3	# square
 3	# direction
 !	# flashback
@@ -70,7 +63,7 @@ kobaya	# name
 sekibune	# name
 2	# team
 4	# ai
-0	# captain
+9	# captain
 5	# crew
 21 3	# square
 3	# direction
@@ -80,7 +73,7 @@ kobaya	# name
 2	# team
 2	# ai
 0	# captain
-2	# crew
+5	# crew
 17 1	# square
 0	# direction
 !	# flashback
@@ -89,7 +82,7 @@ kobaya	# name
 2	# team
 3	# ai
 0	# captain
-3	# crew
+7	# crew
 17 5	# square
 1	# direction
 !	# flashback
@@ -98,16 +91,25 @@ kobaya	# name
 2	# team
 1	# ai
 0	# captain
-13	# crew
+7	# crew
 12 4	# square
 3	# direction
 !	# flashback
 
-kobaya	# name
+Footman Kobaya	# name
+1	# team
+0	# ai
+4	# captain
+8	# crew
+9 2	# square
+2	# direction
+!	# flashback
+
+Artillery Kobaya	# name
 1	# team
 0	# ai
 6	# captain
 3	# crew
-7 6	# square
+10 1	# square
 2	# direction
-2_haruhachi	# flashback
+!	# flashback

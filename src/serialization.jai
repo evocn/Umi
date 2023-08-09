@@ -340,6 +340,8 @@ save_level :: (map : Map, filename : string) -> bool {
     init_string_builder(*builder);
     print_to_builder(*builder, "[%]\t# Version Number\n\n", VERSION);
 
+    print_to_builder(*builder, "%\t# Weather\n", cast(int)map.weather);
+
     // Tiles
     print_to_builder(*builder, "%\t# Width\n", map.width);
     print_to_builder(*builder, "%\t# Height\n\n", map.height);
@@ -396,10 +398,11 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
     a.proc = flat_pool_allocator_proc;
     a.data = *level_pool;
 
+    line, found := consume_next_line(*handler);
+    map.weather = cast(Weather)string_to_int(line);
+
     // Tiles
     {
-        found : bool;
-        line : string;
         line, found = consume_next_line(*handler);
         file_says_map_width := string_to_int(line);
         line, found = consume_next_line(*handler);

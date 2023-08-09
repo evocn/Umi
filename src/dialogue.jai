@@ -31,6 +31,13 @@ Dialogue :: struct {
 
     mural_name_index : int = -1;
 
+    // Input delays
+    // @POLISH: Allow the user to this in a settings menu?
+    time_per_character :: 0.03;
+
+    line_time := 0.0;
+    characters_at_progress := 0;
+
     // Speakers rendering stuff
     speakers : [2] string;
 
@@ -41,10 +48,16 @@ Dialogue :: struct {
     right_sprite_offset : int;
     right_animator  : Animator;
     right_animator2 : Animator;
+
+    weather : Weather = .DAY;
 }
 
 next_line :: (using dialogue: *Dialogue) {
     line_index += 1;
+    if !is_finished(dialogue) {
+        characters_at_progress = 0;
+        line_time = 0.0;
+    }
 }
 
 is_finished :: (using dialogue: *Dialogue) -> bool {
@@ -69,12 +82,18 @@ next_line_has_effect :: (using dialogue: Dialogue) -> bool {
     else return false;
 }
 
-update_dialogue_animators :: (dialogue: *Dialogue, dt: float) {
-    update(*dialogue.left_animator, dt);
-    update(*dialogue.left_animator2, dt);
+update_dialogue_animators :: (using dialogue: *Dialogue, dt: float) {
+    if lines.count {
+        line_time += dt;
+        if characters_at_progress < lines[line_index].text.count
+            characters_at_progress = cast(int)(line_time / time_per_character);
+    }
 
-    update(*dialogue.right_animator, dt);
-    update(*dialogue.right_animator2, dt);
+    update(*left_animator, dt);
+    update(*left_animator2, dt);
+
+    update(*right_animator, dt);
+    update(*right_animator2, dt);
 }
 
 resolve_dialogue_inputs :: (dialogue: *Dialogue) {
@@ -87,68 +106,79 @@ resolve_dialogue_inputs :: (dialogue: *Dialogue) {
     }
 
     if pressed(*button_1) {
-        if next_line_has_speaker(dialogue.*) {
-            new_speaker_name := dialogue.lines[dialogue.line_index + 1].name;
-            new_speaker_is_not_already_in_conversation := dialogue.speakers[0] != new_speaker_name && dialogue.speakers[1] != new_speaker_name;
+        if dialogue.characters_at_progress == dialogue.lines[dialogue.line_index].text.count
+        {
+            if next_line_has_speaker(dialogue.*) {
+                new_speaker_name := dialogue.lines[dialogue.line_index + 1].name;
+                new_speaker_is_not_already_in_conversation := dialogue.speakers[0] != new_speaker_name && dialogue.speakers[1] != new_speaker_name;
 
-            if new_speaker_is_not_already_in_conversation {
-                no_speakers := !dialogue.speakers[0] && !dialogue.speakers[1];
-                left_empty := !dialogue.speakers[0];
-                right_empty := !dialogue.speakers[1];
-                both_full := !(!dialogue.speakers[0] || !dialogue.speakers[1]);
+                if new_speaker_is_not_already_in_conversation {
+                    no_speakers := !dialogue.speakers[0] && !dialogue.speakers[1];
+                    left_empty := !dialogue.speakers[0];
+                    right_empty := !dialogue.speakers[1];
+                    both_full := !(!dialogue.speakers[0] || !dialogue.speakers[1]);
 
-                if no_speakers || left_empty || both_full {
-                    dialogue.speakers[0] = new_speaker_name;
-                    restart(*dialogue.left_animator);
-                }
-                else if right_empty {
-                    dialogue.speakers[1] = new_speaker_name;
-                    restart(*dialogue.right_animator);
-                }
-            }
-        }
-
-        if next_line_has_effect(dialogue.*) {
-            effect := dialogue.lines[dialogue.line_index + 1].effect;
-            if #complete effect.kind == {
-                case .NONE;
-                    log_error("Shouldn't get here!\n");
-
-                case .ENTER;
-                    if effect.name == dialogue.speakers[0] {
+                    if no_speakers || left_empty {
+                        dialogue.speakers[0] = new_speaker_name;
                         restart(*dialogue.left_animator);
                     }
-                    else if effect.name == dialogue.speakers[1] {
+                    else if right_empty || both_full {
+                        dialogue.speakers[1] = new_speaker_name;
                         restart(*dialogue.right_animator);
                     }
-                    else {
-                        log_error("Unknown party is entering the scene.\n");
-                    }
+                }
+            }
 
-                case .EXIT;
-                    if effect.name == dialogue.speakers[0] {
-                        restart(*dialogue.left_animator2);
-                    }
-                    else if effect.name == dialogue.speakers[1] {
-                        restart(*dialogue.right_animator2);
-                    }
-                    else {
-                        log_error("Unknown party is exiting the scene.\n");
-                    }
+            if next_line_has_effect(dialogue.*) {
+                effect := dialogue.lines[dialogue.line_index + 1].effect;
+                if #complete effect.kind == {
+                    case .NONE;
+                        log_error("Shouldn't get here!\n");
 
-                // @TODO
-                case .NEUTRAL;
-                case .HAPPY;
-                case .SAD;
-                case .ANGRY;
+                    case .ENTER;
+                        if effect.name == dialogue.speakers[0] {
+                            restart(*dialogue.left_animator);
+                        }
+                        else if effect.name == dialogue.speakers[1] {
+                            restart(*dialogue.right_animator);
+                        }
+                        else {
+                            log_error("Unknown party is entering the scene.\n");
+                        }
+
+                    case .EXIT;
+                        if effect.name == dialogue.speakers[0] {
+                            restart(*dialogue.left_animator2);
+                        }
+                        else if effect.name == dialogue.speakers[1] {
+                            restart(*dialogue.right_animator2);
+                        }
+                        else {
+                            log_error("Unknown party is exiting the scene.\n");
+                        }
+
+                    // @TODO
+                    case .NEUTRAL;
+                    case .HAPPY;
+                    case .SAD;
+                    case .ANGRY;
+                }
+            }
+
+            if next_line_has_mural_name(dialogue.*) {
+                dialogue.mural_name_index = dialogue.line_index + 1;
+            }
+
+            next_line(dialogue);
+
+            // @NOTE: Developer hack to get through dialogue quickly.
+            if !is_finished(dialogue) && button_2.held {
+                dialogue.characters_at_progress = dialogue.lines[dialogue.line_index].text.count;
             }
         }
-
-        if next_line_has_mural_name(dialogue.*) {
-            dialogue.mural_name_index = dialogue.line_index + 1;
+        else {
+            dialogue.characters_at_progress = dialogue.lines[dialogue.line_index].text.count;
         }
-
-        next_line(dialogue);
     }
 
     if pressed(*button_select) {
@@ -166,6 +196,8 @@ reset_dialogue :: (using dialogue: *Dialogue) {
     mural_name_index = -1;
     speakers[0] = "";
     speakers[1] = "";
+    characters_at_progress = 0;
+    line_time = 0.0;
 }
 
 finish_dialogue :: () {
@@ -238,6 +270,13 @@ load_dialogue_file :: (dialogue: *Dialogue, filename: string) -> success: bool {
 
     while handler.file_data {
         line, success := parse_string(*handler);
+
+        if contains(line, #char "*") {
+            replace_chars(line, "*", #char " ");
+            trimmed := trim(line);
+            dialogue.weather = parse_weather(trimmed);
+            continue;
+        }
 
         if contains(line, #char "@") {
             assert(dialogue.lines.count > 0, "Can't have an @ before any lines!");

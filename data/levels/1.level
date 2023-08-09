@@ -1,5 +1,7 @@
 [1]	# Version Number
 
+0
+
 16	# Width
 8	# Height
 
@@ -16,9 +18,17 @@
 # Sprite Index Exceptions:
 ---
 # Events: 
+
+DIALOGUE
+0
+1_a
+
+DIALOGUE
+1
+1_b
 ---
 
-Small Kobaya	# name
+Ayubune	# name
 1	# team
 0	# ai
 3	# captain
@@ -31,7 +41,7 @@ Fish	# name
 2	# team
 0	# ai
 0	# captain
-0	# crew
+1	# crew
 8 3	# square
 0	# direction
 !	# flashback

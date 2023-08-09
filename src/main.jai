@@ -25,6 +25,23 @@ aspect_ratio  : float = 1.78;
 //
 //
 
+Weather :: enum #complete {
+    DAY;
+    NIGHT;
+    STORM;
+}
+
+parse_weather :: (str: string) -> Weather {
+    if str == {
+        case "day";   return .DAY;
+        case "night"; return .NIGHT;
+        case "storm"; return .STORM;
+    }
+
+    log_error("Bad weather string: %\n", str);
+    return .DAY;
+}
+
 Program_Mode :: enum {
     GAME;
     START;
@@ -99,6 +116,7 @@ start_menu : Menu;
 
 sound_player : *Sound_Player;
 music : *Mixer_Sound_Data;
+music_stream : *Sound_Stream;
 sfx   : Table(string, *Mixer_Sound_Data);
 
 // Loggers
@@ -172,6 +190,11 @@ main :: () {
         deinit(*second_font.characters);
 
         stop_all_sounds_abruptly(sound_player, 0);
+        stop_music();
+        update_sound_player(1000.0);
+        array_reset(*retired_decoders);
+        array_reset(*completed_queue);
+        array_reset(*decode_queue);
         shutdown(sound_player);
         free(sound_player);
         reset(*audio_pool, overwrite_memory=true);

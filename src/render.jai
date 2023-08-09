@@ -3,7 +3,40 @@
 // Alex Hartford
 // June 2023
 
+MENU_TRANSPARENCY_MODIFIER :: 0.3;
+DIALOGUE_TRANSPARENCY_MODIFIER :: 0.9;
+
 render :: (map: Map, dialogue: Dialogue) {
+    {
+        weather : Weather;
+
+        if spine.current_section == 0 || spine.current_section == 2 {
+            weather = dialogue.weather;
+        }
+        else {
+            weather = map.weather;
+        }
+
+        // Set the colors according to the mode we're in.
+        if weather == {
+            case .DAY;
+                bg = color_bg;
+                fg = color_fg;
+                ui = color_3;
+                text = color_black;
+                text_2 = color_white;
+
+        case .NIGHT; #through;
+        case .STORM;
+            bg = color_fg;
+            fg = color_bg;
+            ui = color_black;
+            text = color_3;
+            text_2 = color_white;
+        }
+    }
+
+
     fade_progress := 0.0;
     if fade.active || spine.ready_for_next_section
         fade_progress = fade_get_t_value();
@@ -12,7 +45,7 @@ render :: (map: Map, dialogue: Dialogue) {
         // Render all this to the framebuffer.
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         glViewport(0, 0, PIXEL_WIDTH, PIXEL_HEIGHT);
-        glClearColor(color_bg.x, color_bg.y, color_bg.z, 1);
+        glClearColor(bg.x, bg.y, bg.z, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
         if #complete program_mode == {
@@ -32,28 +65,28 @@ render :: (map: Map, dialogue: Dialogue) {
                 render_cutscene(dialogue, transparency = 1.0 - fade_progress);
 
             case .DIALOGUE;
-                render_map(map, transparency = 0.3);
+                render_map(map, transparency = MENU_TRANSPARENCY_MODIFIER);
                 render_dialogue(dialogue);
 
             case .MENU;
                 if prior_program_mode == {
                     case .GAME;
-                        render_map(map, transparency = 0.3);
-                        render_ui(map, transparency = 0.3);
+                        render_map(map, transparency = MENU_TRANSPARENCY_MODIFIER);
+                        render_ui(map, transparency = MENU_TRANSPARENCY_MODIFIER);
 
                     case .DIALOGUE;
-                        render_map(map, transparency = 0.3);
-                        render_ui(map, transparency = 0.3);
-                        render_dialogue(dialogue, transparency = 0.3);
+                        render_map(map, transparency = MENU_TRANSPARENCY_MODIFIER);
+                        render_ui(map, transparency = MENU_TRANSPARENCY_MODIFIER);
+                        render_dialogue(dialogue, transparency = MENU_TRANSPARENCY_MODIFIER);
 
                     case .CUTSCENE;
-                        render_cutscene(dialogue, transparency = 0.3);
+                        render_cutscene(dialogue, transparency = MENU_TRANSPARENCY_MODIFIER);
                 }
                 render_menu(menu);
 
             case .GAME_OVER;
-                render_map(map, transparency = 0.3);
-                render_ui(map, transparency = 0.3);
+                render_map(map, transparency = MENU_TRANSPARENCY_MODIFIER);
+                render_ui(map, transparency = MENU_TRANSPARENCY_MODIFIER);
                 render_game_over();
 
             case .CREDITS;
@@ -151,12 +184,11 @@ render_slice :: (transparency := 1.0) {
     }
 }
 
-render_map :: (map : Map, transparency := 1.0)
-{
-    use_tile_shader(transparency);
-
+render_map :: (map : Map, transparency := 1.0) {
     // Draw Game Board
     {
+        use_tile_shader(transparency);
+
         for col: (viewport.corner.col)..(viewport.corner.col + VIEWPORT_WIDTH - 1) {
             for tile, row: map.tiles[col] {
                 tile_index := tile.sprite_index;
@@ -189,7 +221,7 @@ render_map :: (map : Map, transparency := 1.0)
         }
 
         // Draw Cursor
-        cursor_color := color_fg;
+        cursor_color := fg;
         if whose_turn() == .YOU then cursor_color = color_1;
         else cursor_color = color_2;
 
@@ -205,17 +237,17 @@ render_map :: (map : Map, transparency := 1.0)
 }
 
 render_ui :: (map: Map, transparency := 1.0) {
-    draw_ability_ui :: (using ability : Ability, square: Square, num_square: Square, button_index := 0, color := color_bg) {
-        draw_tile(sprite_index, square, color);
+    draw_ability_ui :: (using ability : Ability, square: Square, num_square: Square, button_index := 0) {
+        draw_tile(sprite_index, square, text);
 
-        draw_tile(803 + button_index, num_square, color);
+        draw_tile(803 + button_index, num_square, text_2);
     }
 
     // Draw UI Elements
     use_tile_shader(transparency);
 
     for 0..VIEWPORT_WIDTH-1 {
-        draw_background(.{it, -1}, color_3);
+        draw_background(.{it, -1}, ui);
     }
 
     ui_unit := get_occupant(map, cursor.square);
@@ -224,35 +256,30 @@ render_ui :: (map: Map, transparency := 1.0) {
 
     if ui_unit {
         use_text_shader(transparency);
-        draw_text(ui_unit.name, .{11, 0});
+        draw_text_right(ui_unit.name, PIXEL_HEIGHT - TILE_SIZE / 2 + 2, nudge_x = -5);
+        draw_text_right(get_captain_name(ui_unit.captain), PIXEL_HEIGHT - TILE_SIZE + 2, nudge_x = -5);
     }
     use_tile_shader(transparency);
 
     if cursor.inspecting {
         for col: 0..VIEWPORT_WIDTH / 2 - 1 {
             for row: -1..VIEWPORT_HEIGHT {
-                draw_background(.{col, row}, color_3);
+                draw_background(.{col, row}, ui);
             }
         }
 
         using cursor.inspecting;
 
         // health
-        draw_tile(942, .{1, 0}, color_black);
-        draw_number(health, .{2, 0}, color_black);
+        draw_tile(942, .{1, 0}, text);
+        draw_number(health, .{2, 0}, text_2);
 
-        draw_tile(519, .{1, 1}, color_black);
-        draw_number(crew, .{2, 1}, color_black);
+        draw_tile(519, .{1, 1}, text);
+        draw_number(crew, .{2, 1}, text_2);
 
         // movement
-        if moved {
-            draw_tile(1048, .{1, 2}, color_white);
-            draw_number(movement, .{2, 2}, color_white);
-        }
-        else {
-            draw_tile(1048, .{1, 2}, color_black);
-            draw_number(movement, .{2, 2}, color_black);
-        }
+        draw_tile(1048, .{1, 2}, text);
+        draw_number(movement, .{2, 2}, text_2);
 
         if status & .AFLAME {
             draw_tile(504, .{1, 3}, color_2);
@@ -261,23 +288,20 @@ render_ui :: (map: Map, transparency := 1.0) {
             draw_tile(48, .{2, 3}, color_2);
         }
 
-        color := color_black;
-        if exhausted
-            color = color_white;
         if primary.active {
-            draw_ability_ui(primary, .{1, 4}, .{2, 4}, 0, color);
+            draw_ability_ui(primary, .{1, 4}, .{2, 4}, 0);
         }
         if secondary.active {
-            draw_ability_ui(secondary, .{1, 5}, .{2, 5}, 1, color);
+            draw_ability_ui(secondary, .{1, 5}, .{2, 5}, 1);
         }
 
-        draw_ability_ui(repair, .{0, 7}, .{1, 7}, 2, color_black);
-        draw_ability_ui(board,  .{4, 7}, .{5, 7}, 3, color_black);
+        draw_ability_ui(repair, .{0, 7}, .{1, 7}, 2);
+        draw_ability_ui(board,  .{4, 7}, .{5, 7}, 3);
 
         {
             use_text_shader(transparency);
 
-            draw_text(description, .{0, 0});
+            draw_text(description, .{0, 0}, nudge_x = 5);
 
             draw_text(summarize_unit_flags(flags), .{0, 0}, second=true);
 
@@ -291,8 +315,7 @@ render_ui :: (map: Map, transparency := 1.0) {
 
                 draw_text(primary.name, .{3, 5});
 
-                text_color := color_1; if primary.damage > 0 then text_color = color_2;
-                draw_text(summarize_ability(primary), .{3, 5}, text_color, second=true);
+                draw_text(summarize_ability(primary), .{3, 5}, second=true);
             }
             if secondary.active {
                 draw_text(tprint("%-%", secondary.min_range, secondary.max_range), .{0, 6});
@@ -300,19 +323,18 @@ render_ui :: (map: Map, transparency := 1.0) {
 
                 draw_text(secondary.name, .{3, 6});
 
-                text_color := color_1; if secondary.damage > 0 then text_color = color_2;
-                draw_text(summarize_ability(secondary), .{3, 6}, text_color, second=true);
+                draw_text(summarize_ability(secondary), .{3, 6}, second=true);
             }
 
             {
                 text_color := color_1;
 
-                draw_text("Repair", .{2, 8}, text_color);
+                draw_text("Repair", .{2, 8});
             }
             {
                 text_color := color_2;
 
-                draw_text("Attack", .{6, 8}, text_color);
+                draw_text("Attack", .{6, 8});
             }
         }
 
@@ -321,34 +343,27 @@ render_ui :: (map: Map, transparency := 1.0) {
             render_captain(captain);
 
             use_tile_shader(transparency);
-            draw_background(.{12, 7}, color_3);
-            draw_background(.{13, 7}, color_3);
-            draw_background(.{14, 7}, color_3);
-            draw_background(.{15, 7}, color_3);
+            for 8..16 {
+                draw_background(.{it, 7}, ui);
+            }
 
             use_text_shader(transparency);
-            draw_text(get_captain_name(captain), .{12, 8});
+            draw_text_right(get_captain_description(captain), 4, nudge_x = -4);
         }
     }
     else if ui_unit {
         using ui_unit;
 
         // health
-        draw_tile(532, .{1, -1}, color_black);
-        draw_number(health, .{1, -1}, color_white);
+        draw_tile(532, .{1, -1}, text);
+        draw_number(health, .{1, -1}, text_2);
 
-        draw_tile(519, .{2, -1}, color_black);
-        draw_number(crew, .{2, -1}, color_white);
+        draw_tile(519, .{2, -1}, text);
+        draw_number(crew, .{2, -1}, text_2);
 
         // movement
-        if moved {
-            draw_tile(1048, .{3, -1}, color_black);
-            draw_number(movement, .{3, -1}, color_white);
-        }
-        else {
-            draw_tile(1048, .{3, -1}, color_white);
-            draw_number(movement, .{3, -1}, color_black);
-        }
+        draw_tile(1048, .{3, -1}, text);
+        draw_number(movement, .{3, -1}, text_2);
 
         if status & .AFLAME {
             draw_tile(504, .{4, -1}, color_2);
@@ -357,16 +372,14 @@ render_ui :: (map: Map, transparency := 1.0) {
             draw_tile(48, .{4, -1}, color_2);
         }
 
-        color := color_black;
-        if exhausted
-            color = color_white;
         if primary.active {
-            draw_ability_ui(primary, .{5, -1}, .{6, -1}, 0, color);
+            draw_ability_ui(primary, .{5, -1}, .{6, -1}, 0);
         }
         if secondary.active {
-            draw_ability_ui(secondary, .{8, -1}, .{9, -1}, 1, color);
+            draw_ability_ui(secondary, .{8, -1}, .{9, -1}, 1);
         }
 
+        // @TODO!
         ti := type_info(Unit_Flags);
         for ti.values {
 
@@ -383,7 +396,7 @@ render_captain :: (captain: Captain, right := true) {
             return;
         }
 
-        draw_sprite(sprite, right=right);
+        draw_sprite(sprite, right=right, y_offset=TILE_SIZE);
     }
 }
 
@@ -398,14 +411,14 @@ render_start_screen :: (transparency := 1.0) {
 render_credits :: (transparency := 1.0) {
     use_text_shader(transparency);
     k := cast(float)PIXEL_HEIGHT * 3 / 4;
-    draw_text_centered("<Umi Development Team>", k + TILE_SIZE, color=color_black);
+    draw_text_centered("| Umi Development Team |", k + TILE_SIZE);
 
-    draw_text_centered("Game by Alex Hartford.", k, color=color_black);
-    draw_text_centered("Art by Emelia Hartford.", k - TILE_SIZE, color=color_2);
-    draw_text_centered("Murals by Bryce Nevitt.", k - 2*TILE_SIZE, color=color_2);
-    draw_text_centered("System Design by Grant Neighbor.", k - 3*TILE_SIZE, color=color_1);
-    draw_text_centered("Level Design by Josh Elijah.", k - 4*TILE_SIZE, color=color_1);
-    draw_text_centered("Music and Sounds by Riley Morris.", k - 5*TILE_SIZE, color=color_3);
+    draw_text_centered("Game by Alex Hartford.", k);
+    draw_text_centered("Art by Emelia Hartford.", k - TILE_SIZE);
+    draw_text_centered("Murals by Bryce Nevitt.", k - 2*TILE_SIZE);
+    draw_text_centered("System Design by Grant Neighbor.", k - 3*TILE_SIZE);
+    draw_text_centered("Level Design by Josh Elijah.", k - 4*TILE_SIZE);
+    draw_text_centered("Music and Sounds by Riley Morris.", k - 5*TILE_SIZE);
 }
 
 render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
@@ -430,30 +443,47 @@ render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
 }
 
 render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
+    current_speaker_name := dialogue.lines[dialogue.line_index].name;
     {
         // Draw speaker sprites.
-        use_sprite_shader(transparency);
-
-        name := to_lower_copy(dialogue.speakers[0]);
-        if name {
-            sprite := table_find_pointer(*rendering.sprites, name);
-            if !sprite {
-                log_error("Unable to find sprite % in the sprites catalogue.\n", name);
-                return;
+        {
+            speaker_transparency := DIALOGUE_TRANSPARENCY_MODIFIER;
+            if dialogue.speakers[0] == current_speaker_name {
+                speaker_transparency = 1.0;
             }
 
-            draw_sprite(sprite, x_offset=dialogue.left_sprite_offset, y_offset=TILE_SIZE);
+            name := to_lower_copy(dialogue.speakers[0]);
+            use_sprite_shader(transparency * speaker_transparency);
+
+            if name {
+                sprite := table_find_pointer(*rendering.sprites, name);
+                if !sprite {
+                    log_error("Unable to find sprite % in the sprites catalogue.\n", name);
+                    return;
+                }
+
+                draw_sprite(sprite, x_offset=dialogue.left_sprite_offset, y_offset=TILE_SIZE);
+            }
         }
 
-        name = to_lower_copy(dialogue.speakers[1]);
-        if name {
-            sprite := table_find_pointer(*rendering.sprites, name);
-            if !sprite {
-                log_error("Unable to find sprite % in the sprites catalogue.\n", name);
-                return;
+        {
+            speaker_transparency := DIALOGUE_TRANSPARENCY_MODIFIER;
+            if dialogue.speakers[1] == current_speaker_name {
+                speaker_transparency = 1.0;
             }
 
-            draw_sprite(sprite, x_offset=dialogue.right_sprite_offset, y_offset=TILE_SIZE, right=true);
+            name := to_lower_copy(dialogue.speakers[1]);
+            use_sprite_shader(transparency * speaker_transparency);
+
+            if name {
+                sprite := table_find_pointer(*rendering.sprites, name);
+                if !sprite {
+                    log_error("Unable to find sprite % in the sprites catalogue.\n", name);
+                    return;
+                }
+
+                draw_sprite(sprite, x_offset=dialogue.right_sprite_offset, y_offset=TILE_SIZE, right=true);
+            }
         }
     }
 
@@ -462,24 +492,22 @@ render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
         use_tile_shader(transparency);
         for col: 0..VIEWPORT_WIDTH {
             for row: VIEWPORT_HEIGHT - 1 .. VIEWPORT_HEIGHT {
-                draw_background(.{col, row}, color_3);
+                draw_background(.{col, row}, ui);
             }
         }
 
         // Draw dialogue text
         use_text_shader(transparency);
-        current_speaker_name := dialogue.lines[dialogue.line_index].name;
-
         if dialogue.speakers[0] == current_speaker_name {
-            draw_text(current_speaker_name, xx (TILE_SIZE / 2), xx (TILE_SIZE / 2), color_1);
+            draw_text(current_speaker_name, cast(float)(TILE_SIZE / 2), cast(float)(TILE_SIZE / 2));
         }
 
         else if dialogue.speakers[1] == current_speaker_name {
-            draw_text_right(current_speaker_name, xx (TILE_SIZE / 2), nudge_x = xx (-TILE_SIZE / 2), color=color_1);
+            draw_text_right(current_speaker_name, xx (TILE_SIZE / 2), nudge_x = xx (-TILE_SIZE / 2));
         }
 
         line := dialogue.lines[dialogue.line_index].text;
-        draw_text_centered(line, 5);
+        draw_text_centered_with_progress(line, 5, dialogue.characters_at_progress);
     }
 }
 
@@ -598,17 +626,17 @@ render_menu :: (using menu: Menu, transparency := 1.0) {
 
         for col: 0..VIEWPORT_WIDTH / 2 - 1 {
             for row: -1..VIEWPORT_HEIGHT {
-                draw_background(.{col, row}, color_3);
+                draw_background(.{col, row}, ui);
             }
         }
 
         for elements {
-            draw_menu_element(it, .{3, it_index + 1}, color_white, color_black);
+            draw_menu_element(it, .{3, it_index + 1}, text, ui);
         }
 
         // Draw selected element over it.
         if elements.count {
-            draw_menu_element(elements[element_index], .{3, element_index + 1}, color_black, color_white);
+            draw_menu_element(elements[element_index], .{3, element_index + 1}, text_2, text);
         }
     }
 
@@ -622,12 +650,12 @@ render_start_menu :: (using menu: Menu, transparency := 1.0) {
         use_tile_shader(transparency);
 
         for elements {
-            draw_menu_element(it, .{15, it_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 1}, color_1, color_4);
+            draw_menu_element(it, .{15, it_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 1}, color_black, color_white);
         }
 
         if elements.count {
             // Draw selected element over it.
-            draw_menu_element(elements[element_index], .{15, element_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 1}, color_3, color_4);
+            draw_menu_element(elements[element_index], .{15, element_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 1}, color_white, color_black);
         }
     }
 }
@@ -642,7 +670,7 @@ render_game_over :: (transparency := 1.0) {
 
         for col: VIEWPORT_WIDTH / 3..VIEWPORT_WIDTH - VIEWPORT_WIDTH / 3 - 1 {
             for row: -1..VIEWPORT_HEIGHT {
-                draw_background(.{col, row}, color_3);
+                draw_background(.{col, row}, ui);
             }
         }
     }
@@ -650,8 +678,8 @@ render_game_over :: (transparency := 1.0) {
     {
         use_text_shader(transparency);
 
-        draw_text_centered("game over", xx (PIXEL_HEIGHT / 2.0), color=color_bg);
-        draw_text_centered("retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height), color=color_1);
+        draw_text_centered("game over", xx (PIXEL_HEIGHT / 2.0));
+        draw_text_centered("retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height));
     }
 }
 
@@ -659,7 +687,7 @@ render_game_over :: (transparency := 1.0) {
 // Menus
 //
 
-draw_menu_element :: (using element: *Menu_Element, square: Square, color := color_fg, second_color := color_3) {
+draw_menu_element :: (using element: *Menu_Element, square: Square, color := color_black, second_color := color_3) {
     if kind == {
         case .GO;
             using cast(*Go_Element)element;
@@ -696,21 +724,21 @@ draw_menu_element :: (using element: *Menu_Element, square: Square, color := col
 // deprecated for this project, maybe useful later.
 //
 
-draw_menu_element_text :: (using element: *Menu_Element, height : float, color := color_fg) {
+draw_menu_element_text :: (using element: *Menu_Element, height : float) {
     if kind == {
         case .GO;
             using cast(*Go_Element)element;
-            draw_text_centered(name, height, color=color);
+            draw_text_centered(name, height);
 
         case .CHECKBOX;
             using cast(*Checkbox_Element)element;
             str := "Off";
             if value
                 str = "On";
-            draw_text_centered(tprint("% - %", name, str), height, color=color);
+            draw_text_centered(tprint("% - %", name, str), height);
 
         case .SLIDER;
             using cast(*Slider_Element)element;
-            draw_text_centered(tprint("% - %", name, value.*), height, color=color);
+            draw_text_centered(tprint("% - %", name, value.*), height);
     }
 }

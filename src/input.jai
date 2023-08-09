@@ -4,23 +4,23 @@
 // June 2023
 
 Button :: struct {
-    pressed : bool;
+    held : bool;
     held_for : float;
 }
 
 press_button :: (using button: *Button) {
-    pressed = true;
+    held = true;
     held_for = 0.0;
 }
 
 release_button :: (using button: *Button) {
-    pressed = false;
+    held = false;
     held_for = 0.0;
 }
 
 pressed :: (using button: *Button) -> bool {
-    if pressed {
-        pressed = false;
+    if held {
+        held = false;
         return true;
     }
 
@@ -37,7 +37,7 @@ update_input_hold_times :: (dt: float) {
             press_button(button);
         }
 
-        if button.pressed || button.held_for != 0.0 {
+        if button.held || button.held_for != 0.0 {
             button.held_for += dt;
         }
     }

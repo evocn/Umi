@@ -106,13 +106,18 @@ play_music :: (name : string) {
         assert(false);
     }
 
-    stream := play_sound(music, false);
+    music_stream = play_sound(music, false);
 
-    if stream {
-        stream.flags   |= .REPEATING;
-        stream.category = .MUSIC;
-        //stream.user_volume_scale *= 1.0;
+    if music_stream {
+        music_stream.flags   |= .REPEATING;
+        music_stream.category = .MUSIC;
+        //music_stream.user_volume_scale *= 1.0;
     }
+}
+
+stop_music :: () {
+    stop_stream_abruptly(sound_player, music);
+    destroy(music_stream);
 }
 
 // Move sound streams forward by dt.

@@ -11,41 +11,50 @@ Font :: struct {
     vao, vbo : GLuint;
 }
 
-draw_text :: (text: string, square: Square, color := color_black, second := false)
+draw_text :: (text: string, square: Square, nudge_x := 0.0, second := false)
 {
     shader := rendering.text_shader;
     font := main_font;
 
-    set_vec4(shader, "color", color);
+    set_vec4(shader, "color", colors.text);
     x := cast(float)square.col * TILE_SIZE;
     y := (TILE_SIZE / 2) * cast(int)!second + (PIXEL_HEIGHT - TILE_SIZE - cast(float)square.row * TILE_SIZE);
-    render_text(font, text, x, y, alignment = .LEFT);
+    render_text(font, text, x + nudge_x, y, alignment = .LEFT);
 }
 
-draw_text :: (text: string, x: float, y: float, color := color_black)
+draw_text :: (text: string, x: float, y: float)
 {
     shader := rendering.text_shader;
     font := main_font;
 
-    set_vec4(shader, "color", color);
+    set_vec4(shader, "color", colors.text);
     render_text(font, text, x, y, alignment = .LEFT);
 }
 
-draw_text_centered :: (text: string, y: float, nudge_x := 0.0, color := color_black)
+draw_text_centered :: (text: string, y: float, nudge_x := 0.0)
 {
     shader := rendering.text_shader;
     font := main_font;
 
-    set_vec4(shader, "color", color);
+    set_vec4(shader, "color", colors.text);
     render_text(font, text, nudge_x, y, alignment = .CENTER);
 }
 
-draw_text_right :: (text: string, y: float, nudge_x := 0.0, color := color_black)
+draw_text_centered_with_progress :: (text: string, y: float, progress: int, nudge_x := 0.0)
 {
     shader := rendering.text_shader;
     font := main_font;
 
-    set_vec4(shader, "color", color);
+    set_vec4(shader, "color", colors.text);
+    render_text(font, text, nudge_x, y, progress = progress, alignment = .CENTER);
+}
+
+draw_text_right :: (text: string, y: float, nudge_x := 0.0)
+{
+    shader := rendering.text_shader;
+    font := main_font;
+
+    set_vec4(shader, "color", colors.text);
     render_text(font, text, nudge_x, y, alignment = .RIGHT);
 }
 
@@ -66,7 +75,7 @@ Alignment :: enum {
     RIGHT;
 }
 
-render_text :: (font : Font, text : string, x : float, y : float, $alignment := Alignment.CENTER)
+render_text :: (font : Font, text : string, x : float, y : float, progress := -1, $alignment := Alignment.CENTER)
 {
     glActiveTexture(GL_TEXTURE0);
     defer glBindTexture(GL_TEXTURE_2D, 0);
@@ -86,6 +95,10 @@ render_text :: (font : Font, text : string, x : float, y : float, $alignment := 
 
     for cast([] u8)text
     {
+        if progress != -1 && it_index >= progress {
+            break;
+        }
+
         glyph, found := table_find(*font.characters, it);
         assert(found);
 

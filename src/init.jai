@@ -100,6 +100,8 @@ init :: () -> bool {
             register_sprite("arukahime");
             register_sprite("haruhachi");
 
+            register_sprite("pirate");
+
             register_sprite("ui");
         }
 
@@ -252,11 +254,11 @@ init_menus :: () {
         sfx.sprite_index_two = 821;
         array_add(*elements, cast(*Menu_Element)sfx);
 
-        quit := New(Go_Element, allocator=a);
-        quit.name = "quit";
-        quit.callback = quit_game;
-        quit.sprite_index = 120;
-        array_add(*elements, cast(*Menu_Element)quit);
+        home := New(Go_Element, allocator=a);
+        home.name = "home";
+        home.callback = go_home;
+        home.sprite_index = 825;
+        array_add(*elements, cast(*Menu_Element)home);
     }
 
     {

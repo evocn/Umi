@@ -16,11 +16,11 @@ make_spritesheet :: (using spritesheet : *Spritesheet, filename : string) -> suc
     return success;
 }
 
-draw_tile :: (index: int, square : Square, color := color_fg, offset := Vector2.{0, 0}, horizontal_flip := false) {
+draw_tile :: (index: int, square : Square, color := color_black, offset := Vector2.{0, 0}, horizontal_flip := false) {
     draw_spritesheet(rendering.spritesheet, index, square, color_override=color, offset=offset, horizontal_flip=horizontal_flip);
 }
 
-draw_ship :: (index: int, direction: Direction, square : Square, color := color_fg) {
+draw_ship :: (index: int, direction: Direction, square : Square, color := color_black) {
     if #complete direction == {
         case .NORTH;    
             draw_spritesheet(rendering.ship_spritesheet, index * 4, square, color_override=color, horizontal_flip=false);
@@ -34,7 +34,7 @@ draw_ship :: (index: int, direction: Direction, square : Square, color := color_
 }
 
 draw_spritesheet :: (using sheet : Spritesheet, index: int, square : Square, 
-                     offset := Vector2.{0, 0}, horizontal_flip := false, use_color_override := true, color_override := color_fg) {
+                     offset := Vector2.{0, 0}, horizontal_flip := false, use_color_override := true, color_override := color_black) {
     bind(sheet.texture, 0);
     shader := rendering.shader;
 

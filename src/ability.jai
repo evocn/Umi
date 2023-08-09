@@ -11,6 +11,7 @@ Ability :: struct {
     min_range : int = 1;
     max_range : int = 1;
 
+    damages_hull : bool;
     damage : s32;
     bonus_damage : s32;
 
@@ -79,6 +80,10 @@ summarize_ability :: (using ability: Ability) -> string {
         }
         else if damage < 0 {
             print_to_builder(*builder, "%-% ", -1 * (bonus_damage + -1), -1 * (damage + bonus_damage));
+        }
+
+        if damages_hull {
+            append(*builder, "hull ");
         }
 
         if damage > 0 || (damage == 0 && bonus_damage > 0) {
@@ -213,7 +218,14 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             result.user_die_bonus = attack_damage - die_result;
 
             attack_damage = clamp(attack_damage, 0, MAX_CREW);
-            damage_hull(victim, attack_damage);
+
+            if damages_hull {
+                damage_hull(victim, attack_damage);
+            }
+            else {
+                damage_crew(victim, attack_damage);
+            }
+
             if victim.dead result.victim_died = true;
         }
         else if damage < 0 || (damage == 0 && bonus_damage < 0) {
@@ -224,7 +236,14 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             result.user_die_bonus = heal_amount - die_result;
 
             heal_amount = clamp(heal_amount, 0, MAX_CREW);
-            damage_hull(victim, -1 * heal_amount);
+
+            if damages_hull {
+                damage_hull(victim, -1 * heal_amount);
+            }
+            else {
+                damage_crew(victim, -1 * heal_amount);
+            }
+
             if victim.dead result.victim_died = true; // unlikely...
         }
 

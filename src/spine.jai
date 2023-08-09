@@ -52,7 +52,7 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
     }
     if current_chapter >= chapters.count {
         spine_reset();
-        stop_stream_abruptly(sound_player, music);
+        stop_music();
         play_music("mohican");
         switch_mode(.START);
         return;
@@ -63,13 +63,13 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
     if current_section == {
         case 0; 
             load_dialogue_file(dialogue, tprint("%.dialogue", chapters[current_chapter].intro));
-            stop_stream_abruptly(sound_player, music);
+            stop_music();
             play_music(chapters[current_chapter].intro_song);
             switch_mode(.CUTSCENE);
 
         case 1;
             init_level(map, units, chapters[current_chapter].level);
-            stop_stream_abruptly(sound_player, music);
+            stop_music();
             play_music(chapters[current_chapter].level_song);
             switch_mode(.GAME);
 
@@ -86,7 +86,7 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
 
         case 2;
             load_dialogue_file(dialogue, tprint("%.dialogue", chapters[current_chapter].outro));
-            stop_stream_abruptly(sound_player, music);
+            stop_music();
             play_music(chapters[current_chapter].outro_song);
             switch_mode(.CUTSCENE);
     }

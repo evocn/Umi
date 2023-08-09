@@ -439,6 +439,7 @@ ability_editor :: (ability: *Ability) {
         ImGui.SliderInt("Max", xx *ability.max_range, 1, 9);
     }
 
+    ImGui.Checkbox("Damages Hull", *ability.damages_hull);
     ImGui.SliderInt("Damage", *ability.damage, -6, 6);
     ImGui.SliderInt("Bonus Damage", *ability.bonus_damage, -3, 3);
 

@@ -3,18 +3,29 @@ Log
 Alex Hartford
 July 2023
 
-TODO
-====
-
 Week 3
 ------
 Design Week
 
+Tight System
+3 Fun Levels.
+
+Stealth Mission
+    The mission is a simple stealth mission with two fleets, and a great big fire
+    situation near the end!
+
+    I want Kuki Yoshitake to appear at the end of this one.
+    It would be cool if he knows that it is the Murakami right away, when no one
+    else does.
+
 Reinforcements
 Transfer Units
-Tight System
+Parley
 
-7 Fun levels.
+4 Fun levels.
+
+Rewrite everything in period form.
+  Maybe read some period works?
 
 Week 4
 ------
@@ -27,8 +38,13 @@ Art Week
 
 Reduce draw calls (screen culling)
 undo for gameplay
-Better Cursor
-Soft Viewport
+
+Dialogue murals crossfades.
+
+Some visual displaying the year inbetween chapters.
+Night Mode.
+Fog of War?
+Display of how many crew remain on either side, how many ships, etc.
 
 New Icon
 
@@ -39,21 +55,30 @@ Save/Load Game?
 Week 5
 ------
 Polish.
-  Start Screen ssssshing!
-  Fades.
-  Volume fades.
-  Full-on Audio pass.
-  Visual flourishes. Flashes of lightning, etc.
-  UI Animations
+    Start Screen ssssshing!
+    Full-on Audio pass.
+    Visual flourishes. Flashes of lightning, etc.
+    UI Animations
+
+    Better Cursor
+    Soft Viewport
+    Dialogue displays one character at a time, and buffers inputs until it's finished.
+    New Power Button ui element
+    Display the menu element name beside the element. (Or overlaid)
 
 Finish.
   QA Pass
   Bug fixes galore.
 
 Release.
-  Itch Page.
   Release Build.
+  Mac Build.
   Run it on every machine I can think of.
+
+Publish.
+  Itch Page.
+  Github.
+  Website.
 
 Vision
 ======
@@ -122,3 +147,16 @@ I'm going to push through it. I don't want to back down from something this
 powerful. We are going straight through the blockade of resistance.
 
 I will not evaluate until I am done.
+# 8/7/2023
+Starting the final push.
+
+I've been having some doubts, some insecurities lately. These are very normal to
+me now.
+
+Next up is to do the work. The good news is that I believe in the project
+personally.
+
+I just need to focus on the good, the right thing - and on what I want a player
+to experience.
+
+I am doing it for them.

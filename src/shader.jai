@@ -11,7 +11,7 @@ use_tile_shader :: (transparency : float) -> Shader {
     set_mat4(shader, "projection", orthographic);
 
     set_float(shader, "transparency", transparency);
-    set_vec4(shader, "background", color_bg);
+    set_vec4(shader, "background", bg);
 
     return shader;
 }
@@ -24,7 +24,7 @@ use_text_shader :: (transparency : float) -> Shader {
     set_mat4(shader, "projection", orthographic);
 
     set_float(shader, "transparency", transparency);
-    set_vec4(shader, "background", color_bg);
+    set_vec4(shader, "background", bg);
 
     return shader;
 }
@@ -37,7 +37,7 @@ use_sprite_shader :: (transparency : float) -> Shader {
     set_mat4(shader, "projection", orthographic);
 
     set_float(shader, "transparency", transparency);
-    set_vec4(shader, "background", color_bg);
+    set_vec4(shader, "background", bg);
 
     return shader;
 }
@@ -50,7 +50,7 @@ use_color_shader :: (transparency : float) -> Shader {
     set_mat4(shader, "projection", orthographic);
 
     set_float(shader, "transparency", transparency);
-    set_vec4(shader, "background", color_bg);
+    set_vec4(shader, "background", bg);
 
     set_int(shader, "use_color_override", 1);
 

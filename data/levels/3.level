@@ -1,0 +1,29 @@
+[1]	# Version Number
+
+1	# Weather
+16	# Width
+8	# Height
+
+# Tiles:
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+---
+# Sprite Index Exceptions:
+---
+# Events: 
+---
+
+Ayubune	# name
+1	# team
+0	# ai
+0	# captain
+5	# crew
+5 3	# square
+0	# direction
+!	# flashback
