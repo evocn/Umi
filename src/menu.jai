@@ -63,14 +63,14 @@ resolve_menu_inputs :: (using menu: *Menu) {
     if pressed(*up) {
         element_index -= 1;
         if element_index < 0 {
-            element_index = elements.count - 1;
+            element_index += 1;
         }
         play_sfx("click");
     }
     if pressed(*down) {
         element_index += 1;
         if element_index >= elements.count {
-            element_index = 0;
+            element_index -= 1;
         }
         play_sfx("click");
     }
@@ -156,6 +156,12 @@ go_home :: () {
     spine.current_section = -1;
     stop_stream_abruptly(sound_player, music);
     play_music("mohican");
+}
+
+go_to_settings :: () {
+    switch_mode(.MENU);
+    menu.element_index = 0;
+    play_sfx("selection");
 }
 
 show_credits :: () {

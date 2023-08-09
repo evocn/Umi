@@ -91,6 +91,7 @@ settings : struct {
 
 rendering : struct {
     using shaders : struct {
+        basic_shader    : Shader;
         shader          : Shader;
         text_shader     : Shader;
         quad_shader     : Shader;
@@ -190,7 +191,6 @@ main :: () {
         deinit(*second_font.characters);
 
         stop_all_sounds_abruptly(sound_player, 0);
-        stop_music();
         update_sound_player(1000.0);
         array_reset(*retired_decoders);
         array_reset(*completed_queue);

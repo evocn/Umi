@@ -81,6 +81,10 @@ render :: (map: Map, dialogue: Dialogue) {
 
                     case .CUTSCENE;
                         render_cutscene(dialogue, transparency = MENU_TRANSPARENCY_MODIFIER);
+
+                    case .START;
+                        render_start_screen(transparency = MENU_TRANSPARENCY_MODIFIER);
+                        render_start_menu(start_menu, transparency = MENU_TRANSPARENCY_MODIFIER);
                 }
                 render_menu(menu);
 
@@ -249,6 +253,8 @@ render_ui :: (map: Map, transparency := 1.0) {
     for 0..VIEWPORT_WIDTH-1 {
         draw_background(.{it, -1}, ui);
     }
+
+    draw_minimap(map, transparency = transparency);
 
     ui_unit := get_occupant(map, cursor.square);
     if ui_unit == null && cursor.selected
@@ -624,7 +630,7 @@ render_menu :: (using menu: Menu, transparency := 1.0) {
     {
         use_tile_shader(transparency);
 
-        for col: 0..VIEWPORT_WIDTH / 2 - 1 {
+        for col: 0..VIEWPORT_WIDTH / 2 - 2 {
             for row: -1..VIEWPORT_HEIGHT {
                 draw_background(.{col, row}, ui);
             }
@@ -741,4 +747,33 @@ draw_menu_element_text :: (using element: *Menu_Element, height : float) {
             using cast(*Slider_Element)element;
             draw_text_centered(tprint("% - %", name, value.*), height);
     }
+}
+
+//
+// Minimap
+//
+
+draw_colored_rectangle :: (x: float, y: float, width: float, height: float, color := color_white, transparency := 1.0) {
+    shader := use_basic_shader(transparency);
+
+    model := Matrix4_Identity;
+    top_left_y := 1.0 - height / PIXEL_HEIGHT;
+    translation_vector := Vector3.{x / PIXEL_WIDTH, top_left_y - y / PIXEL_HEIGHT, 0.0};
+    scale_vector := Vector3.{width / PIXEL_WIDTH, height / PIXEL_HEIGHT, 1.0};
+
+    translate(*model, translation_vector);
+    scale(*model, scale_vector);
+    set_mat4(shader, "model", model);
+
+    set_vec4(shader, "color", color);
+
+    draw_quad(rendering.quad);
+}
+
+draw_minimap :: (using map: Map, transparency := 1.0) {
+    viewport_pixels_wide := cast(float)VIEWPORT_WIDTH;
+    viewport_pixels_tall := cast(float)VIEWPORT_HEIGHT;
+
+    draw_colored_rectangle(0.0, 0.0, xx (map.width), xx (map.height), text, transparency);
+    draw_colored_rectangle(xx viewport.corner.col, xx viewport.corner.row, viewport_pixels_wide, viewport_pixels_tall, text_2, transparency);
 }

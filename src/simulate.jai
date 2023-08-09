@@ -5,15 +5,21 @@
 
 simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
     update_sound_player(dt);
+
+    if program_paused {
+        return;
+    }
+
+    if program_mode == .MENU {
+        resolve_menu_inputs(*menu);
+        return;
+    }
+
     update_dialogue_animators(dialogue, dt);
 
     if spine.ready_for_next_section {
         spine.ready_for_next_section = false;
         spine_go_to_next_section(map, units, dialogue);
-    }
-
-    if program_paused {
-        return;
     }
 
     if fade.active {
@@ -89,7 +95,7 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
         resolve_dialogue_inputs(dialogue);
 
         case .MENU;
-        resolve_menu_inputs(*menu);
+        // @NOTE: Above for control flow.
 
         case .GAME_OVER;
         resolve_game_over(map, units);

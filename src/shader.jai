@@ -57,6 +57,19 @@ use_color_shader :: (transparency : float) -> Shader {
     return shader;
 }
 
+use_basic_shader :: (transparency : float) -> Shader {
+    shader := rendering.basic_shader;
+    use_shader(shader);
+
+    orthographic := orthographic_projection_matrix(0, 1, 0, 1, -1, 1);
+    set_mat4(shader, "projection", orthographic);
+
+    set_float(shader, "transparency", transparency);
+    set_vec4(shader, "background", bg);
+
+    return shader;
+}
+
 //
 //
 //

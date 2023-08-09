@@ -50,7 +50,7 @@ draw_spritesheet :: (using sheet : Spritesheet, index: int, square : Square,
     set_vec2(shader, "relative_sheet_scale", relative_sheet_scale);
 
     model := Matrix4_Identity;
-    translation_vector := Vector3.{square.col * (1.0 / VIEWPORT_WIDTH) + offset.x / PIXEL_WIDTH, (VIEWPORT_HEIGHT - square.row - 1) * (1.0 / (VIEWPORT_HEIGHT + 1)) + offset.y / PIXEL_WIDTH, 1};
+    translation_vector := Vector3.{square.col * (1.0 / VIEWPORT_WIDTH) + offset.x / PIXEL_WIDTH, (VIEWPORT_HEIGHT - square.row - 1) * (1.0 / (VIEWPORT_HEIGHT + 1)) + offset.y / PIXEL_WIDTH, 0};
     scale_vector := Vector3.{1.0 / VIEWPORT_WIDTH, 1.0 / (VIEWPORT_HEIGHT + 1), 1};
 
     translate(*model, translation_vector);

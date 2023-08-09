@@ -22,7 +22,7 @@ Reinforcements
 Transfer Units
 Parley
 
-4 Fun levels.
+4 More Fun levels.
 
 Rewrite everything in period form.
   Maybe read some period works?

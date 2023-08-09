@@ -67,6 +67,7 @@ init :: () -> bool {
         using rendering;
 
         // Shaders
+        basic_shader = make_shader("screen.vs", "basic.fs");
         shader       = make_shader("screen.vs", "texture.fs");
         text_shader  = make_shader("text.vs", "text.fs");
         quad_shader  = make_shader("quad.vs", "quad.fs");
@@ -272,19 +273,17 @@ init_menus :: () {
         resume.sprite_index = 22;
         array_add(*elements, cast(*Menu_Element)resume);
 
-        fullscreen := New(Checkbox_Element, allocator=a);
-        fullscreen.name = "fullscreen";
-        fullscreen.callback = toggle_fullscreen;
-        fullscreen.value = *settings.fullscreen;
-        fullscreen.sprite_index = 831;
-        fullscreen.sprite_index_two = 830;
-        array_add(*elements, cast(*Menu_Element)fullscreen);
-
         credits := New(Go_Element, allocator=a);
         credits.name = "credits";
         credits.callback = show_credits;
         credits.sprite_index = 768;
         array_add(*elements, cast(*Menu_Element)credits);
+
+        settings := New(Go_Element, allocator=a);
+        settings.name = "settings";
+        settings.callback = go_to_settings;
+        settings.sprite_index = 829;
+        array_add(*elements, cast(*Menu_Element)settings);
 
         quit := New(Go_Element, allocator=a);
         quit.name = "quit";
