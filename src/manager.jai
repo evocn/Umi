@@ -46,7 +46,6 @@ next_turn :: (using map: *Map) -> Team {
 
             if it.sinking != 0 {
                 it.moved = true;
-                it.exhausted = true;
                 it.sinking -= 1;
                 if it.sinking == 0 {
                     kill(it);

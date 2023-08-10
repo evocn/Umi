@@ -106,7 +106,7 @@ play_music :: (name : string) {
         assert(false);
     }
 
-    music_stream = play_sound(music, false);
+    music_stream := play_sound(music, false);
 
     if music_stream {
         music_stream.flags   |= .REPEATING;
@@ -115,9 +115,30 @@ play_music :: (name : string) {
     }
 }
 
+play_ambience :: (name : string) {
+    if name == "none" then return;
+
+    full_path := tprint("%/%.ogg", music_path, name);
+
+    ambience = load_audio_file(full_path);
+
+    if !ambience {
+        log_error("Could not load music file: %\n", full_path);
+        assert(false);
+    }
+
+    ambience_stream := play_sound(ambience, false);
+
+    if ambience_stream {
+        ambience_stream.flags   |= .REPEATING;
+        ambience_stream.category = .AMBIENCES;
+        //ambience_stream.user_volume_scale *= 1.0;
+    }
+}
+
 stop_music :: () {
     stop_stream_abruptly(sound_player, music);
-    destroy(music_stream);
+    //destroy(music_stream);
 }
 
 // Move sound streams forward by dt.

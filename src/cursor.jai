@@ -93,6 +93,10 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
                     occupant.flashback = "";
                 }
             }
+
+            if pressed(*button_special) {
+                begin_targeting(map, which_ability=4);
+            }
         }
 
         case .MOVING;
@@ -237,7 +241,7 @@ begin_targeting :: (map : *Map, which_ability : int) {
     command := New(Begin_Targeting_Command);
     command.map = map;
     command.team = .YOU;
-    assert(which_ability >= 0 && which_ability <= 3);
+    assert(which_ability >= 0 && which_ability <= 4);
     command.which_ability = which_ability;
     array_add(*command_queue, cast(*Command)command);
 }

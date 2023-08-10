@@ -44,7 +44,7 @@ get_captain_name :: (captain: Captain) -> string {
         case .KUKI;         return "kuki";
 
         case .SAMURAI;      return "";
-        case .PIRATE;       return "pirate";
+        case .PIRATE;       return "yoshitaka";
         case .WARLORD;      return "";
         case .STRATEGIST;   return "";
         case .HOLY;         return "";

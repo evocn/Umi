@@ -26,34 +26,27 @@ update_and_draw_editor :: (map: *Map, units: *[..] *Unit) {
     ImGui_ImplSdl_NewFrame(window);
     ImGui.NewFrame();
 
-    new_context := context;
-    new_context.logger      = save_load_logger;
-    push_context new_context {
-        if should_save {
-            should_save = false;
+    if should_save {
+        should_save = false;
 
-            success : bool;
+        success : bool;
 
-            success = save_units(units.*, "all.units");
-            if !success {
-                log_error("Error saving units.\n");
-            }
-
-            if program_state.current_level_index == -1 {
-                log_error("No level selected to save to!\n");
-            }
-            else {
-                success = save_level(map, tprint("%.level", levels[program_state.current_level_index]));
-                if !success {
-                    log_error("Error saving level.\n");
-                }
-            }
-
-            init_levels();
+        success = save_units(units.*, "all.units");
+        if !success {
+            log_error("Error saving units.\n");
         }
 
-        save_load(map, units);
+        else {
+            success = save_level(map, tprint("%.level", map.name));
+            if !success {
+                log_error("Error saving level.\n");
+            }
+        }
+
+        init_levels();
     }
+
+    save_load(map, units);
 
     units_editor(units);
     if selected_unit {
@@ -124,13 +117,8 @@ save_load :: (map: *Map, units: *[..] *Unit) {
         if(ImGui.Button("Load")) {
             load_units(units, "all.units");
 
-            if program_state.current_level_index == -1 {
-                log_error("No level selected to load!\n");
-            }
-            else {
-                init_level(map, units.*, levels[program_state.current_level_index]);
-                editor.moving_unit = null;
-            }
+            init_and_load_level(map, units.*, copy_string(map.name));
+            editor.moving_unit = null;
         }
 
         ImGui.SameLine();
@@ -142,24 +130,19 @@ save_load :: (map: *Map, units: *[..] *Unit) {
             }
             init_levels();
             _, program_state.current_level_index = array_find(levels, "new");
-            init_level(map, units.*, levels[program_state.current_level_index]);
+            init_and_load_level(map, units.*, levels[program_state.current_level_index]);
             map.width = 16;
             map.height = 8;
         }
 
         ImGui.SameLine();
         if(ImGui.Button("Delete")) {
-            if program_state.current_level_index == -1 {
-                log_error("No level selected to delete.\n");
-            }
-            else {
-                success := file_delete(tprint("%/%.level", levels_path, levels[program_state.current_level_index]));
-                assert(success);
-            }
+            success := file_delete(tprint("%/%.level", levels_path, map.name));
+            assert(success);
 
             init_levels();
             program_state.current_level_index = 0;
-            init_level(map, units.*, levels[program_state.current_level_index]);
+            init_and_load_level(map, units.*, levels[program_state.current_level_index]);
         }
 
         if ImGui.BeginListBox("###007", Vector2.{-FLOAT32_MIN, -FLOAT32_MIN}) {
@@ -167,7 +150,7 @@ save_load :: (map: *Map, units: *[..] *Unit) {
                 if ImGui.Selectable(temp_c_string(it), program_state.current_level_index == it_index) {
                     program_state.current_level_index = it_index;
 
-                    init_level(map, units.*, levels[it_index]);
+                    init_and_load_level(map, units.*, levels[it_index]);
                     editor.moving_unit = null;
                 }
             }
@@ -359,7 +342,8 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
 
                     ImGui.SliderInt("Movement", xx *movement, 0, 9);
 
-                    ImGui.SliderInt("Health", xx *max_health, 1, 9);
+                    ImGui.SliderInt("Max Hull", xx *max_hull, 1, 9);
+                    ImGui.SliderInt("Max Crew", xx *max_crew, 1, MAX_CREW);
 
                     ImGui.Checkbox("Primary", xx *primary.active);
                     ImGui.Checkbox("Secondary", xx *secondary.active);
@@ -409,7 +393,7 @@ percolate_changes_to_map_units :: (map: *Map, unit: *Unit) {
             it.direction = unit_copy.direction;
             it.flashback = unit_copy.flashback;
 
-            it.health = it.max_health;
+            it.hull = it.max_hull;
         }
     }
 }
@@ -440,8 +424,8 @@ ability_editor :: (ability: *Ability) {
     }
 
     ImGui.Checkbox("Damages Hull", *ability.damages_hull);
-    ImGui.SliderInt("Damage", *ability.damage, -6, 6);
-    ImGui.SliderInt("Bonus Damage", *ability.bonus_damage, -3, 3);
+    ImGui.SliderInt("Damage", *ability.damage, -20, 20);
+    ImGui.SliderInt("Bonus Damage", *ability.bonus_damage, -20, 20);
 
     imgui_flags_editor(*ability.status);
 

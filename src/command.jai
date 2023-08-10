@@ -121,6 +121,7 @@ execute :: (using command: *Begin_Targeting_Command) {
         || which_ability == 1 && !selected.secondary.active 
         || which_ability == 2 && !selected.repair.active 
         || which_ability == 3 && !selected.board.active 
+        || which_ability == 4 && !selected.interact.active 
         {
             return;
         }
@@ -145,6 +146,7 @@ execute :: (using command: *Begin_Targeting_Command) {
         || which_ability == 1 && !selected.secondary.active 
         || which_ability == 2 && !selected.repair.active 
         || which_ability == 3 && !selected.board.active 
+        || which_ability == 4 && !selected.interact.active 
         {
             selected = null;
             return;
@@ -165,6 +167,7 @@ execute :: (using command: *Begin_Targeting_Command) {
         case 1; targeting_with = *selected.secondary;
         case 2; targeting_with = *selected.repair;
         case 3; targeting_with = *selected.board;
+        case 4; targeting_with = *selected.interact;
     }
 
     selected_initial_square = square;

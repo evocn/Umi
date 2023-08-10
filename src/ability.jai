@@ -59,6 +59,7 @@ Ability_Orientation :: enum {
 
 Ability_Special :: enum {
     NONE;
+    INTERACT;
     WARP;
     DANCE;
     RAM;
@@ -159,12 +160,12 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
     result: Resolution;
     result.ability = ability;
     result.user = user;
-    result.user_initial_hull = user.health;
+    result.user_initial_hull = user.hull;
     result.user_initial_crew = user.crew;
 
     if has_target(ability.*) {
         result.victim = victim;
-        result.victim_initial_hull = victim.health;
+        result.victim_initial_hull = victim.hull;
         result.victim_initial_crew = victim.crew;
 
         assert(victim != null);
@@ -289,6 +290,52 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
 
         // special
         if special == {
+            case .INTERACT;
+            {
+                if user.team == victim.team {
+                    crew_receiver := user;
+                    crew_giver := victim;
+
+                    if user.sinking {
+                        crew_receiver = victim;
+                        crew_giver = user;
+                    }
+
+                    // Transfer
+                    MAX_CREW_TRANSFER :: 3;
+
+                    max_crew_giver_can_give := clamp(crew_giver.crew, 0, MAX_CREW_TRANSFER);
+                    max_crew_receiver_can_take := clamp(crew_receiver.max_crew - crew_receiver.crew, 0, MAX_CREW_TRANSFER);
+
+                    print("%, %\n", max_crew_giver_can_give, max_crew_receiver_can_take);
+
+                    how_many_to_take := min(max_crew_giver_can_give, max_crew_receiver_can_take);
+                    crew_receiver.crew = crew_receiver.crew + how_many_to_take;
+                    crew_giver.crew = crew_giver.crew - how_many_to_take;
+
+                    if crew_giver.crew == 0 {
+                        if crew_giver.captain != .NONE {
+                            if crew_receiver.captain == .NONE {
+                                crew_receiver.captain = crew_giver.captain;
+                            }
+                            else {
+                                array_add(*crew_receiver.captains_in_the_hold, crew_giver.captain);
+                                for crew_giver.captains_in_the_hold {
+                                    array_add(*crew_receiver.captains_in_the_hold, it);
+                                }
+                            }
+                        }
+
+                        kill(crew_giver);
+                    }
+                }
+                else {
+                    // Parley
+
+                    // @TODO: Get a dialogue to appear here.
+                    // @TODO: Define who can/can't talk to someone. Preferably in the level file so we can edit it with tools.
+                }
+            }
             case .DANCE;
                 victim.moved = false;
                 victim.exhausted = false;
@@ -321,11 +368,11 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
     }
 
     result.user_final_crew = user.crew;
-    result.user_final_hull = user.health;
+    result.user_final_hull = user.hull;
 
     if victim {
         result.victim_final_crew = victim.crew;
-        result.victim_final_hull = victim.health;
+        result.victim_final_hull = victim.hull;
     }
 
     return result;

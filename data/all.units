@@ -3,7 +3,8 @@
 Ayubune	# name
 A fishing boat. Rowed by small oars.	# description
 0	# sprite_index
-1	# max_health
+1	# max_hull
+2	# max_crew
 2	# movement
 0	# flags
 # ---
@@ -36,7 +37,8 @@ A fishing boat. Rowed by small oars.	# description
 Fish	# name
 Delicious!	# description
 1	# sprite_index
-1	# max_health
+1	# max_hull
+2	# max_crew
 0	# movement
 0	# flags
 # ---
@@ -69,7 +71,8 @@ Delicious!	# description
 Footman Kobaya	# name
 Built for boarding.	# description
 0	# sprite_index
-3	# max_health
+3	# max_hull
+10	# max_crew
 3	# movement
 0	# flags
 # ---
@@ -102,7 +105,8 @@ Built for boarding.	# description
 atakebune	# name
 large warship. armed and armored.	# description
 0	# sprite_index
-8	# max_health
+8	# max_hull
+28	# max_crew
 0	# movement
 0	# flags
 # ---
@@ -135,7 +139,8 @@ greek fire	# name
 cannon	# name
 !	# description
 0	# sprite_index
-1	# max_health
+1	# max_hull
+2	# max_crew
 0	# movement
 2	# flags
 # ---
@@ -144,9 +149,9 @@ cannon	# name
 0	# targeting
 3	# min_range
 7	# max_range
-0	# damages_hull
-5	# damage
-0	# bonus_damage
+1	# damages_hull
+0	# damage
+5	# bonus_damage
 0	# status
 0	# push_orientation
 0	# special
@@ -168,7 +173,8 @@ cannon	# name
 carrack	# name
 portugese sailing ship.	# description
 0	# sprite_index
-0	# max_health
+0	# max_hull
+2	# max_crew
 0	# movement
 0	# flags
 # ---
@@ -201,7 +207,8 @@ portugese sailing ship.	# description
 commander	# name
 !	# description
 677	# sprite_index
-0	# max_health
+0	# max_hull
+2	# max_crew
 0	# movement
 0	# flags
 # ---
@@ -234,7 +241,8 @@ command	# name
 geobukseon	# name
 korean turtle ship.	# description
 0	# sprite_index
-2	# max_health
+2	# max_hull
+2	# max_crew
 2	# movement
 8	# flags
 # ---
@@ -267,7 +275,8 @@ pike	# name
 gyosen	# name
 a tiny fishing boat.	# description
 0	# sprite_index
-2	# max_health
+2	# max_hull
+4	# max_crew
 2	# movement
 1	# flags
 # ---
@@ -300,7 +309,8 @@ seppuku	# name
 kobaya	# name
 A small warship. Manned by samurai.	# description
 0	# sprite_index
-4	# max_health
+4	# max_hull
+5	# max_crew
 3	# movement
 0	# flags
 # ---
@@ -333,7 +343,8 @@ board	# name
 sekibune	# name
 mid-sized warship.	# description
 0	# sprite_index
-6	# max_health
+6	# max_hull
+18	# max_crew
 3	# movement
 2	# flags
 # ---
@@ -366,7 +377,8 @@ board	# name
 tekkosen	# name
 a floating fortress.	# description
 0	# sprite_index
-9	# max_health
+9	# max_hull
+2	# max_crew
 1	# movement
 18	# flags
 # ---
@@ -399,7 +411,8 @@ a floating fortress.	# description
 Artillery Kobaya	# name
 A Kobaya fitted with an eight-pound cannon.	# description
 0	# sprite_index
-3	# max_health
+3	# max_hull
+4	# max_crew
 2	# movement
 0	# flags
 # ---

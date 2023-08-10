@@ -7,6 +7,8 @@ MAX_MAP_WIDTH  :: 64;
 MAX_MAP_HEIGHT :: 64;
 
 Map :: struct {
+    name: string;
+
     tiles : [MAX_MAP_WIDTH][MAX_MAP_HEIGHT] Tile;
     occupancy : [MAX_MAP_WIDTH][MAX_MAP_HEIGHT] *Unit;
 

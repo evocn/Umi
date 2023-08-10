@@ -74,11 +74,10 @@ input : struct {
     button_menu  : Button;
     button_select : Button;
     button_info   : Button;
+    button_special: Button;
 
     button_5 : Button;
     button_6 : Button;
-    button_7 : Button;
-    button_8 : Button;
 }
 
 //update_input :: 
@@ -107,6 +106,7 @@ handle_events :: () {
                 if event.key.keysym.sym == SDLK_ESCAPE  release_button(*button_menu);
                 if event.key.keysym.sym == SDLK_RETURN  release_button(*button_select);
                 if event.key.keysym.sym == SDLK_TAB     release_button(*button_info);
+                if event.key.keysym.sym == SDLK_g       release_button(*button_special);
 
                 if event.key.keysym.sym == SDLK_SPACE   release_button(*button_1);
                 if event.key.keysym.sym == SDLK_z       release_button(*button_2);
@@ -130,6 +130,7 @@ handle_events :: () {
                     if event.key.keysym.sym == SDLK_ESCAPE  press_button(*button_menu);
                     if event.key.keysym.sym == SDLK_RETURN  press_button(*button_select);
                     if event.key.keysym.sym == SDLK_TAB     press_button(*button_info);
+                    if event.key.keysym.sym == SDLK_g       press_button(*button_special);
 
                     if event.key.keysym.sym == SDLK_SPACE   press_button(*button_1);
                     if event.key.keysym.sym == SDLK_z       press_button(*button_2);
@@ -217,6 +218,7 @@ handle_events :: () {
                 if event.jbutton.button == 6 press_button(*button_menu);
                 if event.jbutton.button == 7 press_button(*button_select);
                 if event.jbutton.button == 8 press_button(*button_info);
+                if event.jbutton.button == 9 press_button(*button_special);
 
             case SDL_JOYBUTTONUP;
                 if event.jbutton.button == 0 release_button(*button_1);
@@ -230,6 +232,7 @@ handle_events :: () {
                 if event.jbutton.button == 6 release_button(*button_menu);
                 if event.jbutton.button == 7 release_button(*button_select);
                 if event.jbutton.button == 8 release_button(*button_info);
+                if event.jbutton.button == 9 release_button(*button_special);
 
             case SDL_JOYHATMOTION;
                 hat_state : u8;

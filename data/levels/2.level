@@ -1,7 +1,6 @@
 [1]	# Version Number
 
-0
-
+0	# Weather
 24	# Width
 8	# Height
 
@@ -45,26 +44,17 @@ kobaya	# name
 kobaya	# name
 1	# team
 0	# ai
-2	# captain
-4	# crew
+0	# captain
+3	# crew
 9 5	# square
 2	# direction
-!	# flashback
-
-kobaya	# name
-2	# team
-4	# ai
-0	# captain
-8	# crew
-18 3	# square
-3	# direction
 !	# flashback
 
 sekibune	# name
 2	# team
 4	# ai
 9	# captain
-5	# crew
+18	# crew
 21 3	# square
 3	# direction
 !	# flashback
@@ -82,7 +72,7 @@ kobaya	# name
 2	# team
 3	# ai
 0	# captain
-7	# crew
+5	# crew
 17 5	# square
 1	# direction
 !	# flashback
@@ -91,8 +81,8 @@ kobaya	# name
 2	# team
 1	# ai
 0	# captain
-7	# crew
-12 4	# square
+5	# crew
+14 4	# square
 3	# direction
 !	# flashback
 
@@ -112,4 +102,22 @@ Artillery Kobaya	# name
 3	# crew
 10 1	# square
 2	# direction
+!	# flashback
+
+Footman Kobaya	# name
+2	# team
+2	# ai
+0	# captain
+8	# crew
+18 3	# square
+3	# direction
+!	# flashback
+
+cannon	# name
+2	# team
+5	# ai
+0	# captain
+2	# crew
+11 7	# square
+0	# direction
 !	# flashback

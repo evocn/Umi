@@ -68,7 +68,7 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
             switch_mode(.CUTSCENE);
 
         case 1;
-            init_level(map, units, chapters[current_chapter].level);
+            init_and_load_level(map, units, chapters[current_chapter].level);
             stop_music();
             play_music(chapters[current_chapter].level_song);
             switch_mode(.GAME);
@@ -175,7 +175,7 @@ resolve_game_over :: (map: *Map, units: [..] *Unit) {
     using input;
 
     if pressed(*button_1) {
-        init_level(map, units, levels[current_level_index]);
+        init_and_load_level(map, units, copy_string(map.name));
         switch_mode(.GAME);
         play_sfx("choose");
     }
@@ -185,17 +185,13 @@ resolve_game_over :: (map: *Map, units: [..] *Unit) {
     }
 }
 
-init_level :: (map: *Map, units: [..] *Unit, level_name : string) {
+init_and_load_level :: (map: *Map, units: [..] *Unit, level_name : string) {
     for map.units remove_occupant(map, it.square);
 
     reset(*level_pool, overwrite_memory=true);
 
-    new_context := context;
-    new_context.logger      = save_load_logger;
-    push_context new_context {
-        success := load_level(map, units, tprint("%.level", level_name));
-        assert(success);
-    }
+    success := load_level(map, units, tprint("%.level", level_name));
+    assert(success);
 
     for map.units occupy(map, it.square, it);
 

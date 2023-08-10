@@ -398,6 +398,8 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
     a.proc = flat_pool_allocator_proc;
     a.data = *level_pool;
 
+    map.name = copy_string(path_strip_extension(filename), allocator=a);
+
     line, found := consume_next_line(*handler);
     map.weather = cast(Weather)string_to_int(line);
 
@@ -462,7 +464,8 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
                     new_event.turn, success = parse_int(*handler);
                     if !success error(handler, "No event turn! %.\n", filename);
 
-                    new_event.dialogue_name, success = parse_string(*handler);
+                    name :, success = parse_string(*handler);
+                    new_event.dialogue_name = copy_string(name, allocator=a);
                     if !success error(handler, "No name for the dialogue event! %.\n", filename);
 
                     array_add(*map.events, cast(*Event)new_event);
@@ -504,7 +507,7 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
                     new_unit.direction = unit_copy.direction;
                     new_unit.flashback = unit_copy.flashback;
 
-                    new_unit.health = new_unit.max_health;
+                    new_unit.hull = new_unit.max_hull;
                     break;
                 }
             }
@@ -516,7 +519,9 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
         }
     }
 
-    log("Loaded level from \"%\".\n", filename, flags=.VERBOSE_ONLY);
+    //log("Loaded level from \"%\".\n", filename, flags=.VERBOSE_ONLY);
+
+    _, program_state.current_level_index = array_find(levels, map.name);
 
     return true;
 }

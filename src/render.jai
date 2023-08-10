@@ -221,7 +221,7 @@ render_map :: (map : Map, transparency := 1.0) {
 
         // Draw Units
         for map.units {
-            draw_unit(it);
+            draw_unit(it, transparency);
         }
 
         // Draw Cursor
@@ -231,6 +231,7 @@ render_map :: (map : Map, transparency := 1.0) {
 
         if get_occupant(map, cursor.square) then cursor_color = color_4;
 
+        use_tile_shader(transparency);
         draw_tile(49 * 12 + 35, cursor.square - viewport.corner, cursor_color);
 
         // Editor Cursor
@@ -278,10 +279,16 @@ render_ui :: (map: Map, transparency := 1.0) {
 
         // health
         draw_tile(942, .{1, 0}, text);
-        draw_number(health, .{2, 0}, text_2);
+        draw_number(hull, .{2, 0}, text_2);
+
+        draw_tile(929, .{3, 0}, text);
+        draw_number(max_hull, .{4, 0}, text_2);
 
         draw_tile(519, .{1, 1}, text);
         draw_number(crew, .{2, 1}, text_2);
+
+        draw_tile(929, .{3, 1}, text);
+        draw_number(max_crew, .{4, 1}, text_2);
 
         // movement
         draw_tile(1048, .{1, 2}, text);
@@ -301,6 +308,7 @@ render_ui :: (map: Map, transparency := 1.0) {
             draw_ability_ui(secondary, .{1, 5}, .{2, 5}, 1);
         }
 
+        draw_ability_ui(interact, .{0, 6}, .{1, 6}, 4);
         draw_ability_ui(repair, .{0, 7}, .{1, 7}, 2);
         draw_ability_ui(board,  .{4, 7}, .{5, 7}, 3);
 
@@ -311,8 +319,8 @@ render_ui :: (map: Map, transparency := 1.0) {
 
             draw_text(summarize_unit_flags(flags), .{0, 0}, second=true);
 
-            draw_text("hull", .{3, 1});
-            draw_text("crew", .{3, 2});
+            draw_text("hull", .{5, 1});
+            draw_text("crew", .{5, 2});
             draw_text("movement", .{3, 3});
 
             if primary.active {
@@ -335,6 +343,11 @@ render_ui :: (map: Map, transparency := 1.0) {
             {
                 text_color := color_1;
 
+                draw_text("Interact", .{2, 7});
+            }
+            {
+                text_color := color_1;
+
                 draw_text("Repair", .{2, 8});
             }
             {
@@ -354,15 +367,19 @@ render_ui :: (map: Map, transparency := 1.0) {
             }
 
             use_text_shader(transparency);
-            draw_text_right(get_captain_description(captain), 4, nudge_x = -4);
+            draw_text_right(get_captain_description(captain), TILE_SIZE / 2, nudge_x = -4);
         }
+
+        for captains_in_the_hold {
+        }
+        //draw_text_right(get_captain_name(captain), TILE_SIZE / 2, nudge_x = -4);
     }
     else if ui_unit {
         using ui_unit;
 
         // health
         draw_tile(532, .{1, -1}, text);
-        draw_number(health, .{1, -1}, text_2);
+        draw_number(hull, .{1, -1}, text_2);
 
         draw_tile(519, .{2, -1}, text);
         draw_number(crew, .{2, -1}, text_2);
@@ -546,7 +563,47 @@ render_framebuffer_to_screen :: () {
 //
 //
 
-draw_unit :: (using unit : Unit) {
+draw_mini_health_bar :: (using square: Square, health: int, max_health: int, transparency : float) {
+    pip_size := cast(float)TILE_SIZE / 16;
+    between_pips := cast(float)TILE_SIZE / 32;
+    bar_width := TILE_SIZE - pip_size - between_pips;
+
+    x := cast(float)(square.col - viewport.corner.col) * TILE_SIZE + between_pips;
+    y := cast(float)(square.row - viewport.corner.row) * TILE_SIZE + TILE_SIZE;
+
+    ratio := cast(float)health / max_health;
+
+    for 0..9 {
+        if it >= max_health then return;
+        draw_colored_rectangle(x + (between_pips + pip_size) * it, y, pip_size, pip_size, color=color_white, transparency=transparency);
+        if it >= health then continue;
+        draw_colored_rectangle(x + (between_pips + pip_size) * it, y, pip_size, pip_size, color=color_1, transparency=transparency);
+    }
+
+    if 10 >= max_health then return;
+
+    y += pip_size + between_pips;
+
+    for 10..19 {
+        if it >= max_health then return;
+        draw_colored_rectangle(x + (between_pips + pip_size) * (it - 10), y, pip_size, pip_size, color=color_white, transparency=transparency);
+        if it >= health then continue;
+        draw_colored_rectangle(x + (between_pips + pip_size) * (it - 10), y, pip_size, pip_size, color=color_1, transparency=transparency);
+    }
+
+    if 20 >= max_health then return;
+
+    y += pip_size + between_pips;
+
+    for 20..29 {
+        if it >= max_health then return;
+        draw_colored_rectangle(x + (between_pips + pip_size) * (it - 20), y, pip_size, pip_size, color=color_white, transparency=transparency);
+        if it >= health then return;
+        draw_colored_rectangle(x + (between_pips + pip_size) * (it - 20), y, pip_size, pip_size, color=color_1, transparency=transparency);
+    }
+}
+
+draw_unit :: (using unit : Unit, transparency : float) {
     /*
     if whose_turn() == team {
         if !moved {
@@ -558,18 +615,20 @@ draw_unit :: (using unit : Unit) {
     }
     */
 
+    use_tile_shader(transparency);
+
     color := team_color(team);
 
+    draw_ship(sprite_index, direction, square - viewport.corner, color);
     if sinking != 0 {
-        draw_tile(1, square - viewport.corner, color);
+        draw_tile(672, square - viewport.corner, color_white);
     }
-    else {
-        draw_ship(sprite_index, direction, square - viewport.corner, color);
-    }
+
+    draw_mini_health_bar(square, crew, max_crew, transparency);
 
     /*
     if cursor.state == .TARGETING_PRIMARY || cursor.state == .TARGETING_SECONDARY {
-        draw_number(health, square, color_3);
+        draw_number(hull, square, color_3);
     }
     */
 }
@@ -656,12 +715,12 @@ render_start_menu :: (using menu: Menu, transparency := 1.0) {
         use_tile_shader(transparency);
 
         for elements {
-            draw_menu_element(it, .{15, it_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 1}, color_black, color_white);
+            draw_menu_element(it, .{15, it_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 2}, color_black, color_3);
         }
 
         if elements.count {
             // Draw selected element over it.
-            draw_menu_element(elements[element_index], .{15, element_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 1}, color_white, color_black);
+            draw_menu_element(elements[element_index], .{15, element_index + (PIXEL_HEIGHT / TILE_SIZE) - elements.count - 2}, color_2, color_black);
         }
     }
 }

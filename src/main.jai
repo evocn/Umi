@@ -117,19 +117,8 @@ start_menu : Menu;
 
 sound_player : *Sound_Player;
 music : *Mixer_Sound_Data;
-music_stream : *Sound_Stream;
+ambience : *Mixer_Sound_Data;
 sfx   : Table(string, *Mixer_Sound_Data);
-
-// Loggers
-//
-
-logging := Log_Level.NORMAL;
-
-save_load_logger :: (message: string, data: *void, info: Log_Info) {
-    if !(info.common_flags & .VERBOSE_ONLY) || logging == .VERBOSE {
-        print("[Save/Load]: %", message);
-    }
-}
 
 // Main
 //

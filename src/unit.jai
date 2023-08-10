@@ -12,14 +12,16 @@ Unit :: struct {
     description : string;
     sprite_index : int;
 
-    max_health: int;
+    max_hull: int;
+    max_crew: int;
     movement : int;
     flags : Unit_Flags;
 
     primary: Ability;
     secondary: Ability;
-    repair: Ability = Ability.{name="Repair", sprite_index=380, targeting=.SELF, damage=-2};    @NoSerialize
-    board:  Ability = Ability.{name="Board",  sprite_index=474, targeting=.BOARDING};           @NoSerialize
+    repair:    Ability = Ability.{name="Repair", sprite_index=380, targeting=.SELF, damage=-2};    @NoSerialize
+    board:     Ability = Ability.{name="Board",  sprite_index=474, targeting=.BOARDING};           @NoSerialize
+    interact:  Ability = Ability.{name="Interact", sprite_index=474, targeting=.ANY, special=.INTERACT}; @NoSerialize
 
     // Per-Level
     team : Team;            @PerLevel
@@ -33,12 +35,14 @@ Unit :: struct {
 
     // State
     id : int;               @NoSerialize
-    health : int;           @NoSerialize
+    hull : int;             @NoSerialize
     moved  : bool;          @NoSerialize
     exhausted : bool;       @NoSerialize
 
     sinking: int;           @NoSerialize
     dead   : bool;          @NoSerialize
+
+    captains_in_the_hold : [..] Captain; @NoSerialize
 
     status : Status;        @NoSerialize
 }
@@ -87,17 +91,28 @@ AI_Behavior :: enum {
 
 kill :: (using unit: *Unit) {
     dead = true;
+    array_reset(*captains_in_the_hold);
+    play_sfx("dead");
+}
+
+sink :: (using unit: *Unit) {
+    if sinking != 0 {
+        kill(unit);
+        return;
+    }
+
+    sinking = 2;
     play_sfx("dead");
 }
 
 damage_hull :: (using unit: *Unit, damage : int, armor_piercing := false) {
     if unit.flags & .ARMORED && !armor_piercing
-        health = health - (damage - 1);
+        hull = hull - (damage - 1);
     else
-        health = health - damage;
+        hull = hull - damage;
 
-    health = clamp(health, 0, max_health);
-    if health == 0 then kill(unit);
+    hull = clamp(hull, 0, max_hull);
+    if hull == 0 then sink(unit);
 }
 
 damage_crew :: (using unit: *Unit, damage : int) {

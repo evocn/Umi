@@ -102,6 +102,7 @@ init :: () -> bool {
             register_sprite("haruhachi");
 
             register_sprite("pirate");
+            register_sprite("yoshitaka");
 
             register_sprite("ui");
         }
@@ -151,7 +152,7 @@ init :: () -> bool {
     }
 
     //toggle_fullscreen();
-    sound_player.mix_all = 0.5;
+    sound_player.mix_all = 0.0;
 
     return true;
 }
@@ -205,6 +206,8 @@ init_audio :: () {
     // Create the music stream.
     play_music("mohican");
 
+    play_ambience("ocean_calm");
+
     wmInfo : SDL_SysWMinfo;
     SDL_VERSION(*wmInfo.version);
     SDL_GetWindowWMInfo(window, *wmInfo);
@@ -214,6 +217,7 @@ init_audio :: () {
     assert(success);
 
     sound_player.mix_props = 0.5;
+    sound_player.mix_ambiences = 0.5;
     sound_player.mix_music = 0.5;
 }
 
@@ -247,6 +251,13 @@ init_menus :: () {
         music.sprite_index = 823;
         music.sprite_index_two = 1066;
         array_add(*elements, cast(*Menu_Element)music);
+
+        ambiences := New(Slider_Element, allocator=a);
+        ambiences.name = "Ambience";
+        ambiences.value = *sound_player.mix_ambiences;
+        ambiences.sprite_index = 823;
+        ambiences.sprite_index_two = 1066;
+        array_add(*elements, cast(*Menu_Element)ambiences);
 
         sfx := New(Slider_Element, allocator=a);
         sfx.name = "sfx";
