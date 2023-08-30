@@ -40,6 +40,15 @@ draw_text_centered :: (text: string, y: float, nudge_x := 0.0)
     render_text(font, text, nudge_x, y, alignment = .CENTER);
 }
 
+draw_text_centered :: (text: string, y: float, color : Color, nudge_x := 0.0)
+{
+    shader := rendering.text_shader;
+    font := main_font;
+
+    set_vec4(shader, "color", color);
+    render_text(font, text, nudge_x, y, alignment = .CENTER);
+}
+
 draw_text_centered_with_progress :: (text: string, y: float, progress: int, nudge_x := 0.0)
 {
     shader := rendering.text_shader;

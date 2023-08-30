@@ -175,6 +175,7 @@ level_editor :: (using map: *Map) {
             a.data = *pool;
 
             levels[program_state.current_level_index] = copy_string(to_string(level_buffer.data), allocator=a);
+            map.name = copy_string(to_string(level_buffer.data), allocator=a);
             memset(level_buffer.data, 0, level_buffer.count);
         }
         ImGui.SameLine();
@@ -271,6 +272,8 @@ find_template :: (templates: [..] *Unit, name: string) -> bool, int {
     return false, -1;
 }
 
+flashback_buffer : [64] u8;
+parley_buffer : [64] u8;
 unit_editor :: (using unit: *Unit, map: *Map, templates: [..] *Unit) {
     ImGui.Begin("Unit");
     {
@@ -300,7 +303,28 @@ unit_editor :: (using unit: *Unit, map: *Map, templates: [..] *Unit) {
         ti = type_info(Direction);
         ImGui.SliderInt("Direction", xx *direction, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx direction]));
 
-        // Add flashbacks in the file... Not worth the extra kludge.
+        if ImGui.InputText("Flashback", flashback_buffer.data, flashback_buffer.count) {
+            a: Allocator;
+            a.proc = flat_pool_allocator_proc;
+            a.data = *level_pool;
+
+            flashback = copy_string(to_string(flashback_buffer.data), allocator=a);
+            memset(flashback_buffer.data, 0, flashback_buffer.count);
+        }
+
+        ti = type_info(Captain);
+        ImGui.SliderInt("Parleys With", xx *parley_captain, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx parley_captain]));
+
+        if parley_captain != .NONE {
+            if ImGui.InputText("Parley", flashback_buffer.data, flashback_buffer.count) {
+                a: Allocator;
+                a.proc = flat_pool_allocator_proc;
+                a.data = *level_pool;
+
+                flashback = copy_string(to_string(flashback_buffer.data), allocator=a);
+                memset(flashback_buffer.data, 0, flashback_buffer.count);
+            }
+        }
     }
     ImGui.End();
 }
@@ -338,7 +362,7 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
 
                 {
                     using selected_unit;
-                    ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 8, "%d", .ImGuiSliderFlags_AlwaysClamp);
+                    ImGui.DragInt("Sprite", xx *sprite_index, 1, 0, 7, "%d", .ImGuiSliderFlags_AlwaysClamp);
 
                     ImGui.SliderInt("Movement", xx *movement, 0, 9);
 
@@ -392,6 +416,8 @@ percolate_changes_to_map_units :: (map: *Map, unit: *Unit) {
             it.square = unit_copy.square;
             it.direction = unit_copy.direction;
             it.flashback = unit_copy.flashback;
+            it.parley = unit_copy.parley;
+            it.parley_captain = unit_copy.parley_captain;
 
             it.hull = it.max_hull;
         }

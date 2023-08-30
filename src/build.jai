@@ -64,6 +64,7 @@ build :: () {
     add_build_file(tprint("%/slice.jai", #filepath), w);
 
     add_build_file(tprint("%/viewport.jai", #filepath), w);
+    add_build_file(tprint("%/weather.jai", #filepath), w);
 
     add_build_file(tprint("%/render.jai", #filepath), w);
     add_build_file(tprint("%/font.jai", #filepath), w);

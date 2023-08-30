@@ -1,86 +1,147 @@
 [1]
 
-The world is calm. 
-@ study 
+# TODO: Split this into two conversations?
 
-It is early morning.
-You write a letter to a neighboring lord.
+# TESTING
 
-The sound of seagulls carries on the sea breeze.
-It has been two years since you became leader.
-Head of the Noshima Murakami, and therefore leader of all.
-Two years of tranquility.
+Haruhachi | BAHAHAHAHA!
+& laugh
 
-Takeda | That will do. Hm... 
-Takeda | Perhaps the ships could carry this letter today.
-Takeda | ...
-Takeda | Perhaps tomorrow will do.
-Takeda | Politics... So very boring...
+Haruhachi | Woah.!
+& serious
 
-All is still.
+Haruhachi | hm...
+& haughty
 
-Suddenly, the sound of footfalls.
-The door of your study slides open.
-It is your cousin, Aki.
+Haruhachi | Whatever.
+& neutral
+
+# TESTING
+
+The world was calm. 
+@ room 
+
+It was early morning.
+
+Takeda | Hm...
+
+The sound of seagulls hung in the salty air.
+Takeda sat in silence.
+
+He was the head of the Noshima Murakami.
+By extension, he was the leader of all three Murakami clans.
+
+Two years had passed since his ascension.
+< Takeda
+@ noshima
+Two years of peace and tranquility.
+The Murakami had sustained themselves by the sea.
+They had watched as Japan was ravaged by war and bandits.
+The Murakami stayed quiet and watchful.
+
+Takeda was young leader of great potential.
+> Takeda
+@ room 
+
+He was educated, clever, and had broad interests.
+While there were a great many things to manage, 
+Takeda spent his free hours reading.
+Reading and thinking.
+
+Takeda sat quietly, almost perfectly still.
+
+...
+
+But on this particular day, a noise came.
+The sound of footfalls broke his concentration.
+The door of Takeda's study slid open.
+It was his cousin, Aki.
 
 Aki | My lord!
 
-Aki is your cousin.
+Aki was head of the Kurushima Murakami.
 < Takeda
+The Kurushima had always been known for their talents.
+Music, kyudo, poetry, painting...
 
-He is head of the Kurushima Murakami.
-He is your cousin, and brother of Arukahime.
+Aki, the head of the Kurushima, was around Takeda's age.
+The two of them grew up together. They were best friends.
+But while Takeda was a man of history, politics, and philosophy,
+Aki was a simple man, preferring the ways of spear-fishing.
 
-He hastily removes his shoes, kneels, and quickly bows to you.
-> Takeda
+He hastily removed his shoes, kneeled, and quickly bowed.
 
-Aki | Lord Takeda, pirates approach from the east. 
-Aki | I came right away.
-Aki | It is the Wako. I believe they mean to ransack Noshima.
+Aki | Lord Takeda.
+Aki | pirates approach from the east.
+Aki | It is the Wako. They drive a course to ransack Noshima.
+
+The Wako. Grave pirates from the Sea of Japan.
+< Aki
+Their reputation precedes them. Their business is death.
 
 Takeda | ...
-< Aki
-Takeda | Interesting...
-Aki | My lord? We must prepare an offering before they arrive!
+> Takeda
+Takeda | Hm...
 > Aki
+Aki | My lord?
 
-Takeda | Wako, I see... After so many years of peace.
+Takeda | So the Wako return, after over thirty years away from the Seto.
 Takeda | Then the day has come.
+Takeda | Aki, my cousin, today the Murakami determine their own fate.
 
-Aki | My lord, what do you mean?
+Aki | Takeda... What do you mean by that?
 
-Takeda | Today the Murakami determine their own fate.
+Takeda | ...
 
-Aki | !!!
-Aki | You mean to fight them?!
-
-Takeda | How many ships were there?
-
-Aki | Four Kobaya and one Sekibune.
-
-Takeda | Do they have us beat on manpower?
-Aki | Yes, at least those which will fit on our vessels.
-
-Takeda | Artillery?
-
-Aki | Arquebuses. no cannons... Wait, cousin, are you serious?
-Aki | Our fathers have taught us the ways of the pirates.
-Aki | We must give tribute to them. They will pass us by.
+Aki | You mean... to fight?!
+Aki | Takeda, our fathers taught us how to handle pirates.
+Aki | If we give them a proper tribute, they will pass us by.
+Aki | Let us not risk the lives of our kin!
 Aki | Would not a portion of our wealth and one maiden suffice?
 
 Takeda | It certainly would.
+Takeda | My father would have made such a bargain.
 
 Aki | Then why do you speak of fighting?
 
-Takeda | For if the Wako receive what they desire today,
+Arukahime | Aki, brother, what are you doing here?
+
+Aki | ...
+
+Takeda | Here is the maiden you speak of.
+
+Aki | ...
+
+Takeda | Arukahime, the Wako sail to Noshima.
+
+Arukahime | ... 
+Arukahime | Then we must prepare an offering.
+Arukahime | I offer myself as tribute to the pirates.
+
+Takeda | ...
+Takeda | My love. Your loyalty is admirable.
+Takeda | The Kurushima offer a simple and honest strategy.
+Takeda | And if I were my father, I would take it.
+Takeda | I do not mean to risk the lives of our kin without cause.
+Takeda | But there is a line of reasoning which stays my hand.
+
+Aki | What is it?
+
+Takeda | If the Wako receive what they desire today,
 Takeda | they will know us as the farmer knows his rice.
-Takeda | They will return, year after year, to harvest us.
+Takeda | They will return, year after year, for the harvest.
 Takeda | Do you see?
 Takeda | For that reason, we must strike decisively.
 Takeda | One battle, to drive them off forever.
 
+Aki | Risk our lives today, to save ourselves tomorrow?
+Takeda | To change the fate of the Murakami.
+Aki | ... I see. 
+Aki | And do you really think we can win?
+
+Takeda | ...
+
 Takeda | Gather the men, and send for Haruhachi. We must be swift.
-< Aki
 
 Haruhachi | No need.
 
@@ -88,10 +149,18 @@ Takeda | Haruhachi!
 
 Haruhachi | I came as swiftly as the hawk flies.
 
-Haruhachi is head of the Innoshima Murakami.
+Haruhachi was head of the Innoshima Murakami.
 < Takeda
-He is eight years your senior.
+He was eight years Takeda's senior.
+The Innoshima were escorts on the inland sea.
+They had known battle in this age, and how to profit from it.
 
 Takeda | I'm glad you're here, cousin.
 > Takeda
 Takeda | Come, we must rally the men.
+< Takeda
+Haruhachi | Alright!
+< Haruhachi
+
+Arukahime | ...
+Arukahime | Takeda...

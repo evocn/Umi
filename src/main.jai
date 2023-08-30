@@ -25,23 +25,6 @@ aspect_ratio  : float = 1.78;
 //
 //
 
-Weather :: enum #complete {
-    DAY;
-    NIGHT;
-    STORM;
-}
-
-parse_weather :: (str: string) -> Weather {
-    if str == {
-        case "day";   return .DAY;
-        case "night"; return .NIGHT;
-        case "storm"; return .STORM;
-    }
-
-    log_error("Bad weather string: %\n", str);
-    return .DAY;
-}
-
 Program_Mode :: enum {
     GAME;
     START;
@@ -51,11 +34,18 @@ Program_Mode :: enum {
     MENU;
     GAME_OVER;
     CREDITS;
+    CHAPTER;
 }
 
 switch_mode :: (new_mode: Program_Mode) {
     prior_program_mode = program_mode;
     program_mode = new_mode;
+
+
+    if program_mode == .MENU {
+        play_woodblock_sound();
+        menu.element_index = 0;
+    }
 }
 
 return_to_prior_mode :: () {
@@ -65,7 +55,7 @@ return_to_prior_mode :: () {
 }
 
 using program_state : struct {
-    program_mode : Program_Mode = .START;
+    program_mode : Program_Mode;
     prior_program_mode : Program_Mode;
 
     program_paused : bool;
@@ -218,6 +208,7 @@ using Basic :: #import "Basic"()(MEMORY_DEBUGGER=DEBUG_MEMORY);
 #import "Sound_Player";
 #import "Wav_File";
 #import "stb_vorbis";
+
 #import "Thread";
 #import "Random";           
 #import "Sort";

@@ -7,25 +7,7 @@ Week 3
 ------
 Design Week
 
-Tight System
-3 Fun Levels.
-
-Stealth Mission
-    The mission is a simple stealth mission with two fleets, and a great big fire
-    situation near the end!
-
-    I want Kuki Yoshitake to appear at the end of this one.
-    It would be cool if he knows that it is the Murakami right away, when no one
-    else does.
-
-Reinforcements
-Transfer Units
-Parley
-
-4 More Fun levels.
-
-Rewrite everything in period form.
-  Maybe read some period works?
+Writing + Maps for the first 3
 
 Week 4
 ------
@@ -36,44 +18,26 @@ Art Week
 * All slices
 * All music
 
-Reduce draw calls (screen culling)
-undo for gameplay
-
-Dialogue murals crossfades.
-
-Some visual displaying the year inbetween chapters.
-Night Mode.
-Fog of War?
 Display of how many crew remain on either side, how many ships, etc.
 
-New Icon
-
-Save/Load Game?
-  Maybe just a code system?
-  Maybe just let the user pick their starting level?
+5 More Fun levels.
 
 Week 5
 ------
-Polish.
-    Start Screen ssssshing!
-    Full-on Audio pass.
-    Visual flourishes. Flashes of lightning, etc.
-    UI Animations
+Finish Writing, design
 
-    Better Cursor
-    Soft Viewport
-    Dialogue displays one character at a time, and buffers inputs until it's finished.
-    New Power Button ui element
-    Display the menu element name beside the element. (Or overlaid)
-
+Week 6
+------
 Finish.
   QA Pass
+  Full-on Audio pass.
   Bug fixes galore.
 
 Release.
   Release Build.
   Mac Build.
   Run it on every machine I can think of.
+  New Icon
 
 Publish.
   Itch Page.

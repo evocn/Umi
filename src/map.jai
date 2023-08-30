@@ -18,8 +18,6 @@ Map :: struct {
     units : [..] *Unit;
 
     events : [..] *Event;
-
-    weather: Weather = .NIGHT;
 }
 
 clear :: (using map: *Map) {

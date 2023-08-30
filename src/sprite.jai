@@ -8,8 +8,8 @@ Sprite :: struct {
     texture : Texture = ---;
 }
 
-make_sprite :: (using sprite : *Sprite, filename : string, tiled := true) -> success: bool {
-    texture =, success := load_texture(filename);
+make_sprite :: (using sprite : *Sprite, full_path : string, tiled := true) -> success: bool {
+    texture =, success := load_texture(full_path);
     return success;
 }
 

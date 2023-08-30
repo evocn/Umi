@@ -78,17 +78,24 @@ init :: () -> bool {
 
         // Sprites
         success : bool;
-        success = make_spritesheet(*spritesheet, "big.png");
+
+        full_path := tprint("%/big.png", sprites_path);
+        success = make_spritesheet(*spritesheet, full_path);
         assert(success);
 
-        success = make_spritesheet(*ship_spritesheet, "ships.png");
+        full_path = tprint("%/ships.png", sprites_path);
+        success = make_spritesheet(*ship_spritesheet, full_path, tile_size = TILE_SIZE * 2);
         assert(success);
 
         {
             register_sprite :: (name: string) {
                 new_sprite : Sprite;
-                success := make_sprite(*new_sprite, tprint("%.png", name));
-                assert(success);
+                full_path := tprint("%/%.png", sprites_path, name);
+                success := make_sprite(*new_sprite, full_path);
+                if !success {
+                    log_error("Unable to load %.\n", full_path);
+                    assert(false);
+                }
                 table_add(*rendering.sprites, name, new_sprite);
             }
 
@@ -99,9 +106,13 @@ init :: () -> bool {
             register_sprite("takeda");
             register_sprite("motonari");
             register_sprite("arukahime");
-            register_sprite("haruhachi");
 
-            register_sprite("pirate");
+            register_sprite("haruhachi");
+            register_sprite("haruhachi_laugh");
+            register_sprite("haruhachi_haughty");
+            register_sprite("haruhachi_serious");
+
+            register_sprite("limahong");
             register_sprite("yoshitaka");
 
             register_sprite("ui");
@@ -110,27 +121,43 @@ init :: () -> bool {
         {
             register_mural :: (name: string) {
                 new_mural : Sprite;
-                success := make_sprite(*new_mural, tprint("%.png", name));
+                full_path := tprint("%/%.png", murals_path, name);
+                success := make_sprite(*new_mural, full_path);
+                if !success {
+                    log_error("Unable to load %.\n", full_path);
+                    assert(false);
+                }
                 assert(success);
                 table_add(*rendering.murals, name, new_mural);
             }
 
             register_mural("title");
             register_mural("wave");
-            register_mural("bryce");
-            register_mural("study");
             register_mural("black");
+
+            register_mural("noshima");
+            register_mural("study");
+            register_mural("room");
+
+            register_mural("ocean_day");
+            register_mural("ocean_night");
+            register_mural("ocean_evening");
         }
 
         {
             register_slice :: (name: string) {
                 new_slice : Sprite;
-                success := make_sprite(*new_slice, tprint("%.png", name));
-                assert(success);
+                full_path := tprint("%/%.png", slices_path, name);
+                success := make_sprite(*new_slice, full_path);
+                if !success {
+                    log_error("Unable to load %.\n", full_path);
+                    assert(false);
+                }
                 table_add(*rendering.slices, name, new_slice);
             }
 
-            register_slice("slice");
+            register_slice("archers");
+            register_slice("wave");
         }
 
         init_framebuffer();
@@ -152,7 +179,7 @@ init :: () -> bool {
     }
 
     //toggle_fullscreen();
-    sound_player.mix_all = 0.0;
+    sound_player.mix_all = 1.0;
 
     return true;
 }
@@ -203,10 +230,14 @@ init_audio :: () {
     load_sfx("selection");
     load_sfx("warp");
 
-    // Create the music stream.
-    play_music("mohican");
+    load_sfx("wb1");
+    load_sfx("wb2");
+    load_sfx("wb3");
 
-    play_ambience("ocean_calm");
+    load_sfx("haruhachi");
+    load_sfx("haruhachi_haughty");
+    load_sfx("haruhachi_laugh");
+    load_sfx("haruhachi_serious");
 
     wmInfo : SDL_SysWMinfo;
     SDL_VERSION(*wmInfo.version);
@@ -216,9 +247,11 @@ init_audio :: () {
     success := init(sound_player, xx hwnd, true, true);
     assert(success);
 
-    sound_player.mix_props = 0.5;
-    sound_player.mix_ambiences = 0.5;
-    sound_player.mix_music = 0.5;
+    sound_player.mix_props = 1.0;
+    sound_player.mix_ambiences = 1.0;
+    sound_player.mix_music = 1.0;
+
+    go_to_start_screen();
 }
 
 init_menus :: () {
@@ -248,27 +281,27 @@ init_menus :: () {
         music := New(Slider_Element, allocator=a);
         music.name = "Music";
         music.value = *sound_player.mix_music;
-        music.sprite_index = 823;
-        music.sprite_index_two = 1066;
+        music.sprite_index = 957;
+        music.sprite_index_two = 956;
         array_add(*elements, cast(*Menu_Element)music);
 
-        ambiences := New(Slider_Element, allocator=a);
-        ambiences.name = "Ambience";
-        ambiences.value = *sound_player.mix_ambiences;
-        ambiences.sprite_index = 823;
-        ambiences.sprite_index_two = 1066;
-        array_add(*elements, cast(*Menu_Element)ambiences);
+        ambience := New(Slider_Element, allocator=a);
+        ambience.name = "Ambience";
+        ambience.value = *sound_player.mix_ambiences;
+        ambience.sprite_index = 963;
+        ambience.sprite_index_two = 962;
+        array_add(*elements, cast(*Menu_Element)ambience);
 
         sfx := New(Slider_Element, allocator=a);
         sfx.name = "sfx";
         sfx.value = *sound_player.mix_props;
-        sfx.sprite_index = 822;
-        sfx.sprite_index_two = 821;
+        sfx.sprite_index = 961;
+        sfx.sprite_index_two = 960;
         array_add(*elements, cast(*Menu_Element)sfx);
 
         home := New(Go_Element, allocator=a);
         home.name = "home";
-        home.callback = go_home;
+        home.callback = go_to_start_screen;
         home.sprite_index = 825;
         array_add(*elements, cast(*Menu_Element)home);
     }

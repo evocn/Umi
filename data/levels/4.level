@@ -1,0 +1,90 @@
+[1]	# Version Number
+
+0	# Weather
+16	# Width
+8	# Height
+
+# Tiles:
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+---
+# Sprite Index Exceptions:
+---
+# Events: 
+
+DIALOGUE
+0
+4_a
+---
+
+sekibune	# name
+1	# team
+0	# ai
+4	# captain
+5	# crew
+4 3	# square
+0	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+1	# team
+0	# ai
+1	# captain
+5	# crew
+2 4	# square
+0	# direction
+4_aki	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+1	# team
+0	# ai
+0	# captain
+5	# crew
+6 4	# square
+0	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+kobaya	# name
+1	# team
+0	# ai
+5	# captain
+5	# crew
+6 2	# square
+0	# direction
+4_arukahime	# flashback
+!	# parley
+0	# parley_captain
+
+kobaya	# name
+1	# team
+0	# ai
+2	# captain
+5	# crew
+2 2	# square
+0	# direction
+4_ojii	# flashback
+!	# parley
+0	# parley_captain
+
+Flame Kobaya	# name
+1	# team
+0	# ai
+6	# captain
+5	# crew
+4 1	# square
+0	# direction
+4_haruhachi	# flashback
+!	# parley
+0	# parley_captain

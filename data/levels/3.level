@@ -17,13 +17,63 @@
 # Sprite Index Exceptions:
 ---
 # Events: 
+
+DIALOGUE
+0
+3_a
 ---
 
-Ayubune	# name
+Footman Kobaya	# name
 1	# team
 0	# ai
-0	# captain
+1	# captain
+5	# crew
+3 2	# square
+0	# direction
+3_aki	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+1	# team
+0	# ai
+2	# captain
+5	# crew
+7 2	# square
+0	# direction
+3_ojii	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+1	# team
+0	# ai
+4	# captain
+5	# crew
+5 1	# square
+0	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Flame Kobaya	# name
+1	# team
+0	# ai
+6	# captain
 5	# crew
 5 3	# square
 0	# direction
-!	# flashback
+3_haruhachi	# flashback
+!	# parley
+0	# parley_captain
+
+kobaya	# name
+1	# team
+0	# ai
+5	# captain
+5	# crew
+1 1	# square
+0	# direction
+3_arukahime	# flashback
+!	# parley
+0	# parley_captain

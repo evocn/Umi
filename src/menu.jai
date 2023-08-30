@@ -57,7 +57,7 @@ resolve_menu_inputs :: (using menu: *Menu) {
 
     if pressed(*button_menu) {
         return_to_prior_mode();
-        play_sfx("place");
+        play_woodblock_sound();
     }
 
     if pressed(*up) {
@@ -76,17 +76,15 @@ resolve_menu_inputs :: (using menu: *Menu) {
     }
     if pressed(*left) {
         nudge_menu_element(elements[element_index], left=true);
-        play_sfx("choose");
+        play_woodblock_sound();
     }
     if pressed(*right) {
         nudge_menu_element(elements[element_index]);
-        play_sfx("choose");
+        play_woodblock_sound();
     }
 
     if pressed(*button_1) {
         toggle_menu_element(elements[element_index]);
-    }
-    if pressed(*button_2) {
     }
 }
 
@@ -97,13 +95,13 @@ toggle_menu_element :: (using element: *Menu_Element) {
         case .GO;
             using cast(*Go_Element)element;
             callback();
-            play_sfx("place");
+            play_woodblock_sound();
 
         case .CHECKBOX;
             using cast(*Checkbox_Element)element;
             callback();
             value.* = !(value.*);
-            play_sfx("choose");
+            play_woodblock_sound();
 
         case .SLIDER;
             // Don't do anything.
@@ -150,18 +148,26 @@ quit_game :: () {
     running = false;
 }
 
-go_home :: () {
-    switch_mode(.START);
+go_to_start_screen :: () {
+    if prior_program_mode == .START {
+        switch_mode(.START);
+        return;
+    }
+
     spine.current_chapter = -1;
     spine.current_section = -1;
-    stop_stream_abruptly(sound_player, music);
-    play_music("mohican");
+    stop_music();
+
+    //play_music("mohican");
+    play_ambience("ocean_scary");
+    weather = .DAY;
+
+    switch_mode(.START);
 }
 
 go_to_settings :: () {
     switch_mode(.MENU);
     menu.element_index = 0;
-    play_sfx("selection");
 }
 
 show_credits :: () {

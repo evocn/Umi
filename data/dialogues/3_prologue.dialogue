@@ -3,25 +3,29 @@
 * night
 # Another calm night in the study of Takeda.
 
-It has been a year since the battle of Noshima.
+It had been a year since the battle of Noshima.
 @ study
-The Murakami have been changed by it. They are proud. Zealous.
-They tell tales of the battle late into the night.
-They eat more fish than before.
-They catch extra to trade with the neighboring lordships.
-They drink imported sake and play games of Shogi.
+The Murakami were been changed by it. They were proud. Joyful.
+They told tales of the battle late into the night.
+They ate more fish than ever before.
+They caught extra fish to trade with the neighboring lordships.
+They drank imported sake and played games of shogi.
 
-The fish have been plentiful. 
+The fish had been plentiful. 
 The men carry home enough for all Murakami by noontime.
-In the free afternoons, the men train in the martial arts.
-There is a pervasive joy about Noshima castle.
-You gleam with pride every night.
+In the free afternoons, the men trained in the martial arts.
+There was a pervasive pride about Noshima castle.
+Takeda was heralded as a great lord.
 
-The tale of The Battle of Noshima spreads to other lands.
-Murakami becomes a name known to samurai as far north as Uesugi.
+The tale of The Battle of Noshima spread to other lands.
+The Murakami become known to samurai as far north as Uesugi.
 
-One summer night, this fame leads to an unexpected meeting.
+One summer night, this fame led to an unexpected meeting.
 @ black
+
+Figures walk along the shoreline, sillhouetted by moonlight.
+They disembark from a boat bearing a purple flag.
+The flag of the Mori clan.
 
 Takeda | Lord Motonari, I am honored by your presence at Noshima Castle.
 Motonari | And I am honored at meeting you, Lord Takeda.
@@ -40,7 +44,7 @@ They do not trust easily, these samurai of different families.
 
 Takeda | Lord Motonari, in your correspondence, you mentioned something.
 > Takeda
-Takeda | Something to bring our clans closer together.
+Takeda | A request to bring our clans closer together.
 Takeda | Would you elaborate?
 
 Motonari | You and your family are known for the defeat of the Wako.
@@ -66,15 +70,14 @@ Motonari | And when I am shogun, I will give two thousand more.
 
 Takeda | !!!
 < Motonari
-Takeda | That is an immense amount of land...
+Takeda | That is far more than I had anticipated.
 Takeda | Tenfold the size of Murakami lands now.
-Takeda | We would live as emporers.
-Takeda | This is what the Murakami are destined for!
+Takeda | We could farm, and grow the Murakami...
 
 Takeda | I accept your offer!
+> Motonari
 
 Motonari | Then it is settled. You are to be my admiral.
-> Motonari
 Motonari | We shall discuss more in the interim.
 Motonari | But for now, we must tell our men.
 

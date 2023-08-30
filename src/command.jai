@@ -241,6 +241,7 @@ Use_Ability_Command :: struct {
     kind = .USE_ABILITY;
     map: *Map;
     ability: *Ability;
+    dialogue: *Dialogue;
 }
 
 execute :: (using command: *Use_Ability_Command) {
@@ -266,11 +267,11 @@ execute :: (using command: *Use_Ability_Command) {
             case .ANY;
         }
 
-        result = resolve_ability(map, ability, selected, target, square);
+        result = resolve_ability(map, ability, selected, target, square, dialogue);
         print("%\n", result);
     }
     else {
-        result = resolve_ability(map, ability, selected, null, square);
+        result = resolve_ability(map, ability, selected, null, square, dialogue);
     }
 
     selected.exhausted = true;
@@ -292,7 +293,9 @@ execute :: (using command: *Use_Ability_Command) {
         }
     }
 
-    slice_start(result, length = 3.0);
+    if result.should_display {
+        slice_start(result, length = 5.0);
+    }
 
     deselect_unit(map.*, reset_cursor=reset_cursor);
 }

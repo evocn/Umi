@@ -118,7 +118,7 @@ play_music :: (name : string) {
 play_ambience :: (name : string) {
     if name == "none" then return;
 
-    full_path := tprint("%/%.ogg", music_path, name);
+    full_path := tprint("%/%.ogg", ambiences_path, name);
 
     ambience = load_audio_file(full_path);
 
@@ -138,6 +138,7 @@ play_ambience :: (name : string) {
 
 stop_music :: () {
     stop_stream_abruptly(sound_player, music);
+    stop_stream_abruptly(sound_player, ambience);
     //destroy(music_stream);
 }
 
@@ -156,3 +157,16 @@ update_sound_player :: (dt: float) {
     post_entity_update(sound_player, dt);
 }
 
+
+
+//
+//
+
+// "Gameplay Code"-style audio stuff.
+play_woodblock_sound :: () {
+    woodblock_sounds :: string.["wb1", "wb2", "wb3"];
+    //woodblock_sounds :: string.["wb1"];
+    index := cast(int)(random_get_zero_to_one() * woodblock_sounds.count);
+    choice := woodblock_sounds[index];
+    play_sfx(choice);
+}

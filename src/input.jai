@@ -33,12 +33,14 @@ update_input_hold_times :: (dt: float) {
     using input;
 
     maybe_increment_hold_time :: (button: *Button, dt: float) {
-        if button.held_for > HOLD_REPEAT_TIME {
-            press_button(button);
-        }
+        if program_mode == .GAME {
+            if button.held_for > HOLD_REPEAT_TIME {
+                press_button(button);
+            }
 
-        if button.held || button.held_for != 0.0 {
-            button.held_for += dt;
+            if button.held || button.held_for != 0.0 {
+                button.held_for += dt;
+            }
         }
     }
 
@@ -157,7 +159,10 @@ handle_events :: () {
                     }
 
                     if event.key.keysym.sym == SDLK_n {
-                        spine.ready_for_next_section = true;
+                        if program_mode != .MENU {
+                            spine.ready_for_next_section = true;
+                            fade.active = false;
+                        }
                     }
 
                     if event.key.keysym.sym == SDLK_k

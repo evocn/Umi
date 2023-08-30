@@ -111,6 +111,8 @@ summarize_ability :: (using ability: Ability) -> string {
 }
 
 Resolution :: struct {
+    should_display : bool;
+
     ability: *Ability;
     user: *Unit;
     victim: *Unit;
@@ -153,7 +155,7 @@ get_damage :: (attacker_strength : int, victim_strength : int) -> int {
     return damage;
 }
 
-resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *Unit, square: Square) -> Resolution {
+resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *Unit, square: Square, dialogue: *Dialogue) -> Resolution {
     assert(user != null);
     assert(ability != null);
 
@@ -175,6 +177,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
 
         // damage
         if targeting == .BOARDING {
+            result.should_display = true;
+
             die_result := roll_die(BOARDING_AGGRESSOR_DIE) + BOARDING_AGGRESSOR_BONUS;
 
             calculated_user_crew := user.crew + die_result + bonus_damage;
@@ -205,6 +209,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
                 if user.dead result.user_died = true;
         }
         else if damage > 0 || (damage == 0 && bonus_damage > 0) {
+            result.should_display = true;
+
             tile := get_tile(map.*, victim.square);
             if tile.kind == .COVER return result;
             else if tile.kind == .HALF_COVER {
@@ -230,6 +236,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             if victim.dead result.victim_died = true;
         }
         else if damage < 0 || (damage == 0 && bonus_damage < 0) {
+            result.should_display = true;
+
             die_result := roll_die(damage);
             heal_amount := die_result + abs(bonus_damage);
 
@@ -250,6 +258,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
 
         // push
         if push_orientation != .NONE && !(victim.flags & .IMMOVABLE) {
+            result.should_display = true;
+
             direction_of_push : Direction;
             {
                 direction_to_target := get_best_unit_direction(user.square, victim.square);
@@ -293,6 +303,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             case .INTERACT;
             {
                 if user.team == victim.team {
+                    result.should_display = true;
+
                     crew_receiver := user;
                     crew_giver := victim;
 
@@ -330,10 +342,19 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
                     }
                 }
                 else {
+                    result.should_display = false;
                     // Parley
+                    if user.captain == victim.parley_captain {
+                        success := load_dialogue_file(dialogue, tprint("%.dialogue", victim.parley));
+                        if !success {
+                            log_error("Parley: Unable to load dialogue file %.\n", victim.parley);
+                        }
+                        else {
+                            switch_mode(.DIALOGUE);
+                        }
 
-                    // @TODO: Get a dialogue to appear here.
-                    // @TODO: Define who can/can't talk to someone. Preferably in the level file so we can edit it with tools.
+                        victim.team = .YOU;
+                    }
                 }
             }
             case .DANCE;

@@ -28,6 +28,10 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
     }
 
     if screen_slice.active {
+        if pressed(*input.button_select) {
+            screen_slice.time = screen_slice.length;
+        }
+
         slice_update(dt);
         return;
     }
@@ -107,5 +111,8 @@ simulate :: (map: *Map, dialogue: *Dialogue, units: [..] *Unit, dt: float) {
 
         case .CREDITS;
             resolve_credits_input();
+
+        case .CHAPTER;
+            resolve_chapter_screen();
     }
 }

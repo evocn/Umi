@@ -32,12 +32,16 @@ Unit :: struct {
     using square : Square;  @PerLevel
     direction : Direction;  @PerLevel
     flashback : string;     @PerLevel
+    parley : string;        @PerLevel
+    parley_captain : Captain; @PerLevel
 
     // State
     id : int;               @NoSerialize
     hull : int;             @NoSerialize
     moved  : bool;          @NoSerialize
     exhausted : bool;       @NoSerialize
+
+    flashback_triggered : bool; @NoSerialize
 
     sinking: int;           @NoSerialize
     dead   : bool;          @NoSerialize

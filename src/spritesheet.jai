@@ -8,10 +8,10 @@ Spritesheet :: struct {
     columns, rows : int;
 }
 
-make_spritesheet :: (using spritesheet : *Spritesheet, filename : string) -> success: bool {
-    texture =, success := load_texture(filename);
-    columns = texture.width  / TILE_SIZE;
-    rows    = texture.height / TILE_SIZE;
+make_spritesheet :: (using spritesheet : *Spritesheet, full_path : string, tile_size := TILE_SIZE) -> success: bool {
+    texture =, success := load_texture(full_path);
+    columns = texture.width  / tile_size;
+    rows    = texture.height / tile_size;
 
     return success;
 }
@@ -23,18 +23,18 @@ draw_tile :: (index: int, square : Square, color := color_black, offset := Vecto
 draw_ship :: (index: int, direction: Direction, square : Square, color := color_black) {
     if #complete direction == {
         case .NORTH;    
-            draw_spritesheet(rendering.ship_spritesheet, index * 4, square, color_override=color, horizontal_flip=false);
+            draw_spritesheet(rendering.ship_spritesheet, index * 4, square, use_color_override=false, horizontal_flip=false, scale_multiplier=2.0);
         case .SOUTH;
-            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 1, square, color_override=color, horizontal_flip=false);
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 1, square, use_color_override=false, horizontal_flip=false, scale_multiplier=2.0);
         case .EAST;
-            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, color_override=color, horizontal_flip=false);
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, use_color_override=false, horizontal_flip=false, scale_multiplier=2.0);
         case .WEST;
-            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, color_override=color, horizontal_flip=true);
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, use_color_override=false, horizontal_flip=true, scale_multiplier=2.0);
     }
 }
 
 draw_spritesheet :: (using sheet : Spritesheet, index: int, square : Square, 
-                     offset := Vector2.{0, 0}, horizontal_flip := false, use_color_override := true, color_override := color_black) {
+                     offset := Vector2.{0, 0}, horizontal_flip := false, use_color_override := true, color_override := color_black, scale_multiplier := 1.0) {
     bind(sheet.texture, 0);
     shader := rendering.shader;
 
@@ -50,8 +50,13 @@ draw_spritesheet :: (using sheet : Spritesheet, index: int, square : Square,
     set_vec2(shader, "relative_sheet_scale", relative_sheet_scale);
 
     model := Matrix4_Identity;
-    translation_vector := Vector3.{square.col * (1.0 / VIEWPORT_WIDTH) + offset.x / PIXEL_WIDTH, (VIEWPORT_HEIGHT - square.row - 1) * (1.0 / (VIEWPORT_HEIGHT + 1)) + offset.y / PIXEL_WIDTH, 0};
-    scale_vector := Vector3.{1.0 / VIEWPORT_WIDTH, 1.0 / (VIEWPORT_HEIGHT + 1), 1};
+    x_translation := square.col * (1.0 / VIEWPORT_WIDTH) + offset.x / PIXEL_WIDTH - (scale_multiplier - 1.0) * 0.5 / VIEWPORT_WIDTH;
+    y_translation := (VIEWPORT_HEIGHT - square.row - 1) * (1.0 / (VIEWPORT_HEIGHT + 1)) + offset.y / PIXEL_WIDTH - (scale_multiplier - 1.0) * 0.5 / VIEWPORT_HEIGHT;
+    translation_vector := Vector3.{x_translation, y_translation, 0};
+
+    x_scale := 1.0 / VIEWPORT_WIDTH * scale_multiplier;
+    y_scale := 1.0 / (VIEWPORT_HEIGHT + 1) * scale_multiplier;
+    scale_vector := Vector3.{x_scale, y_scale, 1};
 
     translate(*model, translation_vector);
     scale(*model, scale_vector);

@@ -8,11 +8,6 @@ Dialogue_Effect :: struct {
         NONE;
         ENTER;
         EXIT;
-
-        NEUTRAL;
-        HAPPY;
-        SAD;
-        ANGRY;
     }
 
     name: string;
@@ -21,6 +16,7 @@ Dialogue_Effect :: struct {
 Dialogue_Line :: struct {
     name: string;
     text: string;
+    emotion : string;
     mural_name : string;
     effect : Dialogue_Effect;
 }
@@ -40,6 +36,7 @@ Dialogue :: struct {
 
     // Speakers rendering stuff
     speakers : [2] string;
+    emotions : [2] string;
 
     left_sprite_offset : int;
     left_animator  : Animator;
@@ -48,8 +45,6 @@ Dialogue :: struct {
     right_sprite_offset : int;
     right_animator  : Animator;
     right_animator2 : Animator;
-
-    weather : Weather = .DAY;
 }
 
 next_line :: (using dialogue: *Dialogue) {
@@ -67,6 +62,12 @@ is_finished :: (using dialogue: *Dialogue) -> bool {
 next_line_has_speaker :: (using dialogue: Dialogue) -> bool {
     if line_index >= lines.count - 1 then return false;
     if lines[line_index + 1].name then return true;
+    else return false;
+}
+
+next_line_has_emotion :: (using dialogue: Dialogue) -> bool {
+    if line_index >= lines.count - 1 then return false;
+    if lines[line_index + 1].emotion then return true;
     else return false;
 }
 
@@ -101,8 +102,6 @@ resolve_dialogue_inputs :: (dialogue: *Dialogue) {
 
     if pressed(*button_menu) {
         switch_mode(.MENU);
-        menu.element_index = 0;
-        play_sfx("selection");
     }
 
     if pressed(*button_1) {
@@ -112,6 +111,7 @@ resolve_dialogue_inputs :: (dialogue: *Dialogue) {
                 new_speaker_name := dialogue.lines[dialogue.line_index + 1].name;
                 new_speaker_is_not_already_in_conversation := dialogue.speakers[0] != new_speaker_name && dialogue.speakers[1] != new_speaker_name;
 
+                speaker_index : int;
                 if new_speaker_is_not_already_in_conversation {
                     no_speakers := !dialogue.speakers[0] && !dialogue.speakers[1];
                     left_empty := !dialogue.speakers[0];
@@ -119,14 +119,29 @@ resolve_dialogue_inputs :: (dialogue: *Dialogue) {
                     both_full := !(!dialogue.speakers[0] || !dialogue.speakers[1]);
 
                     if no_speakers || left_empty {
+                        speaker_index = 0;
                         dialogue.speakers[0] = new_speaker_name;
                         restart(*dialogue.left_animator);
                     }
                     else if right_empty || both_full {
+                        speaker_index = 1;
                         dialogue.speakers[1] = new_speaker_name;
                         restart(*dialogue.right_animator);
                     }
                 }
+
+                sound_effect_name := to_lower_copy(dialogue.lines[dialogue.line_index + 1].name);
+                if next_line_has_emotion(dialogue.*) {
+                    if dialogue.lines[dialogue.line_index + 1].emotion == "neutral" {
+                        dialogue.emotions[speaker_index] = "";
+                    }
+                    else {
+                        dialogue.emotions[speaker_index] = copy_string(dialogue.lines[dialogue.line_index + 1].emotion);
+                        sound_effect_name = tprint("%_%", sound_effect_name, dialogue.lines[dialogue.line_index + 1].emotion);
+                    }
+                }
+
+                play_sfx(sound_effect_name);
             }
 
             if next_line_has_effect(dialogue.*) {
@@ -156,12 +171,6 @@ resolve_dialogue_inputs :: (dialogue: *Dialogue) {
                         else {
                             log_error("Unknown party is exiting the scene.\n");
                         }
-
-                    // @TODO
-                    case .NEUTRAL;
-                    case .HAPPY;
-                    case .SAD;
-                    case .ANGRY;
                 }
             }
 
@@ -179,6 +188,8 @@ resolve_dialogue_inputs :: (dialogue: *Dialogue) {
         else {
             dialogue.characters_at_progress = dialogue.lines[dialogue.line_index].text.count;
         }
+
+        play_sfx("click");
     }
 
     if pressed(*button_select) {
@@ -274,7 +285,7 @@ load_dialogue_file :: (dialogue: *Dialogue, filename: string) -> success: bool {
         if contains(line, #char "*") {
             replace_chars(line, "*", #char " ");
             trimmed := trim(line);
-            dialogue.weather = parse_weather(trimmed);
+            weather = parse_weather(trimmed);
             continue;
         }
 
@@ -303,6 +314,14 @@ load_dialogue_file :: (dialogue: *Dialogue, filename: string) -> success: bool {
             dialogue.lines[dialogue.lines.count - 1].effect.name = copy_string(trimmed, a);
             continue;
         }
+
+        if contains(line, #char "&") {
+            assert(dialogue.lines.count > 0, "Can't have an & before any lines!");
+            replace_chars(line, "&", #char " ");
+            trimmed := trim(line);
+            dialogue.lines[dialogue.lines.count - 1].emotion = copy_string(trimmed, a);
+            continue;
+        }
         // @NOTE: Put special case lines here. (Extra expressions, sound effects, etc.)
 
         found_separator, left, right := split_from_left(line, #char "|");
@@ -321,6 +340,10 @@ load_dialogue_file :: (dialogue: *Dialogue, filename: string) -> success: bool {
     if dialogue.lines[0].name {
         dialogue.speakers[0] = dialogue.lines[0].name;
         restart(*dialogue.left_animator);
+    }
+
+    if dialogue.lines[0].emotion {
+        dialogue.emotions[0] = dialogue.lines[0].emotion;
     }
 
     if dialogue.lines[0].mural_name {

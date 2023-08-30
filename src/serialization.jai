@@ -5,9 +5,12 @@
 
 VERSION :: 1;
 
-sprites_path    :: "assets/sprites";
+sprites_path    :: "assets/art/sprites";
+murals_path     :: "assets/art/murals";
+slices_path     :: "assets/art/slices";
 fonts_path      :: "assets/fonts";
 music_path      :: "assets/audio/music";
+ambiences_path  :: "assets/audio/ambiences";
 sfx_path        :: "assets/audio/sfx";
 
 data_path       :: "data";
@@ -340,7 +343,7 @@ save_level :: (map : Map, filename : string) -> bool {
     init_string_builder(*builder);
     print_to_builder(*builder, "[%]\t# Version Number\n\n", VERSION);
 
-    print_to_builder(*builder, "%\t# Weather\n", cast(int)map.weather);
+    print_to_builder(*builder, "%\t# Weather\n", cast(int)weather);
 
     // Tiles
     print_to_builder(*builder, "%\t# Width\n", map.width);
@@ -401,7 +404,7 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
     map.name = copy_string(path_strip_extension(filename), allocator=a);
 
     line, found := consume_next_line(*handler);
-    map.weather = cast(Weather)string_to_int(line);
+    weather = cast(Weather)string_to_int(line);
 
     // Tiles
     {
@@ -506,6 +509,8 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
                     new_unit.square = unit_copy.square;
                     new_unit.direction = unit_copy.direction;
                     new_unit.flashback = unit_copy.flashback;
+                    new_unit.parley = unit_copy.parley;
+                    new_unit.parley_captain = unit_copy.parley_captain;
 
                     new_unit.hull = new_unit.max_hull;
                     break;

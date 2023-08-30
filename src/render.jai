@@ -4,19 +4,10 @@
 // June 2023
 
 MENU_TRANSPARENCY_MODIFIER :: 0.3;
-DIALOGUE_TRANSPARENCY_MODIFIER :: 0.9;
+DIALOGUE_TRANSPARENCY_MODIFIER :: 0.7;
 
 render :: (map: Map, dialogue: Dialogue) {
     {
-        weather : Weather;
-
-        if spine.current_section == 0 || spine.current_section == 2 {
-            weather = dialogue.weather;
-        }
-        else {
-            weather = map.weather;
-        }
-
         // Set the colors according to the mode we're in.
         if weather == {
             case .DAY;
@@ -95,6 +86,9 @@ render :: (map: Map, dialogue: Dialogue) {
 
             case .CREDITS;
                 render_credits();
+
+            case .CHAPTER;
+                render_chapter_screen(transparency = 1.0 - fade_progress);
         }
 
         render_slice();
@@ -126,7 +120,6 @@ render_slice :: (transparency := 1.0) {
     }
 
     picture_name := get_slice_picture_name();
-
     picture := table_find_pointer(*rendering.slices, picture_name);
     if !picture {
         log_error("Unable to find this slice picture: %\n", picture_name);
@@ -146,10 +139,11 @@ render_slice :: (transparency := 1.0) {
                 render_captain(user.captain, right=false);
 
             use_text_shader(transparency);
-            draw_text(user.name, .{0, 0});
+            draw_text(user.name, .{0, 0}, nudge_x=5);
 
             use_tile_shader(transparency);
-            draw_ship(user.sprite_index, .EAST, .{1, 0}, color=color_black);
+            //draw_ship(user.sprite_index, .EAST, .{1, 0}, color=color_black);
+            draw_ship(2, .EAST, .{1, 0}, color=color_black);
 
             draw_tile(942, .{3, 0}, color_black);
             draw_number(user_hull, .{3, -1}, color_black);
@@ -174,7 +168,7 @@ render_slice :: (transparency := 1.0) {
                 render_captain(victim.captain, right=true);
 
             use_text_shader(transparency);
-            draw_text(victim.name, .{13, 0});
+            draw_text_right(victim.name, PIXEL_HEIGHT - TILE_SIZE / 2, nudge_x = -5);
 
             use_tile_shader(transparency);
             draw_ship(victim.sprite_index, .WEST, .{14, 0}, color=color_black);
@@ -370,9 +364,9 @@ render_ui :: (map: Map, transparency := 1.0) {
             draw_text_right(get_captain_description(captain), TILE_SIZE / 2, nudge_x = -4);
         }
 
-        for captains_in_the_hold {
+        if captains_in_the_hold {
+            draw_text_right(get_captains_in_hold_string(captains_in_the_hold), 2, nudge_x = -4);
         }
-        //draw_text_right(get_captain_name(captain), TILE_SIZE / 2, nudge_x = -4);
     }
     else if ui_unit {
         using ui_unit;
@@ -432,16 +426,36 @@ render_start_screen :: (transparency := 1.0) {
 }
 
 render_credits :: (transparency := 1.0) {
-    use_text_shader(transparency);
-    k := cast(float)PIXEL_HEIGHT * 3 / 4;
-    draw_text_centered("| Umi Development Team |", k + TILE_SIZE);
+    {
+        use_sprite_shader(transparency);
+        mural, found := table_find(*rendering.murals, "title");
+        if found {
+            draw_sprite(mural);
+        }
+    }
 
-    draw_text_centered("Game by Alex Hartford.", k);
-    draw_text_centered("Art by Emelia Hartford.", k - TILE_SIZE);
-    draw_text_centered("Murals by Bryce Nevitt.", k - 2*TILE_SIZE);
-    draw_text_centered("System Design by Grant Neighbor.", k - 3*TILE_SIZE);
-    draw_text_centered("Level Design by Josh Elijah.", k - 4*TILE_SIZE);
-    draw_text_centered("Music and Sounds by Riley Morris.", k - 5*TILE_SIZE);
+    draw_whole_screen_color(color_4);
+
+    {
+        use_sprite_shader(transparency);
+        sprite := table_find_pointer(*rendering.sprites, "haruhachi");
+        if sprite {
+            draw_sprite(sprite, right=true);
+        }
+    }
+
+    {
+        use_text_shader(transparency);
+        k := cast(float)PIXEL_HEIGHT * 3 / 4;
+        draw_text_centered("Umi Development Team", k + TILE_SIZE, color_white);
+
+        draw_text("Programming, Design, Production, and Writing by Alex Hartford", 10, k);
+        draw_text("System Design by Grant Neighbor", 10, k - TILE_SIZE);
+        draw_text("Level Design by Josh Elijah", 10, k - 2*TILE_SIZE);
+        draw_text("Art by Emelia Hartford", 10, k - 3*TILE_SIZE);
+        draw_text("Murals by Bryce Nevitt", 10, k - 4*TILE_SIZE);
+        draw_text("Music by Riley Morris", 10, k - 5*TILE_SIZE);
+    }
 }
 
 render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
@@ -459,29 +473,35 @@ render_cutscene :: (dialogue: Dialogue, transparency := 1.0) {
             return;
         }
 
-        draw_sprite(mural);
+        draw_sprite(mural, y_offset=32);
     }
 
     render_dialogue(dialogue, transparency);
 }
 
 render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
+
     current_speaker_name := dialogue.lines[dialogue.line_index].name;
     {
         // Draw speaker sprites.
         {
             speaker_transparency := DIALOGUE_TRANSPARENCY_MODIFIER;
-            if dialogue.speakers[0] == current_speaker_name {
+            if dialogue.speakers[0] == current_speaker_name || !dialogue.speakers[1] {
                 speaker_transparency = 1.0;
             }
-
-            name := to_lower_copy(dialogue.speakers[0]);
             use_sprite_shader(transparency * speaker_transparency);
 
-            if name {
-                sprite := table_find_pointer(*rendering.sprites, name);
+            character_name := to_lower_copy(dialogue.speakers[0]);
+
+            if character_name {
+                sprite_name := character_name;
+                if dialogue.emotions[0] {
+                    sprite_name = tprint("%_%", character_name, dialogue.emotions[0]);
+                }
+
+                sprite := table_find_pointer(*rendering.sprites, sprite_name);
                 if !sprite {
-                    log_error("Unable to find sprite % in the sprites catalogue.\n", name);
+                    log_error("Unable to find sprite % in the sprites catalogue.\n", sprite_name);
                     return;
                 }
 
@@ -491,12 +511,12 @@ render_dialogue :: (dialogue: Dialogue, transparency := 1.0) {
 
         {
             speaker_transparency := DIALOGUE_TRANSPARENCY_MODIFIER;
-            if dialogue.speakers[1] == current_speaker_name {
+            if dialogue.speakers[1] == current_speaker_name || !dialogue.speakers[0] {
                 speaker_transparency = 1.0;
             }
+            use_sprite_shader(transparency * speaker_transparency);
 
             name := to_lower_copy(dialogue.speakers[1]);
-            use_sprite_shader(transparency * speaker_transparency);
 
             if name {
                 sprite := table_find_pointer(*rendering.sprites, name);
@@ -558,6 +578,15 @@ render_framebuffer_to_screen :: () {
     glBindTexture(GL_TEXTURE_2D, render_texture);
 
     draw_screen_quad(shader);
+}
+
+draw_whole_screen_color :: (color : Color) {
+    use_tile_shader(1.0);
+    for col: 0..VIEWPORT_WIDTH {
+        for row: -1..VIEWPORT_HEIGHT {
+            draw_background(.{col, row}, color);
+        }
+    }
 }
 
 //
@@ -746,6 +775,16 @@ render_game_over :: (transparency := 1.0) {
         draw_text_centered("game over", xx (PIXEL_HEIGHT / 2.0));
         draw_text_centered("retry?", xx (PIXEL_HEIGHT / 2.0 - main_font.height));
     }
+}
+
+//
+// Chapter Screen
+//
+
+render_chapter_screen :: (transparency := 1.0) {
+    use_text_shader(transparency);
+    draw_text_centered(tprint("Chapter %", spine.current_chapter), xx (PIXEL_HEIGHT / 2.0 + main_font.height));
+    draw_text_centered(spine.chapters[spine.current_chapter].name, xx (PIXEL_HEIGHT / 2.0 - main_font.height));
 }
 
 //

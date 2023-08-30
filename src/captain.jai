@@ -13,12 +13,12 @@ Captain :: enum {
     ARUKAHIME;
     HARUHACHI;
 
-    KUKI;
+    YOSHITAKA;
     // Something really annoying.
 
     SAMURAI;
     // Boarding does double damage
-    PIRATE;
+    LIMAHONG;
     // ???
     WARLORD;
     // Double dice results
@@ -41,10 +41,10 @@ get_captain_name :: (captain: Captain) -> string {
         case .ARUKAHIME;    return "arukahime";
         case .HARUHACHI;    return "haruhachi";
 
-        case .KUKI;         return "kuki";
+        case .YOSHITAKA;    return "yoshitaka";
 
         case .SAMURAI;      return "";
-        case .PIRATE;       return "yoshitaka";
+        case .LIMAHONG;     return "limahong";
         case .WARLORD;      return "";
         case .STRATEGIST;   return "";
         case .HOLY;         return "";
@@ -60,16 +60,31 @@ get_captain_description :: (captain: Captain) -> string {
         case .YOUNG_TAKEDA; return "Has potential.";
         case .TAKEDA;       return "Boarding strength is doubled.";
 
-        case .ARUKAHIME;    return "Bow and Arrow attacks deal double.";
-        case .HARUHACHI;    return "Artillery damage doubled.";
+        case .ARUKAHIME;    return "Bow attacks deal double.";
+        case .HARUHACHI;    return "+2 on Artillery attacks.";
 
-        case .KUKI;         return "";
+        case .YOSHITAKA;    return "";
 
         case .SAMURAI;      return "";
-        case .PIRATE;       return "";
+        case .LIMAHONG;     return "";
         case .WARLORD;      return "";
         case .STRATEGIST;   return "";
         case .HOLY;         return "";
         case .SHAMAN;       return "";
     }
+}
+
+get_captains_in_hold_string :: (hold: [..] Captain) -> string {
+    builder : String_Builder;
+    defer free_buffers(*builder);
+
+    append(*builder, "Hold:");
+
+    for hold {
+        name := tprint(" %", it);
+        append(*builder, to_lower_copy(name));
+    }
+    append(*builder, ".");
+
+    return builder_to_string(*builder);
 }

@@ -25,6 +25,10 @@ DIALOGUE
 DIALOGUE
 1
 1_b
+
+DIALOGUE
+2
+1_c
 ---
 
 Ayubune	# name
@@ -35,6 +39,8 @@ Ayubune	# name
 10 4	# square
 3	# direction
 !	# flashback
+!
+0
 
 Fish	# name
 2	# team
@@ -44,6 +50,8 @@ Fish	# name
 8 3	# square
 0	# direction
 !	# flashback
+!
+0
 
 Fish	# name
 2	# team
@@ -53,6 +61,8 @@ Fish	# name
 7 6	# square
 0	# direction
 !	# flashback
+!
+0
 
 Fish	# name
 2	# team
@@ -62,3 +72,5 @@ Fish	# name
 5 4	# square
 0	# direction
 !	# flashback
+!
+0

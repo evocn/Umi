@@ -19,14 +19,14 @@ Texture :: struct {
 //
 //
 
-load_texture :: (filename : string) -> Texture, success: bool {
+load_texture :: (full_path : string) -> Texture, success: bool {
 	using result : Texture;
 
-	cstr_path := temp_c_string(tprint("%/%", sprites_path, filename));
+	cstr_path := temp_c_string(full_path);
 	data := stbi_load(cstr_path, xx *width, xx *height, xx *dim, 4); defer stbi_image_free(data);
 
 	if(!data) {
-		log_error("Failed to load texture %.\n", filename);
+		log_error("Failed to load texture %.\n", full_path);
         return .{}, false;
 	}
 	fmt : GLenum;

@@ -86,13 +86,13 @@ slice_update :: (dt : float) {
 get_slice_picture_name :: () -> string {
     kind := screen_slice.result.ability.targeting;
     if #complete kind == {
-        case .ENEMY;        return "slice";
-        case .ALLY;         return "slice";
-        case .ANY;          return "slice";
-        case .BOARDING;     return "slice";
-        case .ORTHOGRAPHIC; return "slice";
-        case .AOE;          return "slice";
-        case .EMPTY_SQUARE; return "slice";
-        case .SELF;         return "slice";
+        case .ENEMY;        return "archers";
+        case .ALLY;         return "wave";
+        case .ANY;          return "wave";
+        case .BOARDING;     return "wave";
+        case .ORTHOGRAPHIC; return "wave";
+        case .AOE;          return "wave";
+        case .EMPTY_SQUARE; return "wave";
+        case .SELF;         return "wave";
     }
 }

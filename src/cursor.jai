@@ -83,14 +83,14 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
             if pressed(*button_info) {
                 begin_inspecting(map);
                 occupant := get_occupant(map, square);
-                if occupant && occupant.flashback {
+                if occupant && occupant.flashback && !occupant.flashback_triggered {
                     success := load_dialogue_file(dialogue, tprint("%.dialogue", occupant.flashback));
                     if !success {
                         log_error("Flashback: Unable to load dialogue file %.\n", occupant.flashback);
                         return;
                     }
                     switch_mode(.DIALOGUE);
-                    occupant.flashback = "";
+                    occupant.flashback_triggered = true;
                 }
             }
 
@@ -138,7 +138,7 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
             maybe_move_cursor(map.*);
 
             if pressed(*button_1) {
-                use_ability(map, cursor.targeting_with);
+                use_ability(map, cursor.targeting_with, dialogue);
             }
 
             if pressed(*button_2) {
@@ -147,7 +147,7 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
 
             if pressed(*button_3) {
                 if cursor.targeting_with == *selected.primary {
-                    use_ability(map, cursor.targeting_with);
+                    use_ability(map, cursor.targeting_with, dialogue);
                 }
                 else {
                     begin_targeting(map, which_ability=0);
@@ -156,7 +156,7 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
 
             if pressed(*button_4) {
                 if cursor.targeting_with == *selected.secondary {
-                    use_ability(map, cursor.targeting_with);
+                    use_ability(map, cursor.targeting_with, dialogue);
                 }
                 else {
                     begin_targeting(map, which_ability=1);
@@ -165,7 +165,7 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
 
             if pressed(*button_5) {
                 if cursor.targeting_with == *selected.repair {
-                    use_ability(map, cursor.targeting_with);
+                    use_ability(map, cursor.targeting_with, dialogue);
                 }
                 else {
                     begin_targeting(map, which_ability=2);
@@ -174,7 +174,7 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
 
             if pressed(*button_6) {
                 if cursor.targeting_with == *selected.board {
-                    use_ability(map, cursor.targeting_with);
+                    use_ability(map, cursor.targeting_with, dialogue);
                 }
                 else {
                     begin_targeting(map, which_ability=3);
@@ -246,10 +246,11 @@ begin_targeting :: (map : *Map, which_ability : int) {
     array_add(*command_queue, cast(*Command)command);
 }
 
-use_ability :: (map : *Map, ability: *Ability) {
+use_ability :: (map : *Map, ability: *Ability, dialogue: *Dialogue) {
     command := New(Use_Ability_Command);
     command.map = map;
     command.ability = ability;
+    command.dialogue = dialogue;
     array_add(*command_queue, cast(*Command)command);
 }
 

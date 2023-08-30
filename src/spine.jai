@@ -4,6 +4,8 @@
 // July 2023
 
 Chapter :: struct {
+    name : string;
+
     intro : string;
     level : string;
     outro : string;
@@ -11,6 +13,10 @@ Chapter :: struct {
     intro_song : string;
     level_song : string;
     outro_song : string;
+
+    intro_ambience : string;
+    level_ambience : string;
+    outro_ambience : string;
 }
 
 spine : struct {
@@ -22,9 +28,10 @@ spine : struct {
     current_section : int = -1;
 }
 
-spine_reset :: () {
+reset_game :: () {
     spine.current_chapter = -1;
     spine.current_section = -1;
+    go_to_start_screen();
 }
 
 next_section :: () {
@@ -48,32 +55,35 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
 
     if current_chapter == -1 {
         spine_next_chapter(map, units, dialogue);
-        current_section = 0;
+        current_section = -1;
     }
     if current_chapter >= chapters.count {
-        spine_reset();
-        stop_music();
-        play_music("mohican");
-        switch_mode(.START);
+        reset_game();
         return;
     }
 
-    print("Going to chapter %, section %\n", current_chapter, current_section);
+    log("Going to chapter %, section %.\n", current_chapter, current_section);
 
     if current_section == {
+        case -1; 
+            stop_music();
+            switch_mode(.CHAPTER);
+
         case 0; 
             load_dialogue_file(dialogue, tprint("%.dialogue", chapters[current_chapter].intro));
             stop_music();
             play_music(chapters[current_chapter].intro_song);
+            play_ambience(chapters[current_chapter].intro_ambience);
             switch_mode(.CUTSCENE);
 
         case 1;
             init_and_load_level(map, units, chapters[current_chapter].level);
             stop_music();
             play_music(chapters[current_chapter].level_song);
+            play_ambience(chapters[current_chapter].level_ambience);
             switch_mode(.GAME);
 
-            // @TODO: Function this
+            // @TODO: Function this ish
             {
                 for map.events {
                     if it.turn == 0 {
@@ -88,6 +98,7 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
             load_dialogue_file(dialogue, tprint("%.dialogue", chapters[current_chapter].outro));
             stop_music();
             play_music(chapters[current_chapter].outro_song);
+            play_ambience(chapters[current_chapter].outro_ambience);
             switch_mode(.CUTSCENE);
     }
 }
@@ -96,7 +107,7 @@ spine_next_chapter :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
     using spine;
 
     current_chapter += 1;
-    current_section = 0;
+    current_section = -1;
 }
 
 spine_load :: (filename: string) -> success: bool {
@@ -122,6 +133,11 @@ spine_load :: (filename: string) -> success: bool {
         line : string;
         found : bool;
 
+        // Name
+        line, found = consume_next_line(*handler);
+        if !found return error_out(handler, "Weird input found here.\n");
+        new_chapter.name = copy_string(line, allocator=a);
+
         // Intro
         line, found = consume_next_line(*handler);
         if !found return error_out(handler, "Weird input found here.\n");
@@ -130,6 +146,10 @@ spine_load :: (filename: string) -> success: bool {
         line, found = consume_next_line(*handler);
         if !found return error_out(handler, "Weird input found here.\n");
         new_chapter.intro_song = copy_string(line, allocator=a);
+
+        line, found = consume_next_line(*handler);
+        if !found return error_out(handler, "Weird input found here.\n");
+        new_chapter.intro_ambience = copy_string(line, allocator=a);
 
         // Level
         line, found = consume_next_line(*handler);
@@ -140,6 +160,10 @@ spine_load :: (filename: string) -> success: bool {
         if !found return error_out(handler, "Weird input found here.\n");
         new_chapter.level_song = copy_string(line, allocator=a);
 
+        line, found = consume_next_line(*handler);
+        if !found return error_out(handler, "Weird input found here.\n");
+        new_chapter.level_ambience = copy_string(line, allocator=a);
+
         // Outro
         line, found = consume_next_line(*handler);
         if !found return error_out(handler, "Weird input found here.\n");
@@ -148,6 +172,10 @@ spine_load :: (filename: string) -> success: bool {
         line, found = consume_next_line(*handler);
         if !found return error_out(handler, "Weird input found here.\n");
         new_chapter.outro_song = copy_string(line, allocator=a);
+
+        line, found = consume_next_line(*handler);
+        if !found return error_out(handler, "Weird input found here.\n");
+        new_chapter.outro_ambience = copy_string(line, allocator=a);
 
         // Add the new section.
         array_add(*spine.chapters, new_chapter);
@@ -161,7 +189,8 @@ spine_load :: (filename: string) -> success: bool {
 }
 
 //
-//
+// Miscellaneous stuff. @TODO: Move these out?
+// 
 
 resolve_start_menu_specialties :: () {
     using input;
@@ -177,11 +206,11 @@ resolve_game_over :: (map: *Map, units: [..] *Unit) {
     if pressed(*button_1) {
         init_and_load_level(map, units, copy_string(map.name));
         switch_mode(.GAME);
-        play_sfx("choose");
+        play_woodblock_sound();
     }
 
     if pressed(*button_menu) {
-        running = false;
+        go_to_start_screen();
     }
 }
 
@@ -197,4 +226,10 @@ init_and_load_level :: (map: *Map, units: [..] *Unit, level_name : string) {
 
     manager.turn_number = 0;
     set_turn(.YOU);
+}
+
+resolve_chapter_screen :: () {
+    if !fade.active {
+        fade_start(.OUT, next_section_fade_in, length=4.0);
+    }
 }
