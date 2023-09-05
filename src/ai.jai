@@ -197,6 +197,9 @@ NO_TARGET_DEFAULT :: 900;
 action_attack_in_range :: (unit: *Unit, map: Map, extended := false) -> Action {
     action : Action;
     ability := *unit.board;
+    if unit.primary.active {
+        ability = *unit.primary;
+    }
     
     // Find the nearest player unit
     shortest_distance := NO_TARGET_DEFAULT;
@@ -213,7 +216,7 @@ action_attack_in_range :: (unit: *Unit, map: Map, extended := false) -> Action {
             defer array_reset(*test_path);
             if !success continue;
 
-            if test_path.count < shortest_distance {
+            if test_path.count < shortest_distance && unit.movement != 0 {
                 shortest_distance = test_path.count;
                 action.square = it;
                 action.target = enemy_unit;
@@ -230,11 +233,13 @@ action_attack_in_range :: (unit: *Unit, map: Map, extended := false) -> Action {
     total_range := unit.movement + unit.primary.max_range;
     double_range := total_range + unit.movement;
     if ((!extended && shortest_distance > total_range) ||
-        (extended && shortest_distance > double_range))
+        (extended && shortest_distance > double_range)) {
         return action_wait(unit);
+    }
 
-    if extended && shortest_distance > double_range
+    if extended && shortest_distance > double_range {
         action.target = null;
+    }
 
     action.ability = ability;
 
@@ -244,12 +249,9 @@ action_attack_in_range :: (unit: *Unit, map: Map, extended := false) -> Action {
 action_pursue_and_attack_nearest :: (unit: *Unit, map: Map) -> Action {
     action: Action;
 
-    ability : *Ability;
-    if random_get_zero_to_one() > 0.5 {
+    ability := *unit.board;
+    if unit.primary.active {
         ability = *unit.primary;
-    }
-    else {
-        ability = *unit.board;
     }
 
     // Find the nearest player unit
@@ -289,7 +291,10 @@ action_pursue_and_attack_nearest :: (unit: *Unit, map: Map) -> Action {
 action_wait_but_attack :: (unit: *Unit, map: Map) -> Action {
     action: Action;
 
-    ability := *unit.primary;
+    ability := *unit.board;
+    if unit.primary.active {
+        ability = *unit.primary;
+    }
 
     action.square = unit.square;
     action.ability = null;

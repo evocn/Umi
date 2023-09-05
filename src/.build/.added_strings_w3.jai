@@ -16,18 +16,18 @@ if !unserialize(*s.special, handler) return false;
 if !unserialize(*s.active, handler) return false;
 
 //
-// #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:106.
+// #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:231.
 //
-if !serialize(s.name, "name", builder) return false;
-if !serialize(s.team, "team", builder) return false;
-if !serialize(s.ai, "ai", builder) return false;
-if !serialize(s.captain, "captain", builder) return false;
-if !serialize(s.crew, "crew", builder) return false;
-if !serialize(s.square, "square", builder) return false;
-if !serialize(s.direction, "direction", builder) return false;
-if !serialize(s.flashback, "flashback", builder) return false;
-if !serialize(s.parley, "parley", builder) return false;
-if !serialize(s.parley_captain, "parley_captain", builder) return false;
+if !unserialize(*s.name, handler) return false;
+if !unserialize(*s.team, handler) return false;
+if !unserialize(*s.ai, handler) return false;
+if !unserialize(*s.captain, handler) return false;
+if !unserialize(*s.crew, handler) return false;
+if !unserialize(*s.square, handler) return false;
+if !unserialize(*s.direction, handler) return false;
+if !unserialize(*s.flashback, handler) return false;
+if !unserialize(*s.parley, handler) return false;
+if !unserialize(*s.parley_captain, handler) return false;
 
 //
 // #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:106.
@@ -56,18 +56,18 @@ if !unserialize(*s.primary, handler) return false;
 if !unserialize(*s.secondary, handler) return false;
 
 //
-// #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:231.
+// #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:106.
 //
-if !unserialize(*s.name, handler) return false;
-if !unserialize(*s.team, handler) return false;
-if !unserialize(*s.ai, handler) return false;
-if !unserialize(*s.captain, handler) return false;
-if !unserialize(*s.crew, handler) return false;
-if !unserialize(*s.square, handler) return false;
-if !unserialize(*s.direction, handler) return false;
-if !unserialize(*s.flashback, handler) return false;
-if !unserialize(*s.parley, handler) return false;
-if !unserialize(*s.parley_captain, handler) return false;
+if !serialize(s.name, "name", builder) return false;
+if !serialize(s.team, "team", builder) return false;
+if !serialize(s.ai, "ai", builder) return false;
+if !serialize(s.captain, "captain", builder) return false;
+if !serialize(s.crew, "crew", builder) return false;
+if !serialize(s.square, "square", builder) return false;
+if !serialize(s.direction, "direction", builder) return false;
+if !serialize(s.flashback, "flashback", builder) return false;
+if !serialize(s.parley, "parley", builder) return false;
+if !serialize(s.parley_captain, "parley_captain", builder) return false;
 
 //
 // #insert text. Generated from C:/Users/alexa/Code/umi/src//serialization.jai:106.
