@@ -1,0 +1,275 @@
+[1]	# Version Number
+
+0	# Weather
+48	# Width
+32	# Height
+
+# Tiles:
+000000001111111000000111111111111111111111111111
+000000011111110000000111111111111111111111111111
+000000111111100000000111111100000000000000000000
+000001111111000000000110000000000000000000000000
+000011111110000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000
+000000000000000000000000000001111111111100000011
+000000000000111111000011111111111111111100000011
+000000111111111111000111110001111111111100000011
+000001111111111111000000000001111111111100000011
+000001111111111111000000000011111111111100000011
+000001111111111111000000000111111111111000000011
+000001111111111111000011111100011111110000000011
+000000111111111110000111110000000111100000000011
+000000000000000000000000000000000000000000000011
+000000000000000000000000000000000000000000000011
+000000000000000000000000000000000000000000000111
+000000000000000000000000000000000000000000001111
+000000000111110000000000000000000000000000011111
+000111111111110000000000000001110000000000111111
+001111111111110000000111111111111111111111111111
+001111111111110000000111111111000000111111110001
+001111111111110000000000000000000000000000000001
+001111111111110000000000000000000000000000000001
+001100011111100000000000011000001100001000001111
+000000000000000000000000110000001100000000011111
+000000000000000000000000111000001000000000111111
+000000000000000000000000000000000000000111111111
+000000000000000000000100000001100000111111111111
+---
+# Sprite Index Exceptions:
+---
+# Events: 
+---
+
+Footman Kobaya	# name
+2	# team
+6	# ai
+0	# captain
+5	# crew
+25 4	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+2	# team
+6	# ai
+0	# captain
+5	# crew
+27 7	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+0	# team
+6	# ai
+0	# captain
+5	# crew
+33 4	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+atakebune	# name
+2	# team
+7	# ai
+0	# captain
+20	# crew
+43 5	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+2	# team
+6	# ai
+0	# captain
+5	# crew
+23 19	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+cannon	# name
+0	# team
+0	# ai
+0	# captain
+5	# crew
+30 11	# square
+0	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+atakebune	# name
+2	# team
+7	# ai
+0	# captain
+15	# crew
+29 17	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+atakebune	# name
+0	# team
+7	# ai
+0	# captain
+15	# crew
+29 20	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Artillery Kobaya	# name
+2	# team
+6	# ai
+10	# captain
+5	# crew
+19 28	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+atakebune	# name
+2	# team
+6	# ai
+0	# captain
+15	# crew
+19 26	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+atakebune	# name
+2	# team
+6	# ai
+0	# captain
+15	# crew
+19 30	# square
+3	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+1	# team
+0	# ai
+1	# captain
+5	# crew
+3 7	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+1	# team
+0	# ai
+0	# captain
+5	# crew
+3 9	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+1	# team
+0	# ai
+0	# captain
+5	# crew
+14 8	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Footman Kobaya	# name
+1	# team
+0	# ai
+0	# captain
+5	# crew
+13 5	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+atakebune	# name
+1	# team
+0	# ai
+4	# captain
+20	# crew
+12 7	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+sekibune	# name
+1	# team
+0	# ai
+2	# captain
+10	# crew
+10 9	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+sekibune	# name
+1	# team
+0	# ai
+5	# captain
+16	# crew
+8 6	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Artillery Kobaya	# name
+1	# team
+0	# ai
+6	# captain
+5	# crew
+6 7	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Artillery Kobaya	# name
+1	# team
+0	# ai
+0	# captain
+5	# crew
+6 9	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain
+
+Flame Kobaya	# name
+0	# team
+0	# ai
+7	# captain
+5	# crew
+8 8	# square
+2	# direction
+!	# flashback
+!	# parley
+0	# parley_captain

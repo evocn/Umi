@@ -121,7 +121,7 @@ damage_hull :: (using unit: *Unit, damage : int, armor_piercing := false) {
 
 damage_crew :: (using unit: *Unit, damage : int) {
     crew = crew - damage;
-    crew = clamp(crew, 0, 9);
+    crew = clamp(crew, 0, MAX_CREW);
     if crew == 0 then kill(unit);
 }
 
@@ -144,8 +144,11 @@ find_nearest_unit :: (using map: Map, unit: Unit, query: (*Unit) -> bool) -> *Un
 
     nearest : *Unit;
     shortest_distance := 100;
+
+    traversed := traverse(map, unit.square, unit.team, pass=cast(bool)(unit.flags & .PASS));
+
     for prospects {
-        test_path, success := get_shortest_path(map, unit, it.square);
+        test_path, success := get_shortest_path(traversed, map, unit, it.square);
         defer array_reset(*test_path);
         if !success continue;
 

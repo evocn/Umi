@@ -134,12 +134,12 @@ Footman Kobaya	# name
 0	# parley_captain
 
 cannon	# name
-2	# team
+0	# team
 5	# ai
 0	# captain
-2	# crew
+0	# crew
 11 7	# square
 0	# direction
 !	# flashback
 2_parley	# parley
-2	# parley_captain
+0	# parley_captain

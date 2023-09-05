@@ -140,6 +140,7 @@ random_choice :: (array: [] $T) -> T {
 }
 
 roll_die :: (faces: int) -> int {
+    assert(faces >= 0);
     result := 1 + cast(int)(random_get_zero_to_one() * faces);
     return result;
 }
@@ -158,24 +159,24 @@ activate_mouse :: () {
     SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
 }
 
-// Grid Methods
-//
-
-on_grid :: (using square : Square, map: Map) -> bool {
-    return col >= 0 && col < map.width && row >= 0 && row < map.height;
-}
-
-manhattan_distance :: (a : Square, b : Square) -> int {
-    return abs(a.col - b.col) + abs(a.row - b.row);
-}
-
 // OpenGL
 //
 
-check_gl_error :: (str := "-") {
-    err := glGetError();
-    if err print("error(%) = %\n", str, err);
+print_gl_errors :: (str := "-") {
+    if dont_check_for_gl_errors_anymore then return;
+
+    current_error : GLenum;
+    current_error = glGetError();
+    while current_error != GL_NO_ERROR {
+        dont_check_for_gl_errors_anymore = true;
+
+        log_error("OpenGL Error(%) = %\n", str, current_error);
+
+        current_error = glGetError();
+    }
 }
+
+dont_check_for_gl_errors_anymore : bool;
 
 //
 // Easing functions

@@ -31,7 +31,7 @@ execute :: (using command: *Move_Cursor_Command) {
 
     maybe_move_viewport(map, square);
 
-    play_sfx("move");
+    play_sfx("click");
 }
 
 
@@ -74,7 +74,6 @@ Show_Unit_Range_Command :: struct {
     using #as base: Command;
     kind = .SHOW_UNIT_RANGE;
     map: *Map;
-    team: Team;
 }
 
 execute :: (using command: *Show_Unit_Range_Command) {
@@ -90,7 +89,7 @@ execute :: (using command: *Show_Unit_Range_Command) {
     array_reset(*interactible);
     array_reset(*accessible);
 
-    assert(the_unit.team != .YOU);
+    assert(the_unit.team != .MURAKAMI);
 
     accessible = get_accessible_squares_from_position(map, the_unit);
     for accessible {
@@ -228,7 +227,7 @@ execute :: (using command: *Place_Unit_Command) {
     if path.count > 1 {
         selected.direction = get_best_path_direction(path[0], path[1]);
     }
-    if whose_turn() == .THEM {
+    if whose_turn() != .MURAKAMI {
         selected.direction = get_best_path_direction(square, selected_initial_square);
     }
 
@@ -268,7 +267,6 @@ execute :: (using command: *Use_Ability_Command) {
         }
 
         result = resolve_ability(map, ability, selected, target, square, dialogue);
-        print("%\n", result);
     }
     else {
         result = resolve_ability(map, ability, selected, null, square, dialogue);
@@ -378,4 +376,20 @@ execute :: (using command: *Command) {
 }
 
 //
+// AI-only Commands
 //
+
+// @TODO: Put this in the player's hands too, to go to the next unit that hasn't moved.
+Move_Cursor_To_Command :: struct {
+    using #as base: Command;
+    kind = .MOVE_CURSOR_TO;
+    square : Square;
+    map: Map;
+}
+
+execute :: (using command: *Move_Cursor_To_Command) {
+    if on_grid(square, map)
+        cursor.square = square;
+
+    set_viewport_to_contain(square, map);
+}

@@ -14,6 +14,7 @@ ai_update :: (using map: *Map, dt : float) {
     using ai;
 
     action_time += dt;
+
     if action_time < action_delay
         return;
 
@@ -27,25 +28,43 @@ ai_update :: (using map: *Map, dt : float) {
     }
     else {
         array_reset(*command_queue);
+
+        before := get_time();
         ai_plan(map);
+        after := get_time();
+        print("AI planning took % s.\n", after - before);
     }
 }
 
 ai_plan :: (using map: *Map) {
     using ai;
 
+    ZoneScoped("outer");
+
     // Find Red Unit
     if !to_check {
-        array_reset(*to_check);
         next_turn(map);
         return;
     }
 
     selected := pop(*to_check);
-
     action := action_choose(selected, map);
 
-    path, success := get_shortest_path(map, selected, action.square);
+    while action.stay_put {
+        ZoneScoped("looking for enemy\n");
+
+        // Find Red Unit
+        if !to_check {
+            next_turn(map);
+            return;
+        }
+
+        selected = pop(*to_check);
+        action = action_choose(selected, map);
+    }
+
+    traversed := traverse(map, selected.square, selected.team, pass=cast(bool)(selected.flags & .PASS));
+    path, success := get_shortest_path(traversed, map, selected, action.square);
     defer array_reset(*path);
     assert(success); // For now...
 
@@ -62,7 +81,7 @@ ai_plan :: (using map: *Map) {
         {
             command := New(Begin_Moving_Unit_Command);
             command.map = map;
-            command.team = .THEM;
+            command.team = selected.team;
             array_insert_at(*command_queue, cast(*Command)command, 0);
         }
 
@@ -104,7 +123,7 @@ ai_plan :: (using map: *Map) {
     {
         command := New(Begin_Targeting_Command);
         command.map = map;
-        command.team = .THEM;
+        command.team = selected.team;
         command.which_ability = which_ability;
         array_insert_at(*command_queue, cast(*Command)command, 0);
     }
@@ -124,20 +143,8 @@ ai_plan :: (using map: *Map) {
     }
 }
 
-Action :: struct {
-    square: Square;
-    target: *Unit;
-    ability: *Ability;
-}
 
 action_choose :: (unit: *Unit, map: Map) -> Action {
-    /*
-    if unit.health <= 1 {
-        print("Repairing.");
-        return action_repair(unit);
-    }
-    */
-
     if unit.primary.targeting == {
         case .ORTHOGRAPHIC;
             #through;
@@ -162,39 +169,62 @@ action_choose :: (unit: *Unit, map: Map) -> Action {
 
 }
 
-action_attack_in_range :: (unit: *Unit, map: Map, extended := false) -> Action {
+//
+//
+
+Action :: struct {
+    stay_put : bool;
+    square: Square;
+    target: *Unit;
+    ability: *Ability;
+}
+
+//
+//
+
+action_wait :: (unit: *Unit) -> Action {
     action: Action;
+    action.square = unit.square;
+    action.target = null;
+    action.ability = null;
+    action.stay_put = true;
 
-    ability : *Ability;
-    if random_get_zero_to_one() > 0.5 {
-        ability = *unit.primary;
-    }
-    else {
-        ability = *unit.board;
-    }
+    return action;
+}
 
+NO_TARGET_DEFAULT :: 900;
+
+action_attack_in_range :: (unit: *Unit, map: Map, extended := false) -> Action {
+    action : Action;
+    ability := *unit.board;
+    
     // Find the nearest player unit
-    shortest_distance := 100;
-    player_units := query_units(map.units, (x) => (x.team == .YOU));
-    for player_unit: player_units {
-        squares_for_this_target := get_squares_you_could_use_an_ability_from(map, ability.*, unit, player_unit);
+    shortest_distance := NO_TARGET_DEFAULT;
+    enemy_units := get_enemy_units(map, unit.team);
+
+    traversed := traverse(map, unit.square, unit.team);
+    for enemy_unit : enemy_units {
+        squares_for_this_target := get_squares_you_could_use_an_ability_from(map, ability.*, unit, enemy_unit);
+        //squares_for_this_target := Square.[];
         filter_out_death(*squares_for_this_target, map, unit);
+
         for squares_for_this_target {
-            test_path, success := get_shortest_path(map, unit, it);
+            test_path, success := get_shortest_path(traversed, map, unit, it);
             defer array_reset(*test_path);
             if !success continue;
 
             if test_path.count < shortest_distance {
                 shortest_distance = test_path.count;
                 action.square = it;
-                action.target = player_unit;
+                action.target = enemy_unit;
             }
         }
     }
 
-    if shortest_distance == 100 {
+    if shortest_distance == NO_TARGET_DEFAULT {
         action.square = unit.square;
         action.target = null;
+        return action;
     }
 
     total_range := unit.movement + unit.primary.max_range;
@@ -223,25 +253,30 @@ action_pursue_and_attack_nearest :: (unit: *Unit, map: Map) -> Action {
     }
 
     // Find the nearest player unit
-    shortest_distance := 100;
-    player_units := query_units(map.units, (x) => (x.team == .YOU));
-    for player_unit: player_units {
-        squares_for_this_target := get_squares_you_could_use_an_ability_from(map, ability.*, unit, player_unit);
+    shortest_distance := NO_TARGET_DEFAULT;
+    enemy_units := get_enemy_units(map, unit.team);
+
+    traversed := traverse(map, unit.square, unit.team, pass=cast(bool)(unit.flags & .PASS));
+
+    for enemy_unit: enemy_units {
+        squares_for_this_target := get_squares_you_could_use_an_ability_from(map, ability.*, unit, enemy_unit);
+        //squares_for_this_target : [..] Square;
         filter_out_death(*squares_for_this_target, map, unit);
+
         for squares_for_this_target {
-            test_path, success := get_shortest_path(map, unit, it);
+            test_path, success := get_shortest_path(traversed, map, unit, it);
             defer array_reset(*test_path);
             if !success continue;
 
             if test_path.count < shortest_distance {
                 shortest_distance = test_path.count;
                 action.square = it;
-                action.target = player_unit;
+                action.target = enemy_unit;
             }
         }
     }
 
-    if shortest_distance == 100 {
+    if shortest_distance == NO_TARGET_DEFAULT {
         action.square = unit.square;
         action.target = null;
     }
@@ -251,72 +286,16 @@ action_pursue_and_attack_nearest :: (unit: *Unit, map: Map) -> Action {
     return action;
 }
 
-action_pursue_nearest :: (unit: *Unit, map: Map) -> Action {
-    action: Action;
-
-    // Find the nearest player unit
-    shortest_distance := 100;
-    player_units := query_units(map.units, (x) => (x.team == .YOU));
-    for player_unit: player_units {
-        squares_for_this_target := get_squares_right_next_to_unit(map, unit, player_unit);
-        filter_out_death(*squares_for_this_target, map, unit);
-        for squares_for_this_target {
-            test_path, success := get_shortest_path(map, unit, it);
-            defer array_reset(*test_path);
-            if !success continue;
-
-            if test_path.count < shortest_distance {
-                shortest_distance = test_path.count;
-                action.square = it;
-            }
-        }
-    }
-
-    if shortest_distance == 100 {
-        action.square = unit.square;
-    }
-
-    action.target = null;
-
-    action.ability = null;
-
-    return action;
-}
-
-action_repair :: (unit: *Unit) -> Action {
-    action: Action;
-    action.square = unit.square;
-    action.target = unit;
-    action.ability = *unit.repair;
-
-    return action;
-}
-
-action_wait :: (unit: *Unit) -> Action {
-    action: Action;
-    action.square = unit.square;
-    action.target = null;
-    action.ability = null;
-
-    return action;
-}
-
 action_wait_but_attack :: (unit: *Unit, map: Map) -> Action {
     action: Action;
 
-    ability : *Ability;
-    if random_get_zero_to_one() > 0.5 {
-        ability = *unit.primary;
-    }
-    else {
-        ability = *unit.board;
-    }
+    ability := *unit.primary;
 
     action.square = unit.square;
     action.ability = null;
 
-    player_units := query_units(map.units, (x) => (x.team == .YOU));
-    for player_units {
+    enemy_units := get_enemy_units(map, unit.team);
+    for enemy_units {
         can_attack_target := (manhattan_distance(it.square, unit.square) >= ability.min_range && 
                               manhattan_distance(it.square, unit.square) <= ability.max_range);
         if can_attack_target {
@@ -327,39 +306,4 @@ action_wait_but_attack :: (unit: *Unit, map: Map) -> Action {
     }
 
     return action;
-}
-
-action_random_movement :: (unit: *Unit, map: Map) -> Action {
-    action: Action;
-
-    // If a unit cannot attack, it chooses a square to go to at random.
-    accessible := get_accessible_squares_from_position(map, unit);
-    filter_out_death(*accessible, map, unit);
-
-    assert(accessible.count != 0);
-
-    action.square = random_choice(accessible);
-    action.target = null;
-    action.ability = null;
-
-
-    return action;
-}
-
-//
-// Commands
-//
-
-Move_Cursor_To_Command :: struct {
-    using #as base: Command;
-    kind = .MOVE_CURSOR_TO;
-    square : Square;
-    map: Map;
-}
-
-execute :: (using command: *Move_Cursor_To_Command) {
-    if on_grid(square, map)
-        cursor.square = square;
-
-    set_viewport_to_contain(square, map);
 }

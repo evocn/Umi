@@ -483,7 +483,6 @@ load_level :: (map : *Map, units: [..] *Unit, filename : string) -> success: boo
         }
     }
 
-
     // Units
     {
         array_reset(*map.units);

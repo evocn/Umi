@@ -186,6 +186,7 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
             differential := calculated_user_crew - calculated_victim_crew;
 
             damage_to_victim := get_damage(calculated_user_crew, calculated_victim_crew);
+            if user.captain == .TAKEDA then damage_to_victim *= 2;
             damage_to_victim = clamp(damage_to_victim, 0, MAX_CREW);
 
             damage_to_user := get_damage(calculated_victim_crew, calculated_user_crew);
@@ -221,6 +222,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
 
             die_result := roll_die(damage);
             attack_damage := die_result + bonus_damage;
+            if !damages_hull && user.captain == .ARUKAHIME then attack_damage *= 2;
+            if damages_hull && user.captain == .HARUHACHI then attack_damage += 2;
             result.user_die_result = die_result;
             result.user_die_bonus = attack_damage - die_result;
 
@@ -238,8 +241,12 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
         else if damage < 0 || (damage == 0 && bonus_damage < 0) {
             result.should_display = true;
 
-            die_result := roll_die(damage);
+            die_result := roll_die(abs(damage));
             heal_amount := die_result + abs(bonus_damage);
+
+            if user.captain == .AKI {
+                heal_amount *= 2;
+            }
 
             result.user_die_result = die_result;
             result.user_die_bonus = heal_amount - die_result;
@@ -302,13 +309,13 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
         if special == {
             case .INTERACT;
             {
-                if user.team == victim.team {
+                if user.team == victim.team || victim.team == .NONE {
                     result.should_display = true;
 
                     crew_receiver := user;
                     crew_giver := victim;
 
-                    if user.sinking {
+                    if user.sinking || victim.team == .NONE {
                         crew_receiver = victim;
                         crew_giver = user;
                     }
@@ -316,14 +323,14 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
                     // Transfer
                     MAX_CREW_TRANSFER :: 3;
 
-                    max_crew_giver_can_give := clamp(crew_giver.crew, 0, MAX_CREW_TRANSFER);
+                    max_crew_giver_can_give := clamp(crew_giver.crew, 1, MAX_CREW_TRANSFER);
                     max_crew_receiver_can_take := clamp(crew_receiver.max_crew - crew_receiver.crew, 0, MAX_CREW_TRANSFER);
-
-                    print("%, %\n", max_crew_giver_can_give, max_crew_receiver_can_take);
 
                     how_many_to_take := min(max_crew_giver_can_give, max_crew_receiver_can_take);
                     crew_receiver.crew = crew_receiver.crew + how_many_to_take;
                     crew_giver.crew = crew_giver.crew - how_many_to_take;
+
+                    crew_receiver.team = .MURAKAMI;
 
                     if crew_giver.crew == 0 {
                         if crew_giver.captain != .NONE {
@@ -338,7 +345,8 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
                             }
                         }
 
-                        kill(crew_giver);
+                        crew_giver.team = .NONE;
+                        crew_giver.captain = .NONE;
                     }
                 }
                 else {
@@ -353,7 +361,7 @@ resolve_ability :: (map: *Map, using ability: *Ability, user : *Unit, victim : *
                             switch_mode(.DIALOGUE);
                         }
 
-                        victim.team = .YOU;
+                        victim.team = .MURAKAMI;
                     }
                 }
             }

@@ -29,14 +29,26 @@ cursor : struct {
     inspecting : *Unit;
 }
 
+reset_cursor :: () {
+    using cursor;
+    state = .NEUTRAL;
+    selected = null;
+    selected_initial_square = .{-1, -1};
+    targeting_with = null;
+    array_reset(*accessible);
+    array_reset(*path);
+    targeted = null;
+    array_reset(*interactible);
+    inspecting = null;
+
+}
+
 resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
     using cursor;
     using input;
 
     if pressed(*button_menu) {
         switch_mode(.MENU);
-        menu.element_index = 0;
-        play_sfx("selection");
     }
 
     if state == {
@@ -47,7 +59,7 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
             if pressed(*button_1) {
                 occupant := get_occupant(map, square);
                 if occupant {
-                    if occupant.team == .YOU {
+                    if occupant.team == .MURAKAMI {
                         begin_moving_unit(map);
                     }
                     else {
@@ -82,6 +94,8 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
 
             if pressed(*button_info) {
                 begin_inspecting(map);
+
+                /*
                 occupant := get_occupant(map, square);
                 if occupant && occupant.flashback && !occupant.flashback_triggered {
                     success := load_dialogue_file(dialogue, tprint("%.dialogue", occupant.flashback));
@@ -92,6 +106,7 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
                     switch_mode(.DIALOGUE);
                     occupant.flashback_triggered = true;
                 }
+                */
             }
 
             if pressed(*button_special) {
@@ -103,7 +118,8 @@ resolve_cursor_inputs :: (using map : *Map, dialogue: *Dialogue) {
         {
             if array_find(cursor.accessible, cursor.square) {
                 array_reset(*path);
-                path =, success := get_shortest_path(map, selected, cursor.square);
+                traversed := traverse(map, selected.square, selected.team, pass=cast(bool)(selected.flags & .PASS));
+                path =, success := get_shortest_path(traversed, map, selected, cursor.square);
             }
 
             maybe_move_cursor(map.*);
@@ -226,21 +242,20 @@ move_cursor :: (direction : Direction, map: Map) {
 begin_moving_unit :: (map : *Map) {
     command := New(Begin_Moving_Unit_Command);
     command.map = map;
-    command.team = .YOU;
+    command.team = .MURAKAMI;
     array_add(*command_queue, cast(*Command)command);
 }
 
 show_unit_range :: (map : *Map) {
     command := New(Show_Unit_Range_Command);
     command.map = map;
-    command.team = .THEM;
     array_add(*command_queue, cast(*Command)command);
 }
 
 begin_targeting :: (map : *Map, which_ability : int) {
     command := New(Begin_Targeting_Command);
     command.map = map;
-    command.team = .YOU;
+    command.team = .MURAKAMI;
     assert(which_ability >= 0 && which_ability <= 4);
     command.which_ability = which_ability;
     array_add(*command_queue, cast(*Command)command);

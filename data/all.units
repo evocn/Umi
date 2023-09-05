@@ -184,7 +184,7 @@ cannon	# name
 3	# min_range
 7	# max_range
 1	# damages_hull
-0	# damage
+1	# damage
 5	# bonus_damage
 0	# status
 0	# push_orientation

@@ -220,7 +220,7 @@ render_map :: (map : Map, transparency := 1.0) {
 
         // Draw Cursor
         cursor_color := fg;
-        if whose_turn() == .YOU then cursor_color = color_1;
+        if whose_turn() == .MURAKAMI then cursor_color = color_1;
         else cursor_color = color_2;
 
         if get_occupant(map, cursor.square) then cursor_color = color_4;

@@ -23,6 +23,7 @@ spine : struct {
     chapters: [..] Chapter;
 
     ready_for_next_section : bool;
+    ready_for_last_section : bool;
 
     current_chapter : int = -1;
     current_section : int = -1;
@@ -50,11 +51,11 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
 
     current_section += 1;
     if current_section >= 3 {
-        spine_next_chapter(map, units, dialogue);
+        spine_next_chapter();
     }
 
     if current_chapter == -1 {
-        spine_next_chapter(map, units, dialogue);
+        spine_next_chapter();
         current_section = -1;
     }
     if current_chapter >= chapters.count {
@@ -62,6 +63,27 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
         return;
     }
 
+    spine_start_section(map, units, dialogue);
+}
+
+spine_go_to_last_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
+    using spine;
+
+    current_section -= 1;
+    if current_section <= -1 {
+        spine_last_chapter();
+    }
+
+    if current_chapter <= -1 {
+        reset_game();
+        return;
+    }
+
+    spine_start_section(map, units, dialogue);
+}
+
+spine_start_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
+    using spine;
     log("Going to chapter %, section %.\n", current_chapter, current_section);
 
     if current_section == {
@@ -103,12 +125,20 @@ spine_go_to_next_section :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) 
     }
 }
 
-spine_next_chapter :: (map: *Map, units: [..] *Unit, dialogue: *Dialogue) {
+spine_next_chapter :: () {
     using spine;
 
     current_chapter += 1;
     current_section = -1;
 }
+
+spine_last_chapter :: () {
+    using spine;
+
+    current_chapter -= 1;
+    current_section = 2;
+}
+
 
 spine_load :: (filename: string) -> success: bool {
     handler : Text_File_Handler;
@@ -122,7 +152,7 @@ spine_load :: (filename: string) -> success: bool {
 
     a: Allocator;
     a.proc = flat_pool_allocator_proc;
-    a.data = *pool;
+    a.data = *forever_pool;
     spine.chapters.allocator = a;
 
     array_reset(*spine.chapters);
@@ -205,8 +235,9 @@ resolve_game_over :: (map: *Map, units: [..] *Unit) {
 
     if pressed(*button_1) {
         init_and_load_level(map, units, copy_string(map.name));
-        switch_mode(.GAME);
         play_woodblock_sound();
+        put_cursor_over_commander(map.*);
+        switch_mode(.GAME);
     }
 
     if pressed(*button_menu) {
@@ -225,7 +256,9 @@ init_and_load_level :: (map: *Map, units: [..] *Unit, level_name : string) {
     for map.units occupy(map, it.square, it);
 
     manager.turn_number = 0;
-    set_turn(.YOU);
+    set_turn(.MURAKAMI);
+
+    //reset(*audio_pool, overwrite_memory=true);
 }
 
 resolve_chapter_screen :: () {

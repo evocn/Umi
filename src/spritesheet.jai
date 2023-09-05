@@ -23,13 +23,13 @@ draw_tile :: (index: int, square : Square, color := color_black, offset := Vecto
 draw_ship :: (index: int, direction: Direction, square : Square, color := color_black) {
     if #complete direction == {
         case .NORTH;    
-            draw_spritesheet(rendering.ship_spritesheet, index * 4, square, use_color_override=false, horizontal_flip=false, scale_multiplier=2.0);
+            draw_spritesheet(rendering.ship_spritesheet, index * 4, square, use_color_override=true, color_override = color, horizontal_flip=false, scale_multiplier=2.0);
         case .SOUTH;
-            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 1, square, use_color_override=false, horizontal_flip=false, scale_multiplier=2.0);
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 1, square, use_color_override=true, color_override = color, horizontal_flip=false, scale_multiplier=2.0);
         case .EAST;
-            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, use_color_override=false, horizontal_flip=false, scale_multiplier=2.0);
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, use_color_override=true, color_override = color, horizontal_flip=false, scale_multiplier=2.0);
         case .WEST;
-            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, use_color_override=false, horizontal_flip=true, scale_multiplier=2.0);
+            draw_spritesheet(rendering.ship_spritesheet, index * 4 + 2, square, use_color_override=true, color_override = color, horizontal_flip=true, scale_multiplier=2.0);
     }
 }
 

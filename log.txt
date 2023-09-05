@@ -1,0 +1,7 @@
+dsound reports speaker config STEREO, geometry 20
+Loaded units from "all.units".
+Going to chapter 0, section -1.
+Going to chapter 0, section 0.
+Going to chapter 0, section 1.
+Async thread shutdown, try 1.
+Async thread stopped.

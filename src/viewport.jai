@@ -22,19 +22,36 @@ within_viewport :: (using square: Square) -> bool {
         && viewport.row + VIEWPORT_HEIGHT > row;
 }
 
+within_soft_viewport :: (using square: Square) -> bool {
+    return viewport.col + 2 <= col
+        && viewport.col + VIEWPORT_WIDTH - 2 > col
+        && viewport.row + 2 <= row
+        && viewport.row + VIEWPORT_HEIGHT - 2 > row;
+}
+
+square_is_on_the_fringe :: (using square: Square, map : Map) -> bool {
+    return square.col < 2
+        || map.width - square.col <= 2
+        || square.row < 2
+        || map.height - square.row <= 2;
+}
+
 maybe_move_viewport :: (map: Map, using square: Square) {
-    if within_viewport(square) return;
+    if within_soft_viewport(square) then return;
 
-    if col >= viewport.col + VIEWPORT_WIDTH
+    if col >= viewport.col + VIEWPORT_WIDTH - 2 && map.width - col > 2 {
         move_viewport(map, .EAST);
-    else if col < viewport.col
+    }
+    else if col < viewport.col + 2 && square.col >= 2 {
         move_viewport(map, .WEST);
+    }
 
-    if row >= viewport.row + VIEWPORT_HEIGHT
+    if row >= viewport.row + VIEWPORT_HEIGHT - 2 && map.height - square.row > 2 {
         move_viewport(map, .SOUTH);
-    else if row < viewport.row
+    }
+    else if row < viewport.row + 2 && square.row >= 2 {
         move_viewport(map, .NORTH);
-
+    }
 }
 
 move_viewport :: (map: Map, direction : Direction) {
@@ -48,14 +65,10 @@ move_viewport :: (map: Map, direction : Direction) {
     assert(on_grid(viewport.corner, map) && on_grid(viewport.corner + .{VIEWPORT_WIDTH-1, VIEWPORT_HEIGHT-1}, map));
 }
 
+// @TODO: Soft_viewport_to_contain
 set_viewport_to_contain :: (using square: Square, map: Map) {
     if within_viewport(square) then return;
 
-    viewport.col = col / VIEWPORT_WIDTH;
-    viewport.row = row / VIEWPORT_HEIGHT;
-
-    viewport.col = clamp(viewport.col * VIEWPORT_WIDTH,
-                         0, map.width - VIEWPORT_WIDTH);
-    viewport.row = clamp(viewport.row * VIEWPORT_HEIGHT,
-                         0, map.height - VIEWPORT_HEIGHT);
+    viewport.col = clamp(col, 0, map.width - VIEWPORT_WIDTH);
+    viewport.row = clamp(row, 0, map.height - VIEWPORT_HEIGHT);
 }

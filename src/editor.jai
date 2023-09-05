@@ -3,6 +3,7 @@
 // Alex Hartford
 // June 2023
 
+
 editor : struct {
     cursor : Square;
     selected_unit : *Unit;
@@ -10,6 +11,9 @@ editor : struct {
     moving_unit : *Unit;
 
     should_save : bool;
+
+    place_wall : bool;
+    erase_wall : bool;
 }
 
 //
@@ -172,7 +176,7 @@ level_editor :: (using map: *Map) {
         if ImGui.InputText("### 9999", level_buffer.data, level_buffer.count) {
             a: Allocator;
             a.proc = flat_pool_allocator_proc;
-            a.data = *pool;
+            a.data = *forever_pool;
 
             levels[program_state.current_level_index] = copy_string(to_string(level_buffer.data), allocator=a);
             map.name = copy_string(to_string(level_buffer.data), allocator=a);
@@ -298,7 +302,7 @@ unit_editor :: (using unit: *Unit, map: *Map, templates: [..] *Unit) {
         ti = type_info(Captain);
         ImGui.SliderInt("Captain", xx *captain, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx captain]));
 
-        ImGui.SliderInt("Crew", xx *crew, 1, MAX_CREW);
+        ImGui.SliderInt("Crew", xx *crew, 0, MAX_CREW);
 
         ti = type_info(Direction);
         ImGui.SliderInt("Direction", xx *direction, 0, cast(s32)(ti.names.count - 1), temp_c_string(ti.names[xx direction]));
@@ -341,7 +345,7 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 if ImGui.InputText("### 9999", name_buffer.data, name_buffer.count) {
                     a: Allocator;
                     a.proc = flat_pool_allocator_proc;
-                    a.data = *pool;
+                    a.data = *forever_pool;
 
                     name = copy_string(to_string(name_buffer.data), allocator=a);
                     memset(name_buffer.data, 0, name_buffer.count);
@@ -352,7 +356,7 @@ template_editor :: (using unit: *Unit, units : *[..] *Unit, map: *Map) {
                 if ImGui.InputText("### 9998", description_buffer.data, description_buffer.count) {
                     a: Allocator;
                     a.proc = flat_pool_allocator_proc;
-                    a.data = *pool;
+                    a.data = *forever_pool;
 
                     description = copy_string(to_string(description_buffer.data), allocator=a);
                     memset(description_buffer.data, 0, description_buffer.count);
@@ -428,7 +432,7 @@ ability_editor :: (ability: *Ability) {
     if ImGui.InputText("### 4444", ability_buffer.data, ability_buffer.count) {
         a: Allocator;
         a.proc = flat_pool_allocator_proc;
-        a.data = *pool;
+        a.data = *forever_pool;
 
         ability.name = copy_string(to_string(ability_buffer.data), allocator=a);
         memset(ability_buffer.data, 0, ability_buffer.count);
@@ -476,7 +480,7 @@ units_editor :: (units : *[..] *Unit) {
         if ImGui.Button("New") {
             a: Allocator;
             a.proc = flat_pool_allocator_proc;
-            a.data = *pool;
+            a.data = *forever_pool;
 
             new_unit := New(Unit, allocator=a);
 
@@ -541,6 +545,16 @@ tile_editor :: (using map: *Map) {
             tile.sprite_index = default_tile_sprite_index(tile.kind);
         ImGui.SameLine();
         ImGui.DragInt("### 531", xx *tile.sprite_index, 1, 0, 1077, "%d", .ImGuiSliderFlags_AlwaysClamp);
+
+        if place_wall {
+            tile.kind = .WALL;
+            tile.sprite_index = default_tile_sprite_index(tile.kind);
+        }
+
+        if erase_wall {
+            tile.kind = .NONE;
+            tile.sprite_index = default_tile_sprite_index(tile.kind);
+        }
     }
     ImGui.End();
 }
@@ -619,7 +633,7 @@ move_editor_cursor :: (direction : Direction, map: Map) {
         case .EAST;  new_square = Square.{col+1, row};
     }
 
-    if on_grid(new_square, map)
+    if on_grid(new_square, map) && within_viewport(new_square + viewport.corner)
         editor.cursor = new_square;
 }
 

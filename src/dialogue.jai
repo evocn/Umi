@@ -207,6 +207,8 @@ reset_dialogue :: (using dialogue: *Dialogue) {
     mural_name_index = -1;
     speakers[0] = "";
     speakers[1] = "";
+    emotions[0] = "";
+    emotions[1] = "";
     characters_at_progress = 0;
     line_time = 0.0;
 }
@@ -227,7 +229,7 @@ finish_dialogue :: () {
 initialize :: (using dialogue: *Dialogue) {
     a: Allocator;
     a.proc = flat_pool_allocator_proc;
-    a.data = *pool;
+    a.data = *forever_pool;
 
     left_animator.end = 1.0;
     left_animator.animating = *left_sprite_offset;
@@ -344,6 +346,9 @@ load_dialogue_file :: (dialogue: *Dialogue, filename: string) -> success: bool {
 
     if dialogue.lines[0].emotion {
         dialogue.emotions[0] = dialogue.lines[0].emotion;
+
+        sound_effect_name := tprint("%_%", to_lower_copy(dialogue.lines[0].name), dialogue.lines[0].emotion);
+        play_sfx(sound_effect_name);
     }
 
     if dialogue.lines[0].mural_name {

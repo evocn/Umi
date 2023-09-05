@@ -46,24 +46,3 @@ color_from_hex :: ($h: u32) -> Color {
 
     return color;
 }
-
-team_color :: (team: Team) -> Color {
-    if #complete team == {
-        case .NONE; return color_fg;
-        case .YOU;  return color_1;
-        case .THEM; return color_2;
-    }
-}
-
-enemy_color :: (team: Team) -> Color {
-    if #complete team == {
-        case .NONE; return team_color(.NONE);
-        case .YOU;  return team_color(.THEM);
-        case .THEM; return team_color(.YOU);
-    }
-}
-
-//
-//
-//
-

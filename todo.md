@@ -1,13 +1,9 @@
 
 Meetings
-* Josh at 6
-* Riley on Friday
-
-Miscellaneous
-* Ambience for dialogue scenes
-* Transition Font code over to bitmap.
+* Josh - Wednesday
 
 Writing
+* Rough
 * More characters talking to each other.
   * 2
   * 3
@@ -19,17 +15,23 @@ Writing
   * 8
 
 Mechanics
-* Work out captain swap mechanics
+* Captain dropoff when nearby ally.
+* Aflame
+* Lightning Tiles
+* Whirlpool Tiles
 
 Polish
 * Transition into combat screen
 * Better combat scene
-* Transition between murals
+  * Health Bars
+* Transition between murals in dialogue
 * Better Cursor
 
 Fix
 * Transitions should fit the day/night system too.
-* Audio Memory Leak...
+* Transition Font code over to bitmap.
+* Audio Memory Leak... FUCK IT! We're leaking!
 
 Audio
 * Ensure Riley has everything he needs.
+* Record Character sound effects.

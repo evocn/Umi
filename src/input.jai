@@ -118,6 +118,12 @@ handle_events :: () {
                 if event.key.keysym.sym == SDLK_q       release_button(*button_5);
                 if event.key.keysym.sym == SDLK_e       release_button(*button_6);
 
+                // @REMOVE
+                if event.key.keysym.sym == SDLK_u
+                    editor.place_wall = false;
+                if event.key.keysym.sym == SDLK_i
+                    editor.erase_wall = false;
+
             case SDL_KEYDOWN;
                 if program_state.imgui_capturing_keyboard return;
 
@@ -151,6 +157,7 @@ handle_events :: () {
                             case .GAME_OVER;
                             switch_mode(.EDITOR);
                             activate_mouse();
+                            editor.cursor = cursor.square - viewport.corner;
 
                             case .EDITOR;
                             switch_mode(.GAME);
@@ -162,14 +169,31 @@ handle_events :: () {
                         if program_mode != .MENU {
                             spine.ready_for_next_section = true;
                             fade.active = false;
+                            reset_cursor();
                         }
                     }
 
-                    if event.key.keysym.sym == SDLK_k
-                        switch_mode(.GAME_OVER);
+                    if event.key.keysym.sym == SDLK_b {
+                        if program_mode != .MENU {
+                            spine.ready_for_last_section = true;
+                            fade.active = false;
+                            reset_cursor();
+                        }
+                    }
+
+                    if event.key.keysym.sym == SDLK_k {
+                        if program_mode == .GAME
+                            switch_mode(.GAME_OVER);
+                    }
 
                     if event.key.keysym.sym == SDLK_0
                         program_paused = !program_paused;
+
+                    if event.key.keysym.sym == SDLK_u
+                        editor.place_wall = true;
+
+                    if event.key.keysym.sym == SDLK_i
+                        editor.erase_wall = true;
                 }
 
 

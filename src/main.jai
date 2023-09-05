@@ -68,7 +68,7 @@ using program_state : struct {
     framerate : float;
 }
 
-pool        : Flat_Pool;
+forever_pool: Flat_Pool;
 units_pool  : Flat_Pool;
 level_pool  : Flat_Pool;
 audio_pool  : Flat_Pool;
@@ -153,6 +153,8 @@ main :: () {
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(1);
+
+        FrameMark();
     }
 
     {
@@ -164,17 +166,21 @@ main :: () {
 
         array_reset(*levels);
         array_reset(*menu.elements);
-        reset(*pool, overwrite_memory=true);
 
         deinit(*main_font.characters);
         deinit(*second_font.characters);
 
+
         stop_all_sounds_abruptly(sound_player, 0);
-        update_sound_player(1000.0);
+
+        free(decode_queue_thread.starting_temporary_storage.data);
+
+        shutdown(sound_player);
         array_reset(*retired_decoders);
         array_reset(*completed_queue);
         array_reset(*decode_queue);
-        shutdown(sound_player);
+        array_reset(*sound_player.streams);
+        array_reset(*sound_player.handler.channel_names);
         free(sound_player);
         reset(*audio_pool, overwrite_memory=true);
         deinit(*sfx);
@@ -182,6 +188,8 @@ main :: () {
         deinit(*rendering.sprites);
         deinit(*rendering.murals);
         deinit(*rendering.slices);
+
+        reset(*forever_pool, overwrite_memory=true);
 
         ImGui_ImplSdl_Shutdown();
         ImGui.DestroyContext(imgui_context);
@@ -193,9 +201,7 @@ main :: () {
     #if DEBUG_MEMORY then report_memory_leaks();
 }
 
-BUILD : enum { DEVELOPING; DEPLOYING; } : .DEVELOPING;
-//DEBUG_MEMORY :: BUILD == .DEPLOYING;
-DEBUG_MEMORY :: BUILD == .DEVELOPING;
+DEBUG_MEMORY :: false;
 
 using Basic :: #import "Basic"()(MEMORY_DEBUGGER=DEBUG_MEMORY);
 
@@ -203,6 +209,7 @@ using Basic :: #import "Basic"()(MEMORY_DEBUGGER=DEBUG_MEMORY);
 #import "Math";
 #import "Hash_Table";
 #import "Text_File_Handler";
+#import "Pool";
 #import "Flat_Pool";
 
 #import "Sound_Player";
@@ -222,3 +229,4 @@ System         :: #import "System";         // For get_path_of_running_executabl
 ImGui :: #import "ImGui";
 #import "stb_image";
 #import "freetype-2.12.1";
+#import "jai-tracy";

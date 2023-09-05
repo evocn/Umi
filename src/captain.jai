@@ -9,19 +9,18 @@ Captain :: enum {
     OJII;
     YOUNG_TAKEDA;
     TAKEDA;
+    // Boarding does double damage
 
     ARUKAHIME;
+
     HARUHACHI;
 
+    MOTONARI;
     YOSHITAKA;
-    // Something really annoying.
-
-    SAMURAI;
-    // Boarding does double damage
+    // Double dice results
     LIMAHONG;
     // ???
-    WARLORD;
-    // Double dice results
+
     STRATEGIST;
     // Can use both abilities each round.
     HOLY;
@@ -41,11 +40,10 @@ get_captain_name :: (captain: Captain) -> string {
         case .ARUKAHIME;    return "arukahime";
         case .HARUHACHI;    return "haruhachi";
 
+        case .MOTONARI;     return "motonari";
         case .YOSHITAKA;    return "yoshitaka";
-
-        case .SAMURAI;      return "";
         case .LIMAHONG;     return "limahong";
-        case .WARLORD;      return "";
+
         case .STRATEGIST;   return "";
         case .HOLY;         return "";
         case .SHAMAN;       return "";
@@ -64,10 +62,9 @@ get_captain_description :: (captain: Captain) -> string {
         case .HARUHACHI;    return "+2 on Artillery attacks.";
 
         case .YOSHITAKA;    return "";
-
-        case .SAMURAI;      return "";
+        case .MOTONARI;     return "";
         case .LIMAHONG;     return "";
-        case .WARLORD;      return "";
+
         case .STRATEGIST;   return "";
         case .HOLY;         return "";
         case .SHAMAN;       return "";
@@ -82,7 +79,7 @@ get_captains_in_hold_string :: (hold: [..] Captain) -> string {
 
     for hold {
         name := tprint(" %", it);
-        append(*builder, to_lower_copy(name));
+        append(*builder, copy_string(name));
     }
     append(*builder, ".");
 

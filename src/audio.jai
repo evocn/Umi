@@ -5,10 +5,6 @@
 
 load_audio_file :: (name : string) -> *Mixer_Sound_Data {
 
-    a: Allocator;
-    a.proc = flat_pool_allocator_proc;
-    a.data = *audio_pool;
-
     data : *Mixer_Sound_Data = null;
 
     file_data, success := read_entire_file(name);
@@ -22,9 +18,9 @@ load_audio_file :: (name : string) -> *Mixer_Sound_Data {
     }
 
     if has_extension(name, "wav") {
-        data = New(Mixer_Sound_Data, allocator=a);
-        data.name = copy_string(name, allocator=a);
-        data.buffer = copy_string(file_data, allocator=a);
+        data = New(Mixer_Sound_Data);
+        data.name = copy_string(name);
+        data.buffer = copy_string(file_data);
         free(file_data.data);
 
         format, samples, success=, extra := get_wav_header(data.buffer);
@@ -52,9 +48,9 @@ load_audio_file :: (name : string) -> *Mixer_Sound_Data {
         data.samples       = cast(*s16) samples.data;
         data.sampling_rate = cast(u32) format.nSamplesPerSec;
     } else if has_extension(name, "ogg") {
-        data = New(Mixer_Sound_Data, allocator=a);
-        data.name   = copy_string(name, allocator=a);
-        data.buffer = copy_string(file_data, allocator=a);
+        data = New(Mixer_Sound_Data);
+        data.name   = copy_string(name);
+        data.buffer = copy_string(file_data);
         free(file_data.data);
         data.type   = .OGG_COMPRESSED;
     } else {
@@ -83,14 +79,14 @@ play_sound :: (data: *Mixer_Sound_Data, perturb: bool = true) -> *Sound_Stream {
 
 play_sfx :: (name : string) {
     sound, success := table_find(*sfx, name);
-    if !success {
-        log_error("Unable to find sfx in our table: %.\n", name);
-        return;
+    if success {
+        stream := play_sound(sound);
+        if stream
+            stream.category = .PROPS;
     }
-
-    stream := play_sound(sound);
-    if stream {
-        stream.category = .PROPS;
+    else {
+        log_error("Unable to find sfx in our table: %.\n", name);
+        play_woodblock_sound();
     }
 }
 

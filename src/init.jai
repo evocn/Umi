@@ -8,6 +8,17 @@ init :: () -> bool {
 	executable_path := path_strip_filename(System.get_path_of_running_executable());
 	set_working_directory (tprint("%/../", executable_path));
 
+    // Logging
+    {
+        log_file=, success := file_open("log.txt", for_writing = true, keep_existing_content = false, log_errors = false);
+        if !success {
+            print("Couldn't open the log file!\n");
+        }
+        else {
+            context.logger = umi_logger;
+        }
+    }
+
     // SDL
     {
         SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
@@ -173,7 +184,7 @@ init :: () -> bool {
 
     // Init Gamepad
     if SDL_NumJoysticks() > 0 {
-        print("Houston, we have a gamepad!\n");
+        log("Houston, we have a gamepad!\n");
         gamepad = SDL_JoystickOpen(0);
         assert(gamepad != null);
     }
@@ -247,9 +258,9 @@ init_audio :: () {
     success := init(sound_player, xx hwnd, true, true);
     assert(success);
 
-    sound_player.mix_props = 1.0;
-    sound_player.mix_ambiences = 1.0;
-    sound_player.mix_music = 1.0;
+    sound_player.mix_props = 0.0;
+    sound_player.mix_ambiences = 0.0;
+    sound_player.mix_music = 0.0;
 
     go_to_start_screen();
 }
@@ -257,7 +268,7 @@ init_audio :: () {
 init_menus :: () {
     a: Allocator;
     a.proc = flat_pool_allocator_proc;
-    a.data = *pool;
+    a.data = *forever_pool;
 
     {
         using menu;
@@ -348,7 +359,7 @@ init_levels :: () {
 
     a: Allocator;
     a.proc = flat_pool_allocator_proc;
-    a.data = *pool;
+    a.data = *forever_pool;
 
     for levels_paths {
         short_name := copy_string(path_strip_extension(path_filename(it)), allocator=a);
